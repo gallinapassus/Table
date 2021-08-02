@@ -2,8 +2,18 @@
 import OSLog
 #endif
 import Foundation
+
+public struct HorizontallyAligned {
+    let lines:[String]
+    let alignment:Alignment
+    let width:Int
+    var alignVertically:[[String]] {
+        [align(self, forHeight: lines.count)].transposed()
+    }
+}
 public enum Wrapping {
-    case word
+    case word // Prefer wrapping at word boundary (if possible)
+    case char // Wrap at character boundary
 }
 public enum Alignment : CaseIterable {
     case topRight, topLeft, topCenter
@@ -22,48 +32,13 @@ public struct Col {
         self.wrapping = wrapping
     }
 }
-public struct Txt : ExpressibleByStringLiteral {
-    public typealias StringLiteralType = String
-
-    public let string:String
-    public let alignment:Alignment?
-    public init(_ str:String, _ alignment: Alignment? = nil) {
-        self.string = str
-        self.alignment = alignment
-    }
-    public init(stringLiteral:StringLiteralType) {
-        self.string = stringLiteral
-        self.alignment = nil
-    }
-}
-
-extension Txt : Collection {
-    public func index(after i: String.Index) -> String.Index {
-        string.index(after: i)
-    }
-
-    public subscript(position: String.Index) -> String.Element {
-        string[position]
-    }
-
-    public var startIndex: String.Index {
-        string.startIndex
-    }
-
-    public var endIndex: String.Index {
-        string.endIndex
-    }
-
-    public typealias Index = String.Index
-}
-
 public struct Tbl {
     public let data:[[Txt]]
     public let columns:[Col]
     public let title:Txt?
     public let frameStyle:FrameElements
     public let frameRenderingOptions:FrameRenderingOptions
-    private var actualColumns:[Col]
+    private var actualColumns:[Col] = []
     public init(_ title:Txt?, columns: [Col], data:[[Txt]],
                 frameStyle:FrameElements = .rounded,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
@@ -73,28 +48,39 @@ public struct Tbl {
         self.title = title
         self.frameStyle = frameStyle
         self.frameRenderingOptions = frameRenderingOptions
+
+        // Calculate column widths for autowidth columns
+        self.actualColumns = calculateAutowidths()
+
+        let t1 = DispatchTime.now().uptimeNanoseconds
+        print(#function, Double(t1 - t0) / 1_000_000)
+    }
+    private func calculateAutowidths() -> [Col] {
+        // Figure out actual column widths (for columns which have
+        // specified width as 0 => autowidth)
         if columns.allSatisfy({ $0.width > 0 }) {
-            self.actualColumns = columns
+            // No autowidths defined, use columns as they are defined
+            return columns
         }
         else {
-            self.actualColumns = columns
+            // One or more columns are autowidth columns
+            var tmp = columns
             let recalc = columns.enumerated().compactMap({ columns[$0.offset].width > 0 ? nil : $0.offset })
-//            print("recalculating column widths for columns \(recalc.map { columns[$0].header.string }.joined(separator: ", "))")
+            //print("recalc indices", recalc)
             for i in recalc {
                 for r in data {
                     guard r.count > i else { continue }
-                    let m = Swift.max(self.actualColumns[i].width, r[i].count)
-                    self.actualColumns[i].width =  m//Swift.max(self.actualColumns[i].width, r[i].count)
+                    let m = Swift.max(/*self.actualColumns[i].width*/tmp[i].width, r[i].count)
+                    tmp[i].width =  m
                 }
-                if self.actualColumns[i].width == 0, let hdr = columns[i].header {
+                if /*self.actualColumns[i].width*/tmp[i].width == 0, let hdr = columns[i].header {
                     let smrt = Swift.min(hdr.count, columns.reduce(0, { $0 + ($1.header?.count ?? 0) }) / columns.count)
-                    self.actualColumns[i].width = Swift.max(1, smrt)
+                    tmp[i].width = Swift.max(1, smrt)
                 }
             }
+            //print("actual", tmp.map { $0.width })
+            return tmp
         }
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        //print("Calculated widths:", actualColumns.forEach { print($0.header.string, $0.width, separator: ": ") } )
-        print(#function, Double(t1 - t0) / 1_000_000)
     }
     public init(_ title:String, columns: [Col], data:[[Txt]],
                 frameStyle:FrameElements = .rounded,
@@ -102,53 +88,12 @@ public struct Tbl {
         self.init(Txt(title, .middleCenter), columns: columns, data: data,
                   frameStyle: frameStyle, frameRenderingOptions: frameRenderingOptions)
     }
-
-    public func columnizedHeaders() -> [[String]] {
-        let t0 = DispatchTime.now().uptimeNanoseconds
-        let cc:[[String]] = columns
-            .enumerated()
-            .map({ i,c in
-                let w = actualColumns[i].width == 0 ? (c.header?.count ?? 1) : actualColumns[i].width
-                return (c.header?.string ?? "")
-                    .words(to: w)
-                    .compress(to: w)
-                    .map {
-                        $0.render(to: w,
-                                  alignment: actualColumns[i].header?.alignment ?? actualColumns[i].alignment)
-                    }
-            })
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        print(#function, Double(t1 - t0) / 1_000_000)
-        return cc
-    }
     public func render(into: inout String) {
         let t0 = DispatchTime.now().uptimeNanoseconds
-        let hdrs = columnizedHeaders()
-        let rc = hdrs.reduce(0, { Swift.max($0, $1.count) })
-        let headers:[[String]] = hdrs.enumerated().map({ i,f in
-            if f.count < rc {
-                let alignment = columns[i].header?.alignment ?? columns[i].alignment
-                switch alignment {
-                case .topLeft, .topRight, .topCenter:
-                    let str = "".render(to: self.actualColumns[i].width, alignment: alignment)
-                    return f + Array(repeating: str, count: rc - f.count)
-                case .bottomLeft, .bottomRight, .bottomCenter:
-                    let str = "".render(to: self.actualColumns[i].width, alignment: alignment)
-                    return Array(repeating: str, count: rc - f.count) + f
-                case .middleLeft, .middleRight, .middleCenter:
-                    let tc = (rc - f.count) / 2
-                    let bc = rc - f.count - tc
-                    let ta = Array(repeating: "".render(to: self.actualColumns[i].width, alignment: alignment),
-                                   count: tc)
-                    let ba = Array(repeating: "".render(to: self.actualColumns[i].width, alignment: alignment),
-                                   count: bc)
-                    return ta + f + ba
-                }
-            }
-            else {
-                return f
-            }
-        })
+
+
+
+        // Prepare dividers
         let hasHeaderLabels:Bool = columns.compactMap({ $0.header }).reduce(0, { $0 + $1.count }) > 0
         let hasTitleTop = frameStyle.topLeftCorner + actualColumns
             .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width) })
@@ -167,28 +112,37 @@ public struct Tbl {
             .joined(separator: frameStyle.bottomHorizontalVerticalSeparator) + frameStyle.bottomRightCorner
 
 
-
         if let title = title {
             print(hasTitleTop, to: &into)
-            let totw = actualColumns.reduce(0, { $0 + $1.width }) + ((actualColumns.count - 1) * frameStyle.insideVerticalSeparator.count)
-            let rowfrags = title.string.words(to: totw)
-                    .compress(to: totw)
-                    .map { $0.render(to: totw, alignment: title.alignment ?? .bottomCenter) }
-            for r in rowfrags {
-                print("\(frameStyle.leftVerticalSeparator)\(r)\(frameStyle.rightVerticalSeparator)", to: &into)
+            let titleColumnWidth = actualColumns
+                .reduce(0, { $0 + $1.width }) + ((actualColumns.count - 1) * frameStyle.insideVerticalSeparator.count)
+
+            let alignedTitle = title
+                .fragment(fallback: .middleCenter, width: titleColumnWidth)
+                .alignVertically
+
+            for f in alignedTitle {
+                print(frameStyle.leftVerticalSeparator +
+                        f.joined(separator: frameStyle.insideVerticalSeparator) +
+                        frameStyle.rightVerticalSeparator, to: &into)
             }
         }
         if hasHeaderLabels {
+            let alignedColumnHeaders = actualColumns
+                .compactMap({ ($0.header ?? Txt("")).fragment(for: $0) })
+                .alignVertically
             if title == nil {
-                print("***", to: &into)
                 print(noTitleHasHeaders, to: &into)
             }
             else {
                 print(hasTitleAndHeaders, to: &into)
             }
-            let trans = headers.transposed()
-            for row in trans.indices {
-                print("\(frameStyle.leftVerticalSeparator)\(trans[row].joined(separator: frameStyle.insideVerticalSeparator))\(frameStyle.rightVerticalSeparator)", to: &into)
+
+
+            for f in alignedColumnHeaders {
+                print(frameStyle.leftVerticalSeparator +
+                        f.joined(separator: frameStyle.insideVerticalSeparator) +
+                        frameStyle.rightVerticalSeparator, to: &into)
             }
             print(midhdiv, to: &into)
         }
@@ -201,45 +155,32 @@ public struct Tbl {
             }
         }
         let t1 = DispatchTime.now().uptimeNanoseconds
-        print(#function, "Header:", Double(t1 - t0) / 1_000_000)
+        print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
 
 
-        for i in data.indices {
-            let row = data[i]
-            var rc = 0
-            var columnized:[[String]] = []
-            for (j,c) in row.prefix(columns.count).enumerated() {
-                let a = c.alignment ?? columns[j].alignment
-                let frags = c.string
-                    .words(to: actualColumns[j].width).compress(to: actualColumns[j].width)
-                    .map { $0.render(to: actualColumns[j].width, alignment: a) }
-                rc = Swift.max(rc, frags.count)
-                columnized.append(frags)
+        for (i,row) in data.enumerated() {
+            var columnized:[HorizontallyAligned] = []
+            let maxHeight = row
+                .prefix(columns.count)
+                .enumerated()
+                .map({ j,col in
+                    let fragmented = col.fragment(for: actualColumns[j])
+                    columnized.append(fragmented)
+                    return fragmented.lines.count
+                })
+                .reduce(0, { Swift.max($0, $1) })
+            let missingColumnCount = Swift.max(0, (columns.count - columnized.count))
+            let currentCount = columnized.count
+            for k in 0..<missingColumnCount {
+                let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width) // TODO: Precalc these!
+                columnized.append(
+                    HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
+                                        alignment: .topLeft,
+                                        width: actualColumns[currentCount + k].width)
+                )
             }
-            let missing = Swift.max(0, (columns.count - row.count))
-            for l in 0..<missing {
-                let arr = Array(repeating: String(repeating: " ", count: actualColumns[row.count + l].width), count: rc)
-                columnized.append(contentsOf: [arr])
-            }
-            // Add missing column data
-            for (k,r) in columnized.enumerated() {
-                if r.count < rc {
-                    switch data[i][k].alignment ?? columns[k].alignment {
-                    case .topLeft, .topRight, .topCenter:
-                        columnized[k].append(contentsOf: Array(repeating: String("").render(to: actualColumns[k].width), count: rc - r.count))
-                    case .middleLeft, .middleRight, .middleCenter:
-                        let tc = (rc - r.count) / 2
-                        let bc = rc - r.count - tc
-                        let ta = Array(repeating: String().render(to: actualColumns[k].width), count: tc)
-                        let ba = Array(repeating: String().render(to: actualColumns[k].width), count: bc)
-                        columnized[k] = ta + columnized[k] + ba
-                    case .bottomLeft, .bottomRight, .bottomCenter:
-                        columnized[k] = Array(repeating: String().render(to: actualColumns[k].width), count: rc - r.count) + columnized[k]
-                    }
-                }
-            }
-            for f in columnized.transposed() {
-                print("\(frameStyle.leftVerticalSeparator)\(f.joined(separator: frameStyle.insideVerticalSeparator))\(frameStyle.rightVerticalSeparator)", to: &into)
+            for x in Array(columnized.prefix(columns.count)).alignVertically {
+                print("\(frameStyle.leftVerticalSeparator)\(x.joined(separator: frameStyle.insideVerticalSeparator))\(frameStyle.rightVerticalSeparator)", to: &into)
             }
             if i != data.index(before: data.endIndex) {
                 print(midhdiv, to: &into)
@@ -247,6 +188,6 @@ public struct Tbl {
         }
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
-        print(#function, "Rows:", Double(t2 - t1) / 1_000_000)
+        print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
     }
 }

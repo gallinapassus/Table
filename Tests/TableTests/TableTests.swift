@@ -1,12 +1,14 @@
 import XCTest
-@testable import Table
+//@testable import Table
+import Table
 
 final class TableTests: XCTestCase {
     func testExample() {
         var data:[[Txt]] = []
-        for i in 0..<5 {
+        for i in 0..<50000 {
             var cols:[Txt] = []
-            for j in 0..<8 {
+            let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
+            for j in 0..<cmax {
                 let a:Alignment?
                 if Bool.random() {
                     a = Alignment.allCases.randomElement()!
@@ -14,23 +16,145 @@ final class TableTests: XCTestCase {
                 else {
                     a = nil
                 }
-                cols.append(Txt("row\(i+1) column\(j+1) alignment = \(a as Any)", a))
+                let astr = a == nil ? "nil" : "\(a!)"
+                cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", a))
             }
             data.append(cols)
         }
         let cols = [
-            Col(header: Txt("Column 1", .topLeft),      width: 3,  alignment: .topLeft),
+        //    Col(header: nil, width: 5, alignment: .topRight),
+        //    Col(header: nil, width: 6, alignment: .topRight),
+        //    Col(header: nil, width: 15, alignment: .topRight),
+            Col(header: Txt("Column 1", .topLeft),      width: 4,  alignment: .topLeft),
             Col(header: Txt("Column 2", .topCenter),    width: 5,  alignment: .topRight),
             Col(header: Txt("Column 3", .bottomCenter), width: 4,  alignment: .topCenter),
             Col(header: Txt("Column 4", .bottomCenter), width: 8,  alignment: .topCenter),
-            Col(header: Txt("Column 5", .bottomCenter), width: 12, alignment: .topCenter),
-            Col(header: Txt("Column 6", .bottomCenter), width: 7,  alignment: .topCenter),
-            Col(header: Txt("", .bottomCenter), width: 10, alignment: .topCenter),
-            Col(header: Txt("Column 8", .bottomCenter), width: 0,  alignment: .topCenter),
+            Col(header: Txt("Column 5", .bottomCenter), width: 12,  alignment: .topCenter),
+            Col(header: Txt("Col6",     .middleCenter), width: 8,  alignment: .topCenter),
+            Col(header: Txt("",         .bottomCenter), width: 6, alignment: .topCenter),
+            Col(header: Txt("Column 8", .bottomCenter), width: 0,  alignment: .topLeft),
         ]
-        let table = Tbl(Txt("Table Title"), columns: cols, data: data)
-        var str:String = ""
-        table.render(into: &str)
-        print(str)
+        //let table = Tbl("On narrow table this title wraps on multiple lines?", columns: cols, data: data)
+        let table = Tbl(Txt("On narrow table this title wraps on multiple lines?", .middleCenter), columns: cols, data: data)
+        //let table = Tbl(nil, data, cols)
+        var t:String = ""
+        table.render(into: &t)
+        //print(t)
+    }
+    func testPerformance() {
+        var data:[[Txt]] = []
+        for i in 0..<50000 {
+            var cols:[Txt] = []
+//            let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
+            for j in 0..<9 {
+                let txt = "Row \(i + 1) Column \(j + 1)"
+                cols.append(Txt(txt))
+            }
+            data.append(cols)
+        }
+        let w = 4
+        let cols = [
+            Col(header: nil, width: w, alignment: .topLeft),
+            Col(header: nil, width: w, alignment: .topCenter),
+            Col(header: nil, width: w+1, alignment: .topRight),
+            Col(header: nil, width: w+1, alignment: .middleLeft),
+            Col(header: nil, width: w+2, alignment: .middleCenter),
+            Col(header: nil, width: w+2, alignment: .middleRight),
+            Col(header: nil, width: w+3, alignment: .bottomLeft),
+            Col(header: nil, width: w+3, alignment: .bottomCenter),
+            Col(header: nil, width: 0, alignment: .bottomRight),
+        ]
+        measure {
+            let table = Tbl("Title", columns: cols, data: data)
+            var t = ""
+            table.render(into: &t)
+        }
+        //print(t)
+    }
+    func test_x() {
+        do {
+            let data:[[Txt]] = [
+                ["123", Txt("x", .topLeft), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
+                ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
+            ]
+            let width = 10
+
+            let cols = [
+                Col(header: nil,
+                    width: 1, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+            ]
+            let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
+                            columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)
+            var t = ""
+            table.render(into: &t)
+            print(t)
+        }
+        do {
+            let data:[[Txt]] = [
+                [".......",
+                 Txt("no alignment, follows column alignment"),
+                 Txt("no alignment, follows column alignment"),
+                 Txt("Has alignment .topRight", .topRight)],
+                [".......",
+                 Txt("no alignment, follows column alignment"),
+                 Txt("Has alignment .middleCenter", .middleCenter),
+                 Txt("Has alignment .middleRight", .middleRight)],
+                [".......",
+                 Txt("no alignment, follows column alignment"),
+                 Txt("no alignment, follows column alignment"),
+                 Txt("Has alignment .bottomRight", .bottomRight)],
+            ]
+            let width = 10
+
+            let cols = [
+                Col(header: nil,
+                    width: 1, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .bottomRight, wrapping .word", .bottomCenter),
+                    width: width, alignment: .bottomRight, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+            ]
+            let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
+                            columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)
+            var t = ""
+            table.render(into: &t)
+            print(t)
+        }
+        do {
+            let qbf = "Quick brown fox jumped over the lazy dog."
+            let data:[[Txt]] = [
+                ["123", Txt("x", .topLeft), Txt("x", .topCenter), Txt("x", .topRight), Txt(qbf.prefix(11).description)],
+                ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight), Txt(qbf.prefix(22).description)],
+                ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight), Txt(qbf)],
+            ]
+            let width = 3
+
+            let cols = [
+                Col(header: nil,
+                    width: 1, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt(" 1 ", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt(" 2 ", .topCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt(" 3 ", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Autowidth column, default alignment .topLeft, wrapping .word", .bottomLeft),
+                    width: 0, alignment: .topLeft, wrapping: .word),
+            ]
+            let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
+                            columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)
+            var t = ""
+            table.render(into: &t)
+            print(t)
+        }
     }
 }
