@@ -3,7 +3,7 @@ import OSLog
 #endif
 import Foundation
 
-public struct HorizontallyAligned {
+internal struct HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
     let width:Int
@@ -11,11 +11,11 @@ public struct HorizontallyAligned {
         [align(self, forHeight: lines.count)].transposed()
     }
 }
-public enum Wrapping {
+public enum Wrapping : UInt8, RawRepresentable {
     case word // Prefer wrapping at word boundary (if possible)
     case char // Wrap at character boundary
 }
-public enum Alignment : CaseIterable {
+public enum Alignment : UInt8, RawRepresentable, CaseIterable {
     case topRight, topLeft, topCenter
     case bottomRight, bottomLeft, bottomCenter
     case middleRight, middleLeft, middleCenter
@@ -70,10 +70,10 @@ public struct Tbl {
             for i in recalc {
                 for r in data {
                     guard r.count > i else { continue }
-                    let m = Swift.max(/*self.actualColumns[i].width*/tmp[i].width, r[i].count)
+                    let m = Swift.max(tmp[i].width, r[i].count)
                     tmp[i].width =  m
                 }
-                if /*self.actualColumns[i].width*/tmp[i].width == 0, let hdr = columns[i].header {
+                if tmp[i].width == 0, let hdr = columns[i].header {
                     let smrt = Swift.min(hdr.count, columns.reduce(0, { $0 + ($1.header?.count ?? 0) }) / columns.count)
                     tmp[i].width = Swift.max(1, smrt)
                 }
@@ -158,8 +158,9 @@ public struct Tbl {
         print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
 
 
+        // Main loop to render row/column data
         for (i,row) in data.enumerated() {
-            var columnized:[HorizontallyAligned] = []
+            var columnized:ContiguousArray<HorizontallyAligned> = []
             let maxHeight = row
                 .prefix(columns.count)
                 .enumerated()

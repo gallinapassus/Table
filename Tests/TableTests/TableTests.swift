@@ -5,7 +5,7 @@ import Table
 final class TableTests: XCTestCase {
     func testExample() {
         var data:[[Txt]] = []
-        for i in 0..<50000 {
+        for i in 0..<50 {
             var cols:[Txt] = []
             let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
             for j in 0..<cmax {
