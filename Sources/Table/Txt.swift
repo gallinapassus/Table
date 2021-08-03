@@ -11,7 +11,7 @@ public struct Txt : ExpressibleByStringLiteral {
         self.string = stringLiteral
         self.alignment = nil
     }
-    public func fragment(fallback alignment:Alignment, width:Int, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
+    internal func fragment(fallback alignment:Alignment, width:Int, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
         //let t0 = DispatchTime.now().uptimeNanoseconds
         let wrapper = wrapper ?? string.compressedWords(_:_:)
         let lines = wrapper(string, width)
@@ -20,7 +20,7 @@ public struct Txt : ExpressibleByStringLiteral {
         //print(#function, Double(t1 - t0) / 1_000_000)
         return HorizontallyAligned(lines: lines, alignment: alignment, width: width)
     }
-    public func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
+    internal func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
         self.fragment(fallback: self.alignment ?? column.alignment,
                       width: column.width,
                       with: wrapper ?? string.compressedWords(_:_:))
