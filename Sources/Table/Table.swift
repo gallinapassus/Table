@@ -7,7 +7,7 @@ internal class HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
     let width:Width
-    lazy var alignVertically:[[String]] = {
+    lazy var verticallyAligned:[[String]] = {
         [align(self, forHeight: lines.count)].transposed()
     }()
     internal init(lines: [String], alignment: Alignment, width: Width = .auto) {
@@ -141,34 +141,34 @@ public struct Tbl {
         let hasHeaderLabels:Bool = columns.compactMap({ $0.header }).reduce(0, { $0 + $1.count }) > 0
         let hasTitleTop = frameStyle.topLeftCorner + actualColumns
             .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width.rawValue) })
-            .joined(separator: String(repeating: frameStyle.topHorizontalSeparator, count: frameStyle.topHorizontalVerticalSeparator.count)) + frameStyle.topRightCorner
+            .joined(separator: String(repeating: frameStyle.topHorizontalSeparator, count: frameStyle.topHorizontalVerticalSeparator.count)) + frameStyle.topRightCorner + "\n"
         let noTitleHasHeaders = frameStyle.topLeftCorner + actualColumns
             .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width.rawValue) })
-            .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.topRightCorner
+            .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.topRightCorner + "\n"
         let hasTitleAndHeaders = frameStyle.insideLeftVerticalSeparator + actualColumns
             .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width.rawValue) })
-            .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator
+            .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator + "\n"
         let midhdiv = frameStyle.insideLeftVerticalSeparator + actualColumns
             .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width.rawValue) })
-            .joined(separator: frameStyle.insideHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator
+            .joined(separator: frameStyle.insideHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator + "\n"
         let bottomhdiv = frameStyle.bottomLeftCorner + actualColumns
             .map({ String(repeating: frameStyle.bottomHorizontalSeparator, count: $0.width.rawValue) })
-            .joined(separator: frameStyle.bottomHorizontalVerticalSeparator) + frameStyle.bottomRightCorner
+            .joined(separator: frameStyle.bottomHorizontalVerticalSeparator) + frameStyle.bottomRightCorner + "\n"
 
 
         if let title = title {
-            print(hasTitleTop, to: &into)
+            into.append(hasTitleTop)
             let titleColumnWidth = actualColumns
                 .reduce(0, { $0 + $1.width.rawValue }) + ((actualColumns.count - 1) * frameStyle.insideVerticalSeparator.count)
 
             let alignedTitle = title
                 .fragment(fallback: .middleCenter, width: titleColumnWidth)
-                .alignVertically
+                .verticallyAligned
 
             for f in alignedTitle {
-                print(frameStyle.leftVerticalSeparator +
+                into.append(frameStyle.leftVerticalSeparator +
                         f.joined(separator: frameStyle.insideVerticalSeparator) +
-                        frameStyle.rightVerticalSeparator, to: &into)
+                        frameStyle.rightVerticalSeparator + "\n")
             }
         }
         if hasHeaderLabels {
@@ -176,26 +176,26 @@ public struct Tbl {
                 .compactMap({ ($0.header ?? Txt("")).fragment(for: $0) })
                 .alignVertically
             if title == nil {
-                print(noTitleHasHeaders, to: &into)
+                into.append(noTitleHasHeaders)
             }
             else {
-                print(hasTitleAndHeaders, to: &into)
+                into.append(hasTitleAndHeaders)
             }
 
 
             for f in alignedColumnHeaders {
-                print(frameStyle.leftVerticalSeparator +
+                into.append(frameStyle.leftVerticalSeparator +
                         f.joined(separator: frameStyle.insideVerticalSeparator) +
-                        frameStyle.rightVerticalSeparator, to: &into)
+                        frameStyle.rightVerticalSeparator + "\n")
             }
-            print(midhdiv, to: &into)
+            into.append(midhdiv)
         }
         else {
             if title == nil {
-                print(noTitleHasHeaders, to: &into)
+                into.append(noTitleHasHeaders)
             }
             else {
-                print(hasTitleAndHeaders, to: &into)
+                into.append(hasTitleAndHeaders)
             }
         }
         let t1 = DispatchTime.now().uptimeNanoseconds
@@ -206,6 +206,7 @@ public struct Tbl {
         var cacheMisses:Int = 0
         // Main loop to render row/column data
         for (i,row) in data.enumerated() {
+            //let a0 = DispatchTime.now().uptimeNanoseconds
             var columnized:ContiguousArray<HorizontallyAligned> = []
             let maxHeight = row
                 .prefix(columns.count)
@@ -230,23 +231,6 @@ public struct Tbl {
                             cacheMisses += 1
                             return fragmented.lines.count
                         }
-
-                        /*
-                        if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width.rawValue]?[col.alignment ?? actualColumns[j].alignment] {
-                            //print("MATCH for '\(col.string)'")
-                            columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
-                            cacheHits += 1
-                            return fromCache.count
-                        }
-                        else {
-                            let fragmented = col.fragment(for: actualColumns[j])
-                            //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
-                            cache[col.string.hashValue, default:[:]][actualColumns[j].width.rawValue, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
-                            columnized.append(fragmented)
-                            cacheMisses += 1
-                            return fragmented.lines.count
-                        }
-                         */
                     }
                     else {
                         let fragmented = col.fragment(for: actualColumns[j])
@@ -257,6 +241,7 @@ public struct Tbl {
                 .reduce(0, { Swift.max($0, $1) })
             let missingColumnCount = Swift.max(0, (columns.count - columnized.count))
             let currentCount = columnized.count
+            //let a1 = DispatchTime.now().uptimeNanoseconds
             for k in 0..<missingColumnCount {
                 let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width.rawValue) // TODO: Precalc these!
                 columnized.append(
@@ -265,15 +250,17 @@ public struct Tbl {
                                         width: actualColumns[currentCount + k].width)
                 )
             }
-
+            //let a2 = DispatchTime.now().uptimeNanoseconds
             for x in columnized.prefix(actualColumns.count).alignVertically {
-                print("\(frameStyle.leftVerticalSeparator)\(x.joined(separator: frameStyle.insideVerticalSeparator))\(frameStyle.rightVerticalSeparator)", to: &into)
+                into.append(frameStyle.leftVerticalSeparator + x.joined(separator: frameStyle.insideVerticalSeparator) + frameStyle.rightVerticalSeparator + "\n")
             }
             if i != data.index(before: data.endIndex) {
-                print(midhdiv, to: &into)
+                into.append(midhdiv)
             }
+            //let a3 = DispatchTime.now().uptimeNanoseconds
+            //print(a1-a0, a2-a1, a3-a2)
         }
-        print(bottomhdiv, to: &into)
+        into.append(bottomhdiv)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
         print(#function, "Total:",
