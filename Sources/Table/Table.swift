@@ -221,6 +221,6 @@ public struct Tbl {
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
-        print(#function, cache.keys, cacheHits, cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
+        print(#function, cache.keys.count, cacheHits, cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
     }
 }
