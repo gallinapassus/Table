@@ -3,12 +3,6 @@ import OSLog
 #endif
 import Foundation
 
-internal struct CacheKey : Hashable {
-    let alignment:UInt8
-    let wrapping:UInt8
-    let width:Int
-    let string:String
-}
 internal class HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
@@ -31,16 +25,21 @@ public enum Alignment : UInt8, RawRepresentable, CaseIterable {
     case bottomRight, bottomLeft, bottomCenter
     case middleRight, middleLeft, middleCenter
 }
+public enum ColumnContentHint {
+    case unique, repetitive
+}
 public struct Col {
     public let header:Txt?
     fileprivate (set) public var width:Int
     public let alignment:Alignment
     public let wrapping:Wrapping
-    public init(header:Txt?, width:Int, alignment:Alignment, wrapping:Wrapping = .word) {
+    public let contentHint:ColumnContentHint
+    public init(header:Txt?, width:Int, alignment:Alignment, wrapping:Wrapping = .word, contentHint:ColumnContentHint = .repetitive) {
         self.header = header
         self.width = width
         self.alignment = alignment
         self.wrapping = wrapping
+        self.contentHint = contentHint
     }
 }
 public struct Tbl {
@@ -184,18 +183,25 @@ public struct Tbl {
                 .enumerated()
                 .map({ j,col in
 
-                    if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width]?[col.alignment ?? actualColumns[j].alignment] {
-                        //print("MATCH for '\(col.string)'")
-                        columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
-                        cacheHits += 1
-                        return fromCache.count
+                    if actualColumns[j].contentHint == .repetitive {
+                        if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width]?[col.alignment ?? actualColumns[j].alignment] {
+                            //print("MATCH for '\(col.string)'")
+                            columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
+                            cacheHits += 1
+                            return fromCache.count
+                        }
+                        else {
+                            let fragmented = col.fragment(for: actualColumns[j])
+                            //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
+                            cache[col.string.hashValue, default:[:]][actualColumns[j].width, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
+                            columnized.append(fragmented)
+                            cacheMisses += 1
+                            return fragmented.lines.count
+                        }
                     }
                     else {
                         let fragmented = col.fragment(for: actualColumns[j])
-                        //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
-                        cache[col.string.hashValue, default:[:]][actualColumns[j].width, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
                         columnized.append(fragmented)
-                        cacheMisses += 1
                         return fragmented.lines.count
                     }
                 })
