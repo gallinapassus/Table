@@ -174,6 +174,8 @@ public struct Tbl {
         //           |      |     |          |
 //        var cache:[String:[Int:[Alignment:[String]]]] = [:]
         var cache:[Int:[Int:[Alignment:[String]]]] = [:]
+        var cacheHits:Int = 0
+        var cacheMisses:Int = 0
         // Main loop to render row/column data
         for (i,row) in data.enumerated() {
             var columnized:ContiguousArray<HorizontallyAligned> = []
@@ -185,6 +187,7 @@ public struct Tbl {
                     if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width]?[col.alignment ?? actualColumns[j].alignment] {
                         //print("MATCH for '\(col.string)'")
                         columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
+                        cacheHits += 1
                         return fromCache.count
                     }
                     else {
@@ -192,6 +195,7 @@ public struct Tbl {
                         //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
                         cache[col.string.hashValue, default:[:]][actualColumns[j].width, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
                         columnized.append(fragmented)
+                        cacheMisses += 1
                         return fragmented.lines.count
                     }
                 })
@@ -217,6 +221,6 @@ public struct Tbl {
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
-        //dump(cache.count)
+        print(#function, cache.keys, cacheHits, cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
     }
 }
