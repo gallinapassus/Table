@@ -200,14 +200,8 @@ public struct Tbl {
         }
         let t1 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
-        //                       Fragments --+
-        //            Alignment --+          |
-        //          Width --+     |          |
-        //     Txt --+      |     |          |
-        //           |      |     |          |
-//        var cache:[String:[Int:[Alignment:[String]]]] = [:]
-//        var cache:[Int:[Int:[Alignment:[String]]]] = [:]
-        var cac:[UInt32:[Int:HorizontallyAligned]] = [:]
+
+        var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
         // Main loop to render row/column data
@@ -220,18 +214,18 @@ public struct Tbl {
 
                     if actualColumns[j].contentHint == .repetitive {
 
-                        let u32:UInt32 = (UInt32(actualColumns[j].width.rawValue) << 16) + UInt32(col.alignment?.rawValue ?? actualColumns[j].alignment.rawValue)
+                        // Combine width & alignment
+                        let u32:UInt32 = (UInt32(actualColumns[j].width.rawValue) << 16) +
+                            UInt32(col.alignment?.rawValue ?? actualColumns[j].alignment.rawValue)
 
-                        if let fromCache = cac[u32]?[col.string.hashValue] {
-                            //print("MATCH for '\(col.string)'")
+                        if let fromCache = cache[u32]?[col.string.hashValue] {
                             columnized.append(fromCache)
                             cacheHits += 1
                             return fromCache.lines.count
                         }
                         else {
                             let fragmented = col.fragment(for: actualColumns[j])
-                            //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
-                            cac[u32, default:[:]][col.string.hashValue] = fragmented
+                            cache[u32, default:[:]][col.string.hashValue] = fragmented
                             columnized.append(fragmented)
                             cacheMisses += 1
                             return fragmented.lines.count
@@ -282,6 +276,12 @@ public struct Tbl {
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
+        print(#function, "Total:",
+              Double(t1 - t0) / 1_000_000, "ms",
+              "+",
+              Double(t2 - t1) / 1_000_000, "ms",
+              "=>",
+              Double(t2 - t0) / 1_000_000, "ms")
         print(#function, "hits =", cacheHits, "misses =", cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
 //        dump(cac)
     }
