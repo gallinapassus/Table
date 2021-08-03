@@ -64,9 +64,9 @@ extension String {
         case .topLeft, .bottomLeft, .middleLeft: return self + pad
         case .topRight, .bottomRight, .middleRight: return pad + self
         case .topCenter, .bottomCenter, .middleCenter:
-            let start = pad.startIndex..<pad.index(pad.startIndex, offsetBy: padAmount / 2, limitedBy: pad.endIndex)!
-            let end = start.upperBound..<pad.endIndex
-            return String(pad[start]) + String(self) + String(pad[end])
+            let rangeHead = pad.startIndex..<pad.index(pad.startIndex, offsetBy: padAmount / 2, limitedBy: pad.endIndex)!
+            let rangeTail = rangeHead.upperBound..<pad.endIndex
+            return pad[rangeHead].description + self + pad[rangeTail].description
         }
     }
 }
@@ -109,7 +109,7 @@ extension Array where Element == Substring {
 }
 
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {
-    func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
+    internal func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
         guard let firstRow = self.first else { return [] }
         return firstRow.indices.map { index in
             self.map{ $0[index] }
@@ -117,7 +117,7 @@ extension Array where Element: RangeReplaceableCollection, Element.Element:Colle
     }
 }
 extension Array where Element == Txt {
-    func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> [HorizontallyAligned] {
+    internal func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> [HorizontallyAligned] {
         map {
             $0.fragment(for: column,
                         with: wrapper ?? $0.string.compressedWords(_:_:))
@@ -125,13 +125,30 @@ extension Array where Element == Txt {
     }
 }
 extension Array where Element == HorizontallyAligned {
-    var alignVertically:[[String]] {
+    internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
-        let ret = map { align($0, forHeight: height) }
-        return ret.transposed()
+        return map { align($0, forHeight: height) }.transposed()
     }
 }
-public func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
+extension ContiguousArray where Element == HorizontallyAligned {
+    internal var alignVertically:[[String]] {
+        let height = reduce(0, { Swift.max($0, $1.lines.count) })
+        return map { align($0, forHeight: height) }.transposed()
+    }
+}
+extension ArraySlice where Element == HorizontallyAligned {
+    internal var alignVertically:[[String]] {
+        let height = reduce(0, { Swift.max($0, $1.lines.count) })
+        return map { align($0, forHeight: height) }.transposed()
+    }
+}
+//extension Sequence where Element == HorizontallyAligned {
+//    var alignVerticallySeq:[[String]] {
+//        let height = reduce(0, { Swift.max($0, $1.lines.count) })
+//        return map { align($0, forHeight: height) }.transposed()
+//    }
+//}
+internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
     //let t0 = DispatchTime.now().uptimeNanoseconds
     let hpad = "".render(to: horizontallyAligned.width,
                          alignment: horizontallyAligned.alignment)
