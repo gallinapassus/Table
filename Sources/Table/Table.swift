@@ -3,12 +3,23 @@ import OSLog
 #endif
 import Foundation
 
-internal struct HorizontallyAligned {
+internal struct CacheKey : Hashable {
+    let alignment:UInt8
+    let wrapping:UInt8
+    let width:Int
+    let string:String
+}
+internal class HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
     let width:Int
-    var alignVertically:[[String]] {
+    lazy var alignVertically:[[String]] = {
         [align(self, forHeight: lines.count)].transposed()
+    }()
+    internal init(lines: [String], alignment: Alignment, width: Int) {
+        self.lines = lines
+        self.alignment = alignment
+        self.width = width
     }
 }
 public enum Wrapping : UInt8, RawRepresentable {
@@ -156,8 +167,13 @@ public struct Tbl {
         }
         let t1 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
-
-
+        //                       Fragments --+
+        //            Alignment --+          |
+        //          Width --+     |          |
+        //     Txt --+      |     |          |
+        //           |      |     |          |
+//        var cache:[String:[Int:[Alignment:[String]]]] = [:]
+        var cache:[Int:[Int:[Alignment:[String]]]] = [:]
         // Main loop to render row/column data
         for (i,row) in data.enumerated() {
             var columnized:ContiguousArray<HorizontallyAligned> = []
@@ -165,9 +181,19 @@ public struct Tbl {
                 .prefix(columns.count)
                 .enumerated()
                 .map({ j,col in
-                    let fragmented = col.fragment(for: actualColumns[j])
-                    columnized.append(fragmented)
-                    return fragmented.lines.count
+
+                    if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width]?[col.alignment ?? actualColumns[j].alignment] {
+                        //print("MATCH for '\(col.string)'")
+                        columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
+                        return fromCache.count
+                    }
+                    else {
+                        let fragmented = col.fragment(for: actualColumns[j])
+                        //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
+                        cache[col.string.hashValue, default:[:]][actualColumns[j].width, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
+                        columnized.append(fragmented)
+                        return fragmented.lines.count
+                    }
                 })
                 .reduce(0, { Swift.max($0, $1) })
             let missingColumnCount = Swift.max(0, (columns.count - columnized.count))
@@ -180,7 +206,8 @@ public struct Tbl {
                                         width: actualColumns[currentCount + k].width)
                 )
             }
-            for x in Array(columnized.prefix(columns.count)).alignVertically {
+
+            for x in columnized.prefix(actualColumns.count).alignVertically {
                 print("\(frameStyle.leftVerticalSeparator)\(x.joined(separator: frameStyle.insideVerticalSeparator))\(frameStyle.rightVerticalSeparator)", to: &into)
             }
             if i != data.index(before: data.endIndex) {
@@ -190,5 +217,6 @@ public struct Tbl {
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
+        //dump(cache.count)
     }
 }
