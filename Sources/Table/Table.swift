@@ -6,15 +6,49 @@ import Foundation
 internal class HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
-    let width:Int
+    let width:Width
     lazy var alignVertically:[[String]] = {
         [align(self, forHeight: lines.count)].transposed()
     }()
-    internal init(lines: [String], alignment: Alignment, width: Int) {
+    internal init(lines: [String], alignment: Alignment, width: Width = .auto) {
         self.lines = lines
         self.alignment = alignment
         self.width = width
     }
+}
+public enum Width : RawRepresentable, Equatable, Hashable, Comparable, ExpressibleByIntegerLiteral {
+    public init?(rawValue: Int) {
+        let allowedRange = 1...Int16.max
+        if rawValue == -1 {
+            self = .auto
+        }
+        else if rawValue == 0 {
+            self = .hidden
+        }
+        else if let i16 = Int16(exactly: rawValue),
+                allowedRange.contains(i16) {
+            self = .value(rawValue)
+        }
+        else {
+            fatalError("\(Self.self) must be in range \(allowedRange) or .auto or .hidden")
+        }
+    }
+
+    public var rawValue: Int {
+        switch self {
+        case .auto: return -1
+        case .hidden: return 0
+        case let .value(i): return i
+        }
+    }
+
+    public init(integerLiteral value: RawValue) {
+        self = .value(Swift.min(Int(Int16.max), value))
+    }
+
+    public typealias RawValue = Int
+    public typealias IntegerLiteralType = RawValue
+    case auto, hidden, value(Int)
 }
 public enum Wrapping : UInt8, RawRepresentable {
     case word // Prefer wrapping at word boundary (if possible)
@@ -30,11 +64,11 @@ public enum ColumnContentHint {
 }
 public struct Col {
     public let header:Txt?
-    fileprivate (set) public var width:Int
+    fileprivate (set) public var width:Width
     public let alignment:Alignment
     public let wrapping:Wrapping
     public let contentHint:ColumnContentHint
-    public init(header:Txt?, width:Int, alignment:Alignment, wrapping:Wrapping = .word, contentHint:ColumnContentHint = .repetitive) {
+    public init(header:Txt?, width:Width = .auto, alignment:Alignment, wrapping:Wrapping = .word, contentHint:ColumnContentHint = .repetitive) {
         self.header = header
         self.width = width
         self.alignment = alignment
@@ -80,12 +114,12 @@ public struct Tbl {
             for i in recalc {
                 for r in data {
                     guard r.count > i else { continue }
-                    let m = Swift.max(tmp[i].width, r[i].count)
-                    tmp[i].width =  m
+                    let m = Swift.max(tmp[i].width.rawValue, r[i].count)
+                    tmp[i].width =  .value(m)
                 }
                 if tmp[i].width == 0, let hdr = columns[i].header {
                     let smrt = Swift.min(hdr.count, columns.reduce(0, { $0 + ($1.header?.count ?? 0) }) / columns.count)
-                    tmp[i].width = Swift.max(1, smrt)
+                    tmp[i].width = .value(Swift.max(1, smrt))
                 }
             }
             //print("actual", tmp.map { $0.width })
@@ -106,26 +140,26 @@ public struct Tbl {
         // Prepare dividers
         let hasHeaderLabels:Bool = columns.compactMap({ $0.header }).reduce(0, { $0 + $1.count }) > 0
         let hasTitleTop = frameStyle.topLeftCorner + actualColumns
-            .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width) })
+            .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width.rawValue) })
             .joined(separator: String(repeating: frameStyle.topHorizontalSeparator, count: frameStyle.topHorizontalVerticalSeparator.count)) + frameStyle.topRightCorner
         let noTitleHasHeaders = frameStyle.topLeftCorner + actualColumns
-            .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width) })
+            .map({ String(repeating: frameStyle.topHorizontalSeparator, count: $0.width.rawValue) })
             .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.topRightCorner
         let hasTitleAndHeaders = frameStyle.insideLeftVerticalSeparator + actualColumns
-            .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width) })
+            .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width.rawValue) })
             .joined(separator: frameStyle.topHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator
         let midhdiv = frameStyle.insideLeftVerticalSeparator + actualColumns
-            .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width) })
+            .map({ String(repeating: frameStyle.insideHorizontalSeparator, count: $0.width.rawValue) })
             .joined(separator: frameStyle.insideHorizontalVerticalSeparator) + frameStyle.insideRightVerticalSeparator
         let bottomhdiv = frameStyle.bottomLeftCorner + actualColumns
-            .map({ String(repeating: frameStyle.bottomHorizontalSeparator, count: $0.width) })
+            .map({ String(repeating: frameStyle.bottomHorizontalSeparator, count: $0.width.rawValue) })
             .joined(separator: frameStyle.bottomHorizontalVerticalSeparator) + frameStyle.bottomRightCorner
 
 
         if let title = title {
             print(hasTitleTop, to: &into)
             let titleColumnWidth = actualColumns
-                .reduce(0, { $0 + $1.width }) + ((actualColumns.count - 1) * frameStyle.insideVerticalSeparator.count)
+                .reduce(0, { $0 + $1.width.rawValue }) + ((actualColumns.count - 1) * frameStyle.insideVerticalSeparator.count)
 
             let alignedTitle = title
                 .fragment(fallback: .middleCenter, width: titleColumnWidth)
@@ -172,7 +206,8 @@ public struct Tbl {
         //     Txt --+      |     |          |
         //           |      |     |          |
 //        var cache:[String:[Int:[Alignment:[String]]]] = [:]
-        var cache:[Int:[Int:[Alignment:[String]]]] = [:]
+//        var cache:[Int:[Int:[Alignment:[String]]]] = [:]
+        var cac:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
         // Main loop to render row/column data
@@ -184,7 +219,26 @@ public struct Tbl {
                 .map({ j,col in
 
                     if actualColumns[j].contentHint == .repetitive {
-                        if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width]?[col.alignment ?? actualColumns[j].alignment] {
+
+                        let u32:UInt32 = (UInt32(actualColumns[j].width.rawValue) << 16) + UInt32(col.alignment?.rawValue ?? actualColumns[j].alignment.rawValue)
+
+                        if let fromCache = cac[u32]?[col.string.hashValue] {
+                            //print("MATCH for '\(col.string)'")
+                            columnized.append(fromCache)
+                            cacheHits += 1
+                            return fromCache.lines.count
+                        }
+                        else {
+                            let fragmented = col.fragment(for: actualColumns[j])
+                            //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
+                            cac[u32, default:[:]][col.string.hashValue] = fragmented
+                            columnized.append(fragmented)
+                            cacheMisses += 1
+                            return fragmented.lines.count
+                        }
+
+                        /*
+                        if let fromCache = cache[col.string.hashValue]?[actualColumns[j].width.rawValue]?[col.alignment ?? actualColumns[j].alignment] {
                             //print("MATCH for '\(col.string)'")
                             columnized.append(HorizontallyAligned(lines: fromCache, alignment: col.alignment ?? actualColumns[j].alignment, width: actualColumns[j].width))
                             cacheHits += 1
@@ -193,11 +247,12 @@ public struct Tbl {
                         else {
                             let fragmented = col.fragment(for: actualColumns[j])
                             //print("fragmenting \(actualColumns[j].width) '\(col.string)' -> \(fragmented.lines)")
-                            cache[col.string.hashValue, default:[:]][actualColumns[j].width, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
+                            cache[col.string.hashValue, default:[:]][actualColumns[j].width.rawValue, default:[:]][col.alignment ?? actualColumns[j].alignment, default:[]] = fragmented.lines
                             columnized.append(fragmented)
                             cacheMisses += 1
                             return fragmented.lines.count
                         }
+                         */
                     }
                     else {
                         let fragmented = col.fragment(for: actualColumns[j])
@@ -209,7 +264,7 @@ public struct Tbl {
             let missingColumnCount = Swift.max(0, (columns.count - columnized.count))
             let currentCount = columnized.count
             for k in 0..<missingColumnCount {
-                let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width) // TODO: Precalc these!
+                let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width.rawValue) // TODO: Precalc these!
                 columnized.append(
                     HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
                                         alignment: .topLeft,
@@ -227,6 +282,7 @@ public struct Tbl {
         print(bottomhdiv, to: &into)
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
-        print(#function, cache.keys.count, cacheHits, cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
+        print(#function, "hits =", cacheHits, "misses =", cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
+//        dump(cac)
     }
 }

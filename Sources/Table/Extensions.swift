@@ -150,7 +150,7 @@ extension ArraySlice where Element == HorizontallyAligned {
 //}
 internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
     //let t0 = DispatchTime.now().uptimeNanoseconds
-    let hpad = "".render(to: horizontallyAligned.width,
+    let hpad = "".render(to: horizontallyAligned.width.rawValue,
                          alignment: horizontallyAligned.alignment)
     let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count)
     let ret:[String]

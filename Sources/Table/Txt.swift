@@ -18,11 +18,11 @@ public struct Txt : ExpressibleByStringLiteral {
             .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         //let t1 = DispatchTime.now().uptimeNanoseconds
         //print(#function, Double(t1 - t0) / 1_000_000)
-        return HorizontallyAligned(lines: lines, alignment: alignment, width: width)
+        return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
         self.fragment(fallback: self.alignment ?? column.alignment,
-                      width: column.width,
+                      width: column.width.rawValue,
                       with: wrapper ?? string.compressedWords(_:_:))
     }
 }
