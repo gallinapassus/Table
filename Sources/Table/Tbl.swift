@@ -1,68 +1,5 @@
-#if canImport(OSLog)
-import OSLog
-#endif
 import Foundation
 
-internal class HorizontallyAligned {
-    let lines:[String]
-    let alignment:Alignment
-    let width:Width
-    let wrapping:Wrapping?
-    lazy var verticallyAligned:[[String]] = {
-        [align(self, forHeight: lines.count)].transposed()
-    }()
-    internal init(lines: [String], alignment: Alignment, width: Width = .auto, wrapping:Wrapping? = .default) {
-        self.lines = lines
-        self.alignment = alignment
-        self.width = width
-        self.wrapping = wrapping
-    }
-}
-public enum Width : RawRepresentable, Equatable, Hashable, Comparable, ExpressibleByIntegerLiteral {
-    public init?(rawValue: Int) {
-        let allowedRange = 1...Int16.max
-        if rawValue == -1 {
-            self = .auto
-        }
-        else if rawValue == 0 {
-            self = .hidden
-        }
-        else if let i16 = Int16(exactly: rawValue),
-                allowedRange.contains(i16) {
-            self = .value(rawValue)
-        }
-        else {
-            fatalError("\(Self.self) must be in range \(allowedRange) or .auto or .hidden")
-        }
-    }
-
-    public var rawValue: Int {
-        switch self {
-        case .auto: return -1
-        case .hidden: return 0
-        case let .value(i): return i
-        }
-    }
-
-    public init(integerLiteral value: RawValue) {
-        self = .value(Swift.min(Int(Int16.max), value))
-    }
-
-    public typealias RawValue = Int
-    public typealias IntegerLiteralType = RawValue
-    case auto, hidden, value(Int)
-}
-public enum Wrapping : UInt8, RawRepresentable {
-    case word // Prefer wrapping at word boundary (if possible)
-    case char // Wrap at character boundary
-    case fit  // Disable wrapping, forcibly fit to given space (may cut off excess content)
-    public static let `default`:Wrapping = .char
-}
-public enum Alignment : UInt8, RawRepresentable, CaseIterable {
-    case topRight, topLeft, topCenter
-    case bottomRight, bottomLeft, bottomCenter
-    case middleRight, middleLeft, middleCenter
-}
 public struct Tbl {
     public let data:[[Txt]]
     public let columns:[Col]
@@ -259,7 +196,12 @@ public struct Tbl {
               Double(t2 - t1) / 1_000_000, "ms",
               "=>",
               Double(t2 - t0) / 1_000_000, "ms")
-        print(#function, "hits =", cacheHits, "misses =", cacheMisses, 100.0 * (Double(cacheHits) / Double(cacheMisses)))
+        let nf = NumberFormatter()
+        nf.minimumFractionDigits = 1
+        nf.maximumFractionDigits = 1
+        print(#function, "hits =", cacheHits,
+              ", misses =", cacheMisses,
+              ", hit-miss ratio = ", nf.string(from: NSNumber(value: (Double(cacheHits) / Double(cacheMisses)))) ?? "?")
 //        dump(cac)
     }
 }
