@@ -1,7 +1,7 @@
 import Table
 
 var data:[[Txt]] = []
-for i in 0..<100000 {
+for i in 0..<100 {
     var cols:[Txt] = []
     let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
     for j in 0..<cmax {
@@ -13,6 +13,7 @@ for i in 0..<100000 {
             a = nil
         }
         let astr = a == nil ? "nil" : "\(a!)"
+        cols.append(Txt("99 matches?", a))
         cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", a))
     }
     data.append(cols)

@@ -73,7 +73,10 @@ final class TableTests: XCTestCase {
             Col(header: nil, width: 8, alignment: .topLeft, contentHint: .unique),
             Col(header: nil, width: 6, alignment: .topCenter, contentHint: .repetitive),
         ]
-        // average: 0.788
+        // average: 0.788 -> print(..., to: &into)
+        // average: 0.668 -> into.append()
+        // average: 0.639 -> transposed() tweak
+        // average: 0.415 -> .char wrapping as default
         measure {
             let table = Tbl("Title", columns: cols, data: data)
             var t = ""
@@ -84,21 +87,21 @@ final class TableTests: XCTestCase {
     func test_x() {
         do {
             let data:[[Txt]] = [
-                ["123", Txt("Hello World!", .topLeft), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .fit), Txt("x", .topCenter), Txt("x", .topRight)],
                 ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
                 ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
             ]
-            let width = 10
+            let width:Width = 10
 
             let cols = [
                 Col(header: nil,
                     width: 1, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: .value(width), alignment: .topLeft, wrapping: .word),
+                    width: 12, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: .value(width), alignment: .topLeft, wrapping: .word),
+                    width: width, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: .value(width), alignment: .topLeft, wrapping: .word),
+                    width: width, alignment: .topLeft, wrapping: .word),
             ]
             let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
                             columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)

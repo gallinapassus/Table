@@ -3,30 +3,50 @@ public struct Txt : ExpressibleByStringLiteral {
 
     public let string:String
     public let alignment:Alignment?
-    public init(_ str:String, _ alignment: Alignment? = nil) {
+    public let wrapping:Wrapping?
+    public init(_ str:String, _ alignment: Alignment? = nil, _ wrapping:Wrapping? = nil) {
         self.string = str
         self.alignment = alignment
+        self.wrapping = wrapping
     }
     public init(stringLiteral:StringLiteralType) {
         self.string = stringLiteral
         self.alignment = nil
+        self.wrapping = nil
     }
-    internal func fragment(fallback alignment:Alignment, width:Int, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
+    internal func fragment(fallback alignment:Alignment, width:Int) -> HorizontallyAligned {
         //let t0 = DispatchTime.now().uptimeNanoseconds
-        let wrapper = wrapper ?? string.compressedWords(_:_:)
-        let lines = wrapper(string, width)
-            .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+        let lines:[String]
+        switch wrapping {
+        /*
+        case .fit:
+            if string.count > width {
+                lines = [
+                    String(string
+                            .prefix(Swift.max(0, width - 3))
+                            .appending("...")
+                            .prefix(width))
+                ]
+            }
+            else {
+                lines = [string]
+            }*/
+        case.word:
+            lines = string.compressedWords(string, width)
+                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+        case .char, .fit, nil:
+            lines = string.split(to: width)
+                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+        }
         //let t1 = DispatchTime.now().uptimeNanoseconds
         //print(#function, Double(t1 - t0) / 1_000_000)
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
-    internal func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> HorizontallyAligned {
+    internal func fragment(for column:Col) -> HorizontallyAligned {
         self.fragment(fallback: self.alignment ?? column.alignment,
-                      width: column.width.rawValue,
-                      with: wrapper ?? string.compressedWords(_:_:))
+                      width: column.width.rawValue)
     }
 }
-
 extension Txt : Collection {
     public func index(after i: String.Index) -> String.Index {
         string.index(after: i)
@@ -42,4 +62,3 @@ extension Txt : Collection {
     }
     public typealias Index = String.Index
 }
-

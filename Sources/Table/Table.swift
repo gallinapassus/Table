@@ -7,13 +7,15 @@ internal class HorizontallyAligned {
     let lines:[String]
     let alignment:Alignment
     let width:Width
+    let wrapping:Wrapping?
     lazy var verticallyAligned:[[String]] = {
         [align(self, forHeight: lines.count)].transposed()
     }()
-    internal init(lines: [String], alignment: Alignment, width: Width = .auto) {
+    internal init(lines: [String], alignment: Alignment, width: Width = .auto, wrapping:Wrapping? = .default) {
         self.lines = lines
         self.alignment = alignment
         self.width = width
+        self.wrapping = wrapping
     }
 }
 public enum Width : RawRepresentable, Equatable, Hashable, Comparable, ExpressibleByIntegerLiteral {
@@ -53,28 +55,13 @@ public enum Width : RawRepresentable, Equatable, Hashable, Comparable, Expressib
 public enum Wrapping : UInt8, RawRepresentable {
     case word // Prefer wrapping at word boundary (if possible)
     case char // Wrap at character boundary
+    case fit  // Disable wrapping, forcibly fit to given space (may cut off excess content)
+    public static let `default`:Wrapping = .char
 }
 public enum Alignment : UInt8, RawRepresentable, CaseIterable {
     case topRight, topLeft, topCenter
     case bottomRight, bottomLeft, bottomCenter
     case middleRight, middleLeft, middleCenter
-}
-public enum ColumnContentHint {
-    case unique, repetitive
-}
-public struct Col {
-    public let header:Txt?
-    fileprivate (set) public var width:Width
-    public let alignment:Alignment
-    public let wrapping:Wrapping
-    public let contentHint:ColumnContentHint
-    public init(header:Txt?, width:Width = .auto, alignment:Alignment, wrapping:Wrapping = .word, contentHint:ColumnContentHint = .repetitive) {
-        self.header = header
-        self.width = width
-        self.alignment = alignment
-        self.wrapping = wrapping
-        self.contentHint = contentHint
-    }
 }
 public struct Tbl {
     public let data:[[Txt]]
@@ -115,7 +102,7 @@ public struct Tbl {
                 for r in data {
                     guard r.count > i else { continue }
                     let m = Swift.max(tmp[i].width.rawValue, r[i].count)
-                    tmp[i].width =  .value(m)
+                    tmp[i].width = .value(m)
                 }
                 if tmp[i].width == 0, let hdr = columns[i].header {
                     let smrt = Swift.min(hdr.count, columns.reduce(0, { $0 + ($1.header?.count ?? 0) }) / columns.count)
@@ -173,7 +160,9 @@ public struct Tbl {
         }
         if hasHeaderLabels {
             let alignedColumnHeaders = actualColumns
-                .compactMap({ ($0.header ?? Txt("")).fragment(for: $0) })
+                .compactMap({ ($0.header ?? Txt(""))
+                                .fragment(for: $0) })
+                .dropFirst(0) // <= Convert Array to ArraySlice
                 .alignVertically
             if title == nil {
                 into.append(noTitleHasHeaders)
@@ -226,6 +215,7 @@ public struct Tbl {
                         }
                         else {
                             let fragmented = col.fragment(for: actualColumns[j])
+                            // Write to cache
                             cache[u32, default:[:]][col.string.hashValue] = fragmented
                             columnized.append(fragmented)
                             cacheMisses += 1

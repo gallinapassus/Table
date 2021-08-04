@@ -116,29 +116,27 @@ extension Array where Element: RangeReplaceableCollection, Element.Element:Colle
 //        }
 //    }
     internal func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
-        //guard let firstRow = self.first else { return [] }
         return (self.first ?? Element()).indices.map { index in
             self.map{ $0[index] }
         }
     }
 }
 extension Array where Element == Txt {
-    internal func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> [HorizontallyAligned] {
-        map {
-            $0.fragment(for: column,
-                        with: wrapper ?? $0.string.compressedWords(_:_:))
-        }
+    internal func fragment(for column:Col) -> [HorizontallyAligned] {
+        map { $0.fragment(for: column) }
     }
 }
+/*
 extension Array where Element == HorizontallyAligned {
     internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
         return map { align($0, forHeight: height) }.transposed()
     }
-}
+}*/
 extension ArraySlice where Element == HorizontallyAligned {
     internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
+        /*let height = filter({ $0.wrapping != .fit }).reduce(0, { Swift.max($0, $1.lines.count) })*/
         let foo:[ArraySlice<String>] = map {
             guard $0.lines.count != height else {
                 return ArraySlice<String>($0.lines)
