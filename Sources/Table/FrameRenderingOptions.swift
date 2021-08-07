@@ -17,6 +17,7 @@ public struct FrameRenderingOptions : OptionSet, Hashable {
                                                    .insideHorizontalFrame, .insideVerticalFrame,
                                                    .leftFrame, .rightFrame])
     public static let inside = FrameRenderingOptions([.insideHorizontalFrame, .insideVerticalFrame])
+    public static let outside = FrameRenderingOptions([.topFrame, .bottomFrame, .leftFrame, .rightFrame])
 
     public var optionsInEffect:String {
         var str:[String] = []
