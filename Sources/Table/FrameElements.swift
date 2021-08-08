@@ -1,36 +1,54 @@
 public struct FrameElements {
+    public struct Element : CustomStringConvertible, ExpressibleByStringLiteral {
+        public typealias StringLiteralType = String
 
-    public var topLeftCorner:                     String
-    public var topHorizontalSeparator:            String
-    public var topHorizontalVerticalSeparator:    String
-    public var topRightCorner:                    String
-    public var leftVerticalSeparator:             String
-    public var rightVerticalSeparator:            String
-    public var insideLeftVerticalSeparator:       String
-    public var insideHorizontalSeparator:         String
-    public var insideRightVerticalSeparator:      String
-    public var insideHorizontalVerticalSeparator: String
-    public var insideVerticalSeparator:           String
-    public var bottomLeftCorner:                  String
-    public var bottomHorizontalSeparator:         String
-    public var bottomHorizontalVerticalSeparator: String
-    public var bottomRightCorner:                 String
+        public var description: String { element }
+        private (set) public var element:String
+        public var customEvaluation:((FrameRenderingOptions) -> String)? = nil
+        private func defaultLogic(_ options:FrameRenderingOptions) -> String {
+            "#"
+        }
+        public init(stringLiteral value:StringLiteralType) {
+            self.element = value
+        }
+        public init(_ value:String) {
+            self.element = value
+        }
+        public func element(for options:FrameRenderingOptions) -> String {
+            return customEvaluation?(options) ?? defaultLogic(options)
+        }
+    }
+    public var topLeftCorner:                     Element
+    public var topHorizontalSeparator:            Element
+    public var topHorizontalVerticalSeparator:    Element
+    public var topRightCorner:                    Element
+    public var leftVerticalSeparator:             Element
+    public var rightVerticalSeparator:            Element
+    public var insideLeftVerticalSeparator:       Element
+    public var insideHorizontalSeparator:         Element
+    public var insideRightVerticalSeparator:      Element
+    public var insideHorizontalVerticalSeparator: Element
+    public var insideVerticalSeparator:           Element
+    public var bottomLeftCorner:                  Element
+    public var bottomHorizontalSeparator:         Element
+    public var bottomHorizontalVerticalSeparator: Element
+    public var bottomRightCorner:                 Element
     public init(
-        topLeftCorner:                     String,
-        topHorizontalSeparator:            String,
-        topHorizontalVerticalSeparator:    String,
-        topRightCorner:                    String,
-        leftVerticalSeparator:             String,
-        rightVerticalSeparator:            String,
-        insideLeftVerticalSeparator:       String,
-        insideHorizontalSeparator:         String,
-        insideRightVerticalSeparator:      String,
-        insideHorizontalVerticalSeparator: String,
-        insideVerticalSeparator:           String,
-        bottomLeftCorner:                  String,
-        bottomHorizontalSeparator:         String,
-        bottomHorizontalVerticalSeparator: String,
-        bottomRightCorner:                 String
+        topLeftCorner:                     Element,
+        topHorizontalSeparator:            Element,
+        topHorizontalVerticalSeparator:    Element,
+        topRightCorner:                    Element,
+        leftVerticalSeparator:             Element,
+        rightVerticalSeparator:            Element,
+        insideLeftVerticalSeparator:       Element,
+        insideHorizontalSeparator:         Element,
+        insideRightVerticalSeparator:      Element,
+        insideHorizontalVerticalSeparator: Element,
+        insideVerticalSeparator:           Element,
+        bottomLeftCorner:                  Element,
+        bottomHorizontalSeparator:         Element,
+        bottomHorizontalVerticalSeparator: Element,
+        bottomRightCorner:                 Element
     ) {
         let pairs = [
             (topLeftCorner, bottomLeftCorner),
@@ -52,10 +70,10 @@ public struct FrameElements {
             (topHorizontalVerticalSeparator, insideHorizontalVerticalSeparator),
         ]
         for (l,r) in pairs {
-            precondition(l.count == r.count, "\(FrameElements.self) \"\(l)\" and \"\(r)\" have different string lengths and would produce misaligned frame.")
+            precondition(l.element.count == r.element.count, "\(FrameElements.self) \"\(l)\" and \"\(r)\" have different string lengths and would produce misaligned frame.")
         }
         for mustBeSingleChar in [topHorizontalSeparator, insideHorizontalSeparator, bottomHorizontalSeparator] {
-            precondition(mustBeSingleChar.count == 1, "\(FrameElements.self) \"\(mustBeSingleChar)\" length must be 1.")
+            precondition(mustBeSingleChar.element.count == 1, "\(FrameElements.self) \"\(mustBeSingleChar)\" length must be 1.")
         }
         self.topLeftCorner                     = topLeftCorner
         self.topHorizontalSeparator            = topHorizontalSeparator
@@ -72,6 +90,69 @@ public struct FrameElements {
         self.bottomHorizontalSeparator         = bottomHorizontalSeparator
         self.bottomHorizontalVerticalSeparator = bottomHorizontalVerticalSeparator
         self.bottomRightCorner                 = bottomRightCorner
+
+        self.topLeftCorner.customEvaluation = topLeftCorner.customEvaluation ?? _topLeftCorner
+        self.topHorizontalSeparator.customEvaluation = topHorizontalSeparator.customEvaluation ?? _topHorizontalSeparator
+        self.topHorizontalVerticalSeparator.customEvaluation = topHorizontalVerticalSeparator.customEvaluation ?? _topHorizontalVerticalSeparator
+        self.topRightCorner.customEvaluation = topRightCorner.customEvaluation ?? _topRightCorner
+        self.leftVerticalSeparator.customEvaluation = leftVerticalSeparator.customEvaluation ?? _leftVerticalSeparator
+        self.rightVerticalSeparator.customEvaluation = rightVerticalSeparator.customEvaluation ?? _rightVerticalSeparator
+        self.insideLeftVerticalSeparator.customEvaluation = insideLeftVerticalSeparator.customEvaluation ?? _insideLeftVerticalSeparator
+        self.insideHorizontalSeparator.customEvaluation = insideHorizontalSeparator.customEvaluation ?? _insideHorizontalSeparator
+        self.insideRightVerticalSeparator.customEvaluation = insideRightVerticalSeparator.customEvaluation ?? _insideRightVerticalSeparator
+        self.insideHorizontalVerticalSeparator.customEvaluation = insideHorizontalVerticalSeparator.customEvaluation ?? _insideHorizontalVerticalSeparator
+        self.insideVerticalSeparator.customEvaluation = insideVerticalSeparator.customEvaluation ?? _insideVerticalSeparator
+        self.bottomLeftCorner.customEvaluation = bottomLeftCorner.customEvaluation ?? _bottomLeftCorner
+        self.bottomHorizontalSeparator.customEvaluation = bottomHorizontalSeparator.customEvaluation ?? _bottomHorizontalSeparator
+        self.bottomHorizontalVerticalSeparator.customEvaluation = bottomHorizontalVerticalSeparator.customEvaluation ?? _bottomHorizontalVerticalSeparator
+        self.bottomRightCorner.customEvaluation =  bottomRightCorner.customEvaluation ?? _bottomRightCorner
+    }
+
+    private func _topLeftCorner(o:FrameRenderingOptions) -> String {
+        o.contains([.leftFrame, .topFrame]) ? topLeftCorner.element : ""
+    }
+    private func _topHorizontalSeparator(o:FrameRenderingOptions) -> String {
+        (o.contains(.topFrame) || o.contains(.inside)) ? topHorizontalSeparator.element : " "
+    }
+    private func _topHorizontalVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains([.topFrame, .inside]) || o.contains(.inside) ? topHorizontalVerticalSeparator.element : ""
+    }
+    private func _topRightCorner(o:FrameRenderingOptions) -> String {
+        o.contains([.rightFrame, .topFrame]) ? topRightCorner.element : ""
+    }
+    private func _leftVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.leftFrame) ? leftVerticalSeparator.element : ""
+    }
+    private func _rightVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.rightFrame) ? rightVerticalSeparator.element : ""
+    }
+    private func _insideLeftVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.leftFrame) ? insideLeftVerticalSeparator.element : ""
+    }
+    private func _insideHorizontalSeparator(o:FrameRenderingOptions) -> String {
+        (o.contains(.insideHorizontalFrame) || o.contains(.leftFrame) || o.contains(.rightFrame)) ? insideHorizontalSeparator.element : " "
+    }
+    private func _insideRightVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.rightFrame) ? insideRightVerticalSeparator.element : ""
+    }
+    private func _insideHorizontalVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.insideHorizontalFrame) && o.contains(.insideVerticalFrame) ?
+            insideHorizontalVerticalSeparator.element : ""
+    }
+    private func _insideVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.insideVerticalFrame) ? insideVerticalSeparator.element : ""
+    }
+    private func _bottomLeftCorner(o:FrameRenderingOptions) -> String {
+        o.contains([.leftFrame, .bottomFrame]) ? bottomLeftCorner.element : ""
+    }
+    private func _bottomHorizontalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains(.bottomFrame) ? bottomHorizontalSeparator.element : " "
+    }
+    private func _bottomHorizontalVerticalSeparator(o:FrameRenderingOptions) -> String {
+        o.contains([.bottomFrame, .insideVerticalFrame]) ? bottomHorizontalVerticalSeparator.element : ""
+    }
+    private func _bottomRightCorner(o:FrameRenderingOptions) -> String {
+        o.contains([.rightFrame, .bottomFrame]) ? bottomRightCorner.element : ""
     }
 }
 extension FrameElements {
@@ -176,5 +257,23 @@ extension FrameElements {
             bottomRightCorner:                    " "
         )
     }
+    public static var squaredDouble:Self {
+        FrameElements(
+            topLeftCorner:                        "╔",
+            topHorizontalSeparator:               "═",
+            topHorizontalVerticalSeparator:       "╦",
+            topRightCorner:                       "╗",
+            leftVerticalSeparator:                "║",
+            rightVerticalSeparator:               "║",
+            insideLeftVerticalSeparator:          "╠",
+            insideHorizontalSeparator:            "═",
+            insideRightVerticalSeparator:         "╣",
+            insideHorizontalVerticalSeparator:    "╬",
+            insideVerticalSeparator:              "║",
+            bottomLeftCorner:                     "╚",
+            bottomHorizontalSeparator:            "═",
+            bottomHorizontalVerticalSeparator:    "╩",
+            bottomRightCorner:                    "╝"
+        )
+    }
 }
-

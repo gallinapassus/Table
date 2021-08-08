@@ -64,9 +64,9 @@ extension String {
         case .topLeft, .bottomLeft, .middleLeft: return self + pad
         case .topRight, .bottomRight, .middleRight: return pad + self
         case .topCenter, .bottomCenter, .middleCenter:
-            let start = pad.startIndex..<pad.index(pad.startIndex, offsetBy: padAmount / 2, limitedBy: pad.endIndex)!
-            let end = start.upperBound..<pad.endIndex
-            return String(pad[start]) + String(self) + String(pad[end])
+            let rangeHead = pad.startIndex..<pad.index(pad.startIndex, offsetBy: padAmount / 2, limitedBy: pad.endIndex)!
+            let rangeTail = rangeHead.upperBound..<pad.endIndex
+            return pad[rangeHead].description + self + pad[rangeTail].description
         }
     }
 }
@@ -109,47 +109,52 @@ extension Array where Element == Substring {
 }
 
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {
-    func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
-        guard let firstRow = self.first else { return [] }
-        return firstRow.indices.map { index in
+    internal func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
+        return (self.first ?? Element()).indices.map { index in
             self.map{ $0[index] }
         }
     }
 }
 extension Array where Element == Txt {
-    func fragment(for column:Col, with wrapper:((String, Int)->[Substring])? = nil) -> [HorizontallyAligned] {
-        map {
-            $0.fragment(for: column,
-                        with: wrapper ?? $0.string.compressedWords(_:_:))
-        }
+    internal func fragment(for column:Col) -> [HorizontallyAligned] {
+        map { $0.fragment(for: column) }
     }
 }
+/*
 extension Array where Element == HorizontallyAligned {
-    var alignVertically:[[String]] {
+    internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
-        let ret = map { align($0, forHeight: height) }
-        return ret.transposed()
+        return map { align($0, forHeight: height) }.transposed()
+    }
+}*/
+extension ArraySlice where Element == HorizontallyAligned {
+    internal var alignVertically:[[String]] {
+        let height = reduce(0, { Swift.max($0, $1.lines.count) })
+        /*let height = filter({ $0.wrapping != .fit }).reduce(0, { Swift.max($0, $1.lines.count) })*/
+        let foo:[ArraySlice<String>] = map {
+            guard $0.lines.count != height else {
+                return ArraySlice<String>($0.lines)
+            }
+            return align($0, forHeight: height)
+        }
+        return foo.transposed()
     }
 }
-public func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
-    //let t0 = DispatchTime.now().uptimeNanoseconds
-    let hpad = "".render(to: horizontallyAligned.width,
-                         alignment: horizontallyAligned.alignment)
+internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
+    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count)
     let ret:[String]
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
-        ret = horizontallyAligned.lines + Array(repeating: hpad, count: padAmount)
+        ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)
     case .bottomLeft, .bottomRight, .bottomCenter:
-        ret = Array(repeating: hpad, count: padAmount) + horizontallyAligned.lines
+        ret = ArraySlice(repeating: hpad, count: padAmount) + horizontallyAligned.lines
     case .middleLeft, .middleRight, .middleCenter:
         let topCount = padAmount / 2
         let bottomCount = forHeight - horizontallyAligned.lines.count - topCount
-        let topArray = Array(repeating: hpad, count: topCount)
-        let bottomArray = Array(repeating: hpad, count: bottomCount)
+        let topArray = ArraySlice(repeating: hpad, count: topCount)
+        let bottomArray = ArraySlice(repeating: hpad, count: bottomCount)
         ret = topArray + horizontallyAligned.lines + bottomArray
     }
-    //let t1 = DispatchTime.now().uptimeNanoseconds
-    //print(#function, Double(t1 - t0) / 1_000_000)
     return ret.prefix(forHeight)
 }

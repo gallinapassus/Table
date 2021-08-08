@@ -5,7 +5,7 @@ import Table
 final class TableTests: XCTestCase {
     func testExample() {
         var data:[[Txt]] = []
-        for i in 0..<50000 {
+        for i in 0..<50 {
             var cols:[Txt] = []
             let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
             for j in 0..<cmax {
@@ -39,61 +39,123 @@ final class TableTests: XCTestCase {
         //let table = Tbl(nil, data, cols)
         var t:String = ""
         table.render(into: &t)
-        //print(t)
+        print(t)
     }
     func testPerformance() {
         var data:[[Txt]] = []
-        for i in 0..<50000 {
-            var cols:[Txt] = []
-//            let cmax = [1,2,3,4,5,6,7,8,9,10,11].randomElement()!
-            for j in 0..<9 {
-                let txt = "Row \(i + 1) Column \(j + 1)"
-                cols.append(Txt(txt))
-            }
+        let rnd = ["by itself", "as part of the sentence"]
+        let sentences = [
+            ["A blessing in disguise", rnd.randomElement()!],
+            ["A dime a dozen", rnd.randomElement()!],
+            ["Beat around the bush", rnd.randomElement()!],
+            ["Better late than never", rnd.randomElement()!],
+            ["Bite the bullet", rnd.randomElement()!],
+            ["Break a leg", rnd.randomElement()!],
+            ["Call it a day", rnd.randomElement()!],
+            ["Cut somebody some slack", rnd.randomElement()!],
+            ["Cutting corners", rnd.randomElement()!],
+            ["Easy does it", rnd.randomElement()!],
+            ["Get out of hand", rnd.randomElement()!],
+            ["Get something out of your system", rnd.randomElement()!],
+            ["Get your act together", rnd.randomElement()!],
+            ["Give someone the benefit of the doubt", rnd.randomElement()!],
+            ["Go back to the drawing board", rnd.randomElement()!],
+            ["Hang in there", rnd.randomElement()!],
+            ["Hit the sack", rnd.randomElement()!],
+        ]
+
+        for _ in 0..<50000 {
+            let cols:[Txt] = sentences.randomElement()!.map { Txt($0, Alignment.allCases.randomElement()!) }
             data.append(cols)
         }
-        let w = 4
         let cols = [
-            Col(header: nil, width: w, alignment: .topLeft),
-            Col(header: nil, width: w, alignment: .topCenter),
-            Col(header: nil, width: w+1, alignment: .topRight),
-            Col(header: nil, width: w+1, alignment: .middleLeft),
-            Col(header: nil, width: w+2, alignment: .middleCenter),
-            Col(header: nil, width: w+2, alignment: .middleRight),
-            Col(header: nil, width: w+3, alignment: .bottomLeft),
-            Col(header: nil, width: w+3, alignment: .bottomCenter),
-            Col(header: nil, width: 0, alignment: .bottomRight),
+            Col(header: nil, width: 8, alignment: .topLeft, contentHint: .unique),
+            Col(header: nil, width: 6, alignment: .topCenter, contentHint: .repetitive),
         ]
+        // Release version times:
+        // average: 0.788 -> print(..., to: &into)
+        // average: 0.668 -> into.append()
+        // average: 0.639 -> transposed() tweak
+        // average: 0.415 -> .char wrapping as default
         measure {
             let table = Tbl("Title", columns: cols, data: data)
             var t = ""
             table.render(into: &t)
         }
-        //print(t)
     }
     func test_x() {
+
         do {
             let data:[[Txt]] = [
-                ["123", Txt("x", .topLeft), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .fit), Txt("x", .topCenter), Txt("x", .topRight)],
                 ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
                 ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
             ]
-            let width = 10
+            let width:Width = 10
 
             let cols = [
                 Col(header: nil,
                     width: 1, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: 12, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
                     width: width, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
                     width: width, alignment: .topLeft, wrapping: .word),
             ]
             let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
-                            columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)
+                            columns: cols, data: data, frameStyle: .default, frameRenderingOptions: .all)
             var t = ""
             table.render(into: &t)
+            print(t)
+        }
+        do {
+            let data:[[Txt]] = [
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .fit), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
+                ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
+            ]
+            let width:Width = 10
+
+            let cols = [
+                Col(header: nil,
+                    width: 1, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: 12, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
+                    width: width, alignment: .topLeft, wrapping: .word),
+            ]
+            let table = Tbl(nil,
+                            columns: cols, data: data, frameStyle: .default, frameRenderingOptions: .all)
+            var t = ""
+            table.render(into: &t)
+            print(t)
+        }
+        do {
+            let data:[[Txt]] = [
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .word), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
+                ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
+            ]
+            let width:Width = 3
+
+            let cols = [
+                Col(header: nil,//"#",
+                    width: 1, alignment: .topLeft, wrapping: .word),
+                Col(header: nil,//"Left",
+                    width: 16, alignment: .topLeft, wrapping: .word),
+                Col(header: nil,//"Center",
+                    width: width, alignment: .topLeft, wrapping: .word),
+                Col(header: "Right",
+                    width: width, alignment: .topLeft, wrapping: .word),
+            ]
+            let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft, .word),
+                            columns: cols, data: data, frameStyle: .squaredDouble,
+                            frameRenderingOptions: [.all])
+            var t = ""
+            table.render(into: &t, leftPad:" \n-> ", rightPad: "\n <- ")
             print(t)
         }
         do {
@@ -117,11 +179,11 @@ final class TableTests: XCTestCase {
                 Col(header: nil,
                     width: 1, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: .value(width), alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .bottomRight, wrapping .word", .bottomCenter),
-                    width: width, alignment: .bottomRight, wrapping: .word),
+                    width: .value(width), alignment: .bottomRight, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: .value(width), alignment: .topLeft, wrapping: .word),
             ]
             let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft),
                             columns: cols, data: data, frameStyle: .rounded, frameRenderingOptions: .all)
@@ -142,11 +204,11 @@ final class TableTests: XCTestCase {
                 Col(header: nil,
                     width: 1, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt(" 1 ", .bottomCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: .value(width), alignment: .topLeft, wrapping: .word),
                 Col(header: Txt(" 2 ", .topCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: .value(width), alignment: .topLeft, wrapping: .word),
                 Col(header: Txt(" 3 ", .bottomCenter),
-                    width: width, alignment: .topLeft, wrapping: .word),
+                    width: .value(width), alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Autowidth column, default alignment .topLeft, wrapping .word", .bottomLeft),
                     width: 0, alignment: .topLeft, wrapping: .word),
             ]
