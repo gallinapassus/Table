@@ -32,7 +32,6 @@ let cols = [
     Col(header: Txt("Column 8", .bottomCenter), width: 0,  alignment: .topLeft),
 ]
 let table = Tbl("On narrow table this title wraps on multiple lines?", columns: cols, data: data)
-//let table = Tbl(nil, data, cols)
 var t:String = ""
 table.render(into: &t)
-//print(t)
+print(t)

@@ -17,8 +17,7 @@ final class TableTests: XCTestCase {
                     a = nil
                 }
                 let astr = a == nil ? "nil" : "\(a!)"
-                cols.append(Txt("kala", a))
-//                cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", a))
+                cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", a))
             }
             data.append(cols)
         }
@@ -73,6 +72,7 @@ final class TableTests: XCTestCase {
             Col(header: nil, width: 8, alignment: .topLeft, contentHint: .unique),
             Col(header: nil, width: 6, alignment: .topCenter, contentHint: .repetitive),
         ]
+        // Release version times:
         // average: 0.788 -> print(..., to: &into)
         // average: 0.668 -> into.append()
         // average: 0.639 -> transposed() tweak
@@ -139,7 +139,7 @@ final class TableTests: XCTestCase {
                 ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
                 ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
             ]
-            let width:Width = .auto
+            let width:Width = 3
 
             let cols = [
                 Col(header: nil,//"#",
@@ -147,9 +147,9 @@ final class TableTests: XCTestCase {
                 Col(header: nil,//"Left",
                     width: 16, alignment: .topLeft, wrapping: .word),
                 Col(header: nil,//"Center",
-                    width: 3, alignment: .topLeft, wrapping: .word),
+                    width: width, alignment: .topLeft, wrapping: .word),
                 Col(header: "Right",
-                    width: 3, alignment: .topLeft, wrapping: .word),
+                    width: width, alignment: .topLeft, wrapping: .word),
             ]
             let table = Tbl(Txt("Table title, alignment .middleLeft, frame style .rounded, frame rendering options .all", .middleLeft, .word),
                             columns: cols, data: data, frameStyle: .squaredDouble,
