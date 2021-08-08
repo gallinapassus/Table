@@ -1,7 +1,9 @@
 # Table
 Simple table
 
-```
+```swift
+import Table
+
 let data:[[Txt]] = [
     ["123", Txt("x", .topLeft), Txt("x", .topCenter), Txt("x", .topRight)],
     ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
