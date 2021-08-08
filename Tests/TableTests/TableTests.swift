@@ -81,7 +81,6 @@ final class TableTests: XCTestCase {
             let table = Tbl("Title", columns: cols, data: data)
             var t = ""
             table.render(into: &t)
-            //print(t)
         }
     }
     func test_x() {
@@ -159,7 +158,6 @@ final class TableTests: XCTestCase {
             table.render(into: &t, leftPad:" \n-> ", rightPad: "\n <- ")
             print(t)
         }
-/*
         do {
             let data:[[Txt]] = [
                 [".......",
@@ -220,6 +218,5 @@ final class TableTests: XCTestCase {
             table.render(into: &t)
             print(t)
         }
-         */
     }
 }

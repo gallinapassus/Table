@@ -15,22 +15,8 @@ public struct Txt : ExpressibleByStringLiteral {
         self.wrapping = nil
     }
     internal func fragment(fallback alignment:Alignment, width:Int) -> HorizontallyAligned {
-        //let t0 = DispatchTime.now().uptimeNanoseconds
         let lines:[String]
         switch wrapping {
-        /*
-        case .fit:
-            if string.count > width {
-                lines = [
-                    String(string
-                            .prefix(Swift.max(0, width - 3))
-                            .appending("...")
-                            .prefix(width))
-                ]
-            }
-            else {
-                lines = [string]
-            }*/
         case.word:
             lines = string.compressedWords(string, width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
@@ -38,8 +24,6 @@ public struct Txt : ExpressibleByStringLiteral {
             lines = string.split(to: width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         }
-        //let t1 = DispatchTime.now().uptimeNanoseconds
-        //print(#function, Double(t1 - t0) / 1_000_000)
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col) -> HorizontallyAligned {

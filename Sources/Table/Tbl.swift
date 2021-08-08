@@ -1,4 +1,6 @@
+#if DEBUG
 import Foundation
+#endif
 
 public struct Tbl {
     public let data:[[Txt]]
@@ -10,7 +12,9 @@ public struct Tbl {
     public init(_ title:Txt?, columns: [Col], data:[[Txt]],
                 frameStyle:FrameElements = .default,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
+        #if DEBUG
         let t0 = DispatchTime.now().uptimeNanoseconds
+        #endif
         self.data = data
         self.columns = columns
         self.title = title
@@ -20,8 +24,10 @@ public struct Tbl {
         // Calculate column widths for autowidth columns
         self.actualColumns = calculateAutowidths()
 
+        #if DEBUG
         let t1 = DispatchTime.now().uptimeNanoseconds
         print(#function, Double(t1 - t0) / 1_000_000)
+        #endif
     }
     private func calculateAutowidths() -> [Col] {
         // Figure out actual column widths (for columns which have
@@ -34,7 +40,6 @@ public struct Tbl {
             // One or more columns are autowidth columns
             var tmp = columns
             let recalc = columns.enumerated().compactMap({ columns[$0.offset].width > 0 ? nil : $0.offset })
-            print("recalc indices", recalc)
             for i in recalc {
                 for r in data {
                     guard r.count > i else { continue }
@@ -50,11 +55,7 @@ public struct Tbl {
                         tmp[i].width = 0
                     }
                 }
-//                else {
-//                    tmp[i].width = 0
-//                }
             }
-            print("actual", tmp.map { $0.width })
             return tmp
         }
     }
@@ -97,182 +98,14 @@ public struct Tbl {
             ((actualColumns.count - 1) *
                 frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count)
     }
-    /*
-    private var topFrame:String {
-        var str = ""
-        if frameRenderingOptions.contains([.leftFrame, .topFrame]) {
-            str.append(frameStyle.topLeftCorner.element(for: frameRenderingOptions))
-        }
-        if frameRenderingOptions.contains(.topFrame) {
-            switch (title != nil, hasHeaderLabels) {
-            case (true, true):   // Plain horz, no ticks
-                str.append(
-                    String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                           count: titleColumnWidth)
-                )
-            case (true, false):  // Has title, but no column headers => no ticks
-                str.append(
-                    String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                           count: titleColumnWidth)
-                )
-
-            case (false, true):  // No title, but has column headers => with ticks
-                str.append(
-                    actualColumns.map({
-                    String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                           count: $0.width.rawValue)
-                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
-                )
-            case (false, false): // No title, no column headers => with ticks
-                str.append(
-                    actualColumns.map({
-                    String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                           count: $0.width.rawValue)
-                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
-                )
-            }
-            /*
-            if title != nil {
-                if frameRenderingOptions.contains(.insideVerticalFrame) {
-                    str.append(
-                        actualColumns.map({
-                            String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                                   count: $0.width.rawValue)
-                        }).joined(separator: String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                                                    count: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions).count))
-                    )
-                }
-                else {
-                    str.append(
-                        actualColumns.map({
-                            String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                                   count: $0.width.rawValue)
-                        }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
-                    )
-
-                }
-            }
-            else {
-
-                let hsep:String = frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions)
-                let cd:String
-                if frameRenderingOptions.contains(.insideVerticalFrame) {
-                    cd = frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-                }
-                else {
-                    cd = ""
-                }
-
-                str.append(
-                    actualColumns.map({
-                        String(repeating: hsep,
-                               count: $0.width.rawValue)
-                    }).joined(separator: cd)
-                )
-            }
-             */
-        }
-        if frameRenderingOptions.contains([.rightFrame, .topFrame]) {
-            str.append(frameStyle.topRightCorner.element(for: frameRenderingOptions))
-        }
-        return str + (str.isEmpty ? "" : "\n")
-    }
-    private var bottomFrame:String {
-        var str = ""
-        if frameRenderingOptions.contains([.leftFrame, .bottomFrame]){
-            str.append(frameStyle.bottomLeftCorner.element(for: frameRenderingOptions))
-        }
-        if frameRenderingOptions.contains(.bottomFrame) {
-
-            let hsep:String = frameStyle.bottomHorizontalSeparator.element(for: frameRenderingOptions)
-            let cd:String
-            if frameRenderingOptions.contains(.insideVerticalFrame) {
-                cd = frameStyle.bottomHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-            }
-            else {
-                cd = ""
-            }
-
-            str.append(
-                actualColumns.map({
-                    String(repeating: hsep,
-                           count: $0.width.rawValue)
-                }).joined(separator: cd)
-            )
-        }
-        if frameRenderingOptions.contains([.rightFrame, .bottomFrame]) {
-            str.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-        }
-        return str //+ (str.isEmpty ? "" : "\n")
-    }
-    private var titleColumnHeaderDivider:String {
-        var str = ""
-        if frameRenderingOptions.contains([.leftFrame, .insideHorizontalFrame]) {
-            str.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
-        }
-        let hsep:String
-        let cd:String
-        switch (title != nil, hasHeaderLabels) {
-        case (true, true):
-            hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-        case (true, false):
-            hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-        case (false, true):  hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = "<-*->"//frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-        case (false, false): hsep = frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = "<-#->"//frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-        }
-        if frameRenderingOptions.contains(.insideHorizontalFrame) || frameRenderingOptions.contains([.leftFrame, .rightFrame]) {
-            str.append(
-                actualColumns.map({
-                    String(repeating: hsep, count: $0.width.rawValue)
-                }).joined(separator: cd)
-            )
-        }
-        if frameRenderingOptions.contains([.rightFrame,.insideHorizontalFrame]) {
-            str.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-        }
-        return str + (str.isEmpty ? "" : "\n")
-    }
-    private var insideDivider:String {
-        var str = ""
-        if frameRenderingOptions.contains(.leftFrame) {
-            str.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
-        }
-        let hsep:String
-        let cd:String
-        switch (frameRenderingOptions.contains(.insideHorizontalFrame), frameRenderingOptions.contains(.insideVerticalFrame)) {
-        case (true,true):   hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions)
-        case (true,false):  hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-            cd = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
-        case (false,true):  return ""//hsep = frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions)
-//            cd = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
-        case (false,false): return ""
-        }
-        str.append(
-            actualColumns.map({
-                String(repeating: hsep,
-                       count: $0.width.rawValue)
-            }).joined(separator: cd)
-        )
-        if frameRenderingOptions.contains(.rightFrame) {
-            str.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-        }
-        return str + (str.isEmpty ? "" : "\n")
-    }
-    */
     public func render(into: inout String, leftPad:String = "", rightPad:String = "") {
+        #if DEBUG
         let t0 = DispatchTime.now().uptimeNanoseconds
-
+        #endif
         let lPad = leftPad
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\r", with: "")
+            .filter({ $0.isNewline == false })
         let rPad = rightPad
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\r", with: "")
+            .filter({ $0.isNewline == false })
 
 
         // Top frame
@@ -392,9 +225,10 @@ public struct Tbl {
         }
 
         // Data rows
+        #if DEBUG
         let t1 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
-
+        #endif
         var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
@@ -471,8 +305,6 @@ public struct Tbl {
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
                 into.append("\(rPad)\n")
             }
-            //let a3 = DispatchTime.now().uptimeNanoseconds
-            //print(a1-a0, a2-a1, a3-a2)
         }
 
 
@@ -501,7 +333,7 @@ public struct Tbl {
                 into.append("\(rPad)")
             }
         }
-
+        #if DEBUG
         let t2 = DispatchTime.now().uptimeNanoseconds
         print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
         print(#function, "Total:",
@@ -516,6 +348,7 @@ public struct Tbl {
         print(#function, "hits =", cacheHits,
               ", misses =", cacheMisses,
               ", hit-miss ratio =", nf.string(from: NSNumber(value: (Double(cacheHits) / Double(cacheMisses)))) ?? "?")
-        print(frameRenderingOptions.optionsInEffect)
+        print("Frames:", frameRenderingOptions.optionsInEffect)
+        #endif
     }
 }
