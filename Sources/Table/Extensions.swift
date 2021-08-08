@@ -29,8 +29,8 @@ extension String {
         }
         var arr:[Substring] = []
         var c = self.startIndex
-        while c != endIndex {
-            while self[c].isWhitespace, c != endIndex {
+        while c < endIndex {
+            while c < endIndex, self[c].isWhitespace {
                 c = self.index(after: c)
             }
             guard var e = self.index(c, offsetBy: multipleOf, limitedBy: endIndex) else {
