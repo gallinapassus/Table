@@ -14,21 +14,61 @@ public struct Txt : ExpressibleByStringLiteral {
         self.alignment = nil
         self.wrapping = nil
     }
-    internal func fragment(fallback alignment:Alignment, width:Int) -> HorizontallyAligned {
+    internal func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
+        precondition(width >= 0, "Negative widths are not allowed here.")
         let lines:[String]
         switch wrapping {
-        case.word:
+        case .word:
             lines = string.compressedWords(string, width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
-        case .char, .fit, nil:
+        case .char:
             lines = string.split(to: width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+        case .cut:
+            switch width {
+            case 0:
+                lines = [""]
+            case 1:
+                if string.count > width {
+                    lines = ["…"]
+                }
+                else {
+                    lines = [string]
+                }
+            case 2:
+                if string.count > width {
+                    lines = ["\(string.prefix(1))…"]
+                }
+                else {
+                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                }
+            case 3:
+                if string.count > width {
+                    lines = ["\(string.prefix(1))…\(string.suffix(1))"]
+                }
+                else {
+                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                }
+            default:
+                guard width > Width.auto.rawValue else {
+                    fatalError("Negative widths are not allowed here.")
+                }
+                if string.count > width {
+                    let head = width / 2
+                    let tail = width - 1 - head
+                    lines = ["\(string.prefix(head))…\(string.suffix(tail))".split(to: width).first?.render(to: width, alignment: self.alignment ?? alignment) ?? ""]
+                }
+                else {
+                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                }
+            }
         }
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col) -> HorizontallyAligned {
-        self.fragment(fallback: self.alignment ?? column.alignment,
-                      width: column.width.rawValue)
+        return self.fragment(fallback: self.alignment ?? column.alignment,
+                             width: column.width.rawValue,
+                             wrapping: self.wrapping ?? column.wrapping)
     }
 }
 extension Txt : Collection {

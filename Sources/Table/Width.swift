@@ -26,7 +26,8 @@ public enum Width : RawRepresentable, Equatable, Hashable, Comparable, Expressib
     }
 
     public init(integerLiteral value: RawValue) {
-        self = .value(Swift.min(Int(Int16.max), value))
+        self = Width(rawValue: value)!
+//        self = .value(Swift.min(Int(Int16.max), value))
     }
 
     public typealias RawValue = Int

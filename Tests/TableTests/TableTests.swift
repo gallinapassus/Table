@@ -87,7 +87,7 @@ final class TableTests: XCTestCase {
 
         do {
             let data:[[Txt]] = [
-                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .fit), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .cut), Txt("x", .topCenter), Txt("x", .topRight)],
                 ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
                 ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
             ]
@@ -96,8 +96,8 @@ final class TableTests: XCTestCase {
             let cols = [
                 Col(header: nil,
                     width: 1, alignment: .topLeft, wrapping: .word),
-                Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: 12, alignment: .topLeft, wrapping: .word),
+                Col(header: Txt("Column default alignment .bottomCenter, wrapping .word", .bottomCenter),
+                    width: 6, alignment: .topLeft, wrapping: .cut),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
                     width: width, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
@@ -111,7 +111,7 @@ final class TableTests: XCTestCase {
         }
         do {
             let data:[[Txt]] = [
-                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .fit), Txt("x", .topCenter), Txt("x", .topRight)],
+                ["123", Txt("You can't make an omelet without breaking some eggs", .topLeft, .cut), Txt("x", .topCenter), Txt("x", .topRight)],
                 ["123", Txt("x", .middleLeft), Txt("x", .middleCenter), Txt("x", .middleRight)],
                 ["123", Txt("x", .bottomLeft), Txt("x", .bottomCenter), Txt("x", .bottomRight)],
             ]
@@ -119,9 +119,9 @@ final class TableTests: XCTestCase {
 
             let cols = [
                 Col(header: nil,
-                    width: 1, alignment: .topLeft, wrapping: .word),
+                    width: 0, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
-                    width: 12, alignment: .topLeft, wrapping: .word),
+                    width: 12, alignment: .topLeft, wrapping: .cut),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
                     width: width, alignment: .topLeft, wrapping: .word),
                 Col(header: Txt("Column default alignment .topLeft, wrapping .word", .bottomCenter),
