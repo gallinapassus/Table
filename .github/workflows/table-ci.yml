@@ -28,3 +28,14 @@ jobs:
       run: swift build -v
     - name: Run Linux tests
       run: swift test -v
+
+  build-macOS-self-hosted:
+
+    runs-on: pixel
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build on self hosted macOS
+      run: swift build -v
+    - name: Run tests on self hosted macOS
+      run: swift test -v
