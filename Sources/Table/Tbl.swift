@@ -148,7 +148,7 @@ public struct Tbl {
         // Title
         if let title = title {
             let alignedTitle = title
-                .fragment(fallback: .middleCenter, width: titleColumnWidth)
+                .fragment(fallback: .middleCenter, width: titleColumnWidth, wrapping: .word)
                 .verticallyAligned
 
             for f in alignedTitle {
@@ -181,8 +181,9 @@ public struct Tbl {
         if hasHeaderLabels {
 
             let alignedColumnHeaders = actualColumns
-                .compactMap({ ($0.header ?? Txt(""))
-                                .fragment(for: $0) })
+                .compactMap({ column in
+                    return (column.header ?? Txt("")).fragment(for: column)
+                })
                 .dropFirst(0) // <= Convert Array to ArraySlice
                 .alignVertically
             for f in alignedColumnHeaders {
@@ -217,7 +218,7 @@ public struct Tbl {
                     actualColumns.map({
                         String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                count: $0.width.rawValue)
-                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element/*(for: frameRenderingOptions)*/)
+                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element)
                 )
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
                 into.append("\(rPad)\n")
