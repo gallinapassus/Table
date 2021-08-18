@@ -4,7 +4,7 @@ public struct Txt : ExpressibleByStringLiteral {
     public let string:String
     public let alignment:Alignment?
     public let wrapping:Wrapping?
-    public init(_ str:String, _ alignment: Alignment? = nil, _ wrapping:Wrapping? = nil) {
+    public init(_ str:String, alignment: Alignment? = nil, wrapping:Wrapping? = nil) {
         self.string = str
         self.alignment = alignment
         self.wrapping = wrapping

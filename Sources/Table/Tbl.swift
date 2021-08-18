@@ -9,14 +9,29 @@ public struct Tbl {
     public let frameStyle:FrameElements
     public let frameRenderingOptions:FrameRenderingOptions
     private var actualColumns:[Col] = []
-    public init(_ title:Txt?, columns: [Col], data:[[Txt]],
+    public init(_ title:Txt? = nil, columns: [Col] = [], data:[[Txt]],
                 frameStyle:FrameElements = .default,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
-        #if DEBUG
-        let t0 = DispatchTime.now().uptimeNanoseconds
-        #endif
+        if columns.isEmpty {
+            // Let's treat empty column set as "automatic columns"
+            let maxColCount = data.reduce(0, { Swift.max($0, $1.count) })
+            if maxColCount == 0 {
+                // Actually, there is no data either, let's fake one
+                self.columns = [Col(width: .auto, alignment: .topLeft)]
+            }
+            else {
+                self.columns = Array(repeating: Col(width: .auto, alignment: .topLeft), count: maxColCount)
+            }
+        }
+        else {
+            // Silently cut-off the excess columns as
+            // Tbl supports only UInt16.max columns.
+            self.columns = Array(columns.prefix(Int(UInt16.max)))
+        }
+//        #if DEBUG
+//        let t0 = DispatchTime.now().uptimeNanoseconds
+//        #endif
         self.data = data
-        self.columns = columns
         self.title = title
         self.frameStyle = frameStyle
         self.frameRenderingOptions = frameRenderingOptions
@@ -24,10 +39,10 @@ public struct Tbl {
         // Calculate column widths for autowidth columns
         self.actualColumns = calculateAutowidths()
 
-        #if DEBUG
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        print(#function, Double(t1 - t0) / 1_000_000)
-        #endif
+//        #if DEBUG
+//        let t1 = DispatchTime.now().uptimeNanoseconds
+//        print(#function, Double(t1 - t0) / 1_000_000)
+//        #endif
     }
     private func calculateAutowidths() -> [Col] {
         // Figure out actual column widths (for columns which have
@@ -62,7 +77,7 @@ public struct Tbl {
     public init(_ title:String, columns: [Col], data:[[Txt]],
                 frameStyle:FrameElements = .default,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
-        self.init(Txt(title, .middleCenter), columns: columns, data: data,
+        self.init(Txt(title, alignment: .middleCenter), columns: columns, data: data,
                   frameStyle: frameStyle, frameRenderingOptions: frameRenderingOptions)
     }
     private class FrameElement : ExpressibleByStringLiteral, Collection, CustomStringConvertible {
@@ -93,15 +108,21 @@ public struct Tbl {
         !columns.allSatisfy({ $0.header == nil })
     }
     private var titleColumnWidth:Int {
-        actualColumns
+        let w = Swift.max(0, actualColumns
             .reduce(0, { $0 + $1.width.rawValue }) +
             ((actualColumns.count - 1) *
-                frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count)
+                frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count))
+        if w == 0 {
+            return title?.count ?? 0
+        }
+        else {
+            return w
+        }
     }
     public func render(into: inout String, leftPad:String = "", rightPad:String = "") {
-        #if DEBUG
-        let t0 = DispatchTime.now().uptimeNanoseconds
-        #endif
+//        #if DEBUG
+//        let t0 = DispatchTime.now().uptimeNanoseconds
+//        #endif
         let lPad = leftPad
             .filter({ $0.isNewline == false })
         let rPad = rightPad
@@ -218,7 +239,7 @@ public struct Tbl {
                     actualColumns.map({
                         String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                count: $0.width.rawValue)
-                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element)
+                    }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                 )
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
                 into.append("\(rPad)\n")
@@ -226,10 +247,10 @@ public struct Tbl {
         }
 
         // Data rows
-        #if DEBUG
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
-        #endif
+//        #if DEBUG
+//        let t1 = DispatchTime.now().uptimeNanoseconds
+//        //print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
+//        #endif
         var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
@@ -321,7 +342,7 @@ public struct Tbl {
                     }).joined(separator: frameStyle.bottomHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                 )
                 into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-                into.append("\(rPad)")
+                into.append("\(rPad)\n")
             }
             else {
                 into.append(lPad)
@@ -331,25 +352,30 @@ public struct Tbl {
                            count: titleColumnWidth)
                 )
                 into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-                into.append("\(rPad)")
+                into.append("\(rPad)\n")
             }
         }
-        #if DEBUG
-        let t2 = DispatchTime.now().uptimeNanoseconds
-        print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
-        print(#function, "Total:",
-              Double(t1 - t0) / 1_000_000, "ms",
-              "+",
-              Double(t2 - t1) / 1_000_000, "ms",
-              "=>",
-              Double(t2 - t0) / 1_000_000, "ms")
-        let nf = NumberFormatter()
-        nf.minimumFractionDigits = 1
-        nf.maximumFractionDigits = 1
-        print(#function, "hits =", cacheHits,
-              ", misses =", cacheMisses,
-              ", hit-miss ratio =", nf.string(from: NSNumber(value: (Double(cacheHits) / Double(cacheMisses)))) ?? "?")
-        print("Frames:", frameRenderingOptions.optionsInEffect)
-        #endif
+//        #if DEBUG
+//        let t2 = DispatchTime.now().uptimeNanoseconds
+//        print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
+//        print(#function, "Total:",
+//              Double(t1 - t0) / 1_000_000, "ms",
+//              "+",
+//              Double(t2 - t1) / 1_000_000, "ms",
+//              "=>",
+//              Double(t2 - t0) / 1_000_000, "ms")
+//        let nf = NumberFormatter()
+//        nf.minimumFractionDigits = 1
+//        nf.maximumFractionDigits = 1
+//        print(#function, "hits =", cacheHits,
+//              ", misses =", cacheMisses,
+//              ", hit-miss ratio =", nf.string(from: NSNumber(value: (Double(cacheHits) / Double(cacheMisses)))) ?? "?")
+//        print("Frames:", frameRenderingOptions.optionsInEffect)
+//        #endif
+    }
+    public func render(leftPad:String = "", rightPad:String = "") -> String {
+        var result = ""
+        render(into: &result, leftPad: leftPad, rightPad: rightPad)
+        return result
     }
 }
