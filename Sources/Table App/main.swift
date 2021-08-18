@@ -13,8 +13,8 @@ for i in 0..<100 {
             a = nil
         }
         let astr = a == nil ? "nil" : "\(a!)"
-        cols.append(Txt("99 matches?", a))
-        cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", a))
+        cols.append(Txt("99 matches?", alignment: a))
+        cols.append(Txt("row\(i+1) column\(j+1) alignment \(astr)", alignment: a))
     }
     data.append(cols)
 }
@@ -22,14 +22,14 @@ let cols = [
 //    Col(header: nil, width: 5, alignment: .topRight),
 //    Col(header: nil, width: 6, alignment: .topRight),
 //    Col(header: nil, width: 15, alignment: .topRight),
-    Col(header: Txt("Column 1", .topLeft),      width: 4,  alignment: .topLeft),
-    Col(header: Txt("Column 2", .topCenter),    width: 0,  alignment: .topRight),
-    Col(header: Txt("Column 3", .bottomCenter), width: 4,  alignment: .topCenter),
-    Col(header: Txt("Column 4", .bottomCenter), width: 8,  alignment: .topCenter),
-    Col(header: Txt("Column 5", .bottomCenter), width: 0,  alignment: .topCenter),
-    Col(header: Txt("Col6",     .middleCenter), width: 8,  alignment: .topCenter),
-    Col(header: Txt("",         .bottomCenter), width: 3,  alignment: .topCenter),
-    Col(header: Txt("Column 8", .bottomCenter), width: 0,  alignment: .topLeft),
+    Col(Txt("Column 1", alignment: .topLeft),      width: 4,  alignment: .topLeft),
+    Col(Txt("Column 2", alignment: .topCenter),    width: 0,  alignment: .topRight),
+    Col(Txt("Column 3", alignment: .bottomCenter), width: 4,  alignment: .topCenter),
+    Col(Txt("Column 4", alignment: .bottomCenter), width: 8,  alignment: .topCenter),
+    Col(Txt("Column 5", alignment: .bottomCenter), width: 0,  alignment: .topCenter),
+    Col(Txt("Col6",     alignment: .middleCenter), width: 8,  alignment: .topCenter),
+    Col(Txt("",         alignment: .bottomCenter), width: 3,  alignment: .topCenter),
+    Col(Txt("Column 8", alignment: .bottomCenter), width: 0,  alignment: .topLeft),
 ]
 let table = Tbl("On narrow table this title wraps on multiple lines?", columns: cols, data: data)
 var t:String = ""

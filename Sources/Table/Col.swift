@@ -5,8 +5,8 @@ public struct Col {
     public let alignment:Alignment
     public let wrapping:Wrapping
     public let contentHint:ColumnContentHint
-    public init(header:Txt?, width:Width = .auto,
-                alignment:Alignment,
+    public init(_ header:Txt? = nil, width:Width = .auto,
+                alignment:Alignment = .topLeft,
                 wrapping:Wrapping = .default,
                 contentHint:ColumnContentHint = .repetitive) {
         self.header = header
