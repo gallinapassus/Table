@@ -49,11 +49,8 @@ extension String {
          */
 
         let customSplitted:[Substring] = fragment(where: { c in
-            c.isPunctuation &&
-                (c.isWhitespace == false &&
-                    c != "\"" &&
-                    c != "'" &&
-                    c.isCurrencySymbol == false)
+            let notExcludedFromPunctuation:Bool = c.isWhitespace == false && c != "\"" && c != "'" && c.isCurrencySymbol == false
+            return c.isPunctuation && notExcludedFromPunctuation
         })
         let splittedAtWhitespaces:[Substring] = customSplitted
             .flatMap { $0.split(maxSplits: $0.count,
