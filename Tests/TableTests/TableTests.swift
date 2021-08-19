@@ -2,6 +2,7 @@ import XCTest
 import Table
 
 final class TableTests: XCTestCase {
+    let pangram = "Quick brown fox jumps over the lazy dog"
     func test_noData() {
         let data:[[Txt]] = []
         let columns = [
@@ -110,13 +111,13 @@ final class TableTests: XCTestCase {
                            """)
         }
         do {
-            let data:[[Txt]] = [["Quick brown fox", "jumped over the lazy dog."]]
+            let data:[[Txt]] = [["Quick brown fox", "jumps over the lazy dog"]]
             let table = Tbl(data: data)
             XCTAssertEqual(table.render(),
                            """
-                           +---------------+-------------------------+
-                           |Quick brown fox|jumped over the lazy dog.|
-                           +---------------+-------------------------+
+                           +---------------+-----------------------+
+                           |Quick brown fox|jumps over the lazy dog|
+                           +---------------+-----------------------+
 
                            """)
         }
@@ -216,11 +217,11 @@ final class TableTests: XCTestCase {
                            """
                            +---+---+---+---+---+---+---+---+---+
                            |top|top|top|bot|bot|bot|mid|mid|mid|
-                           |Rig|Lef|Cen|tom|tom|tom|dle|dle|dle|
-                           | ht|t  |ter|Rig|Lef|Cen|Rig|Lef|Cen|
-                           |   |   |   | ht|t  |ter| ht|t  |ter|
+                           |Lef|Rig|Cen|tom|tom|tom|dle|dle|dle|
+                           |t  | ht|ter|Lef|Rig|Cen|Lef|Rig|Cen|
+                           |   |   |   |t  | ht|ter|t  | ht|ter|
                            +---+---+---+---+---+---+---+---+---+
-                           |  #|#  | # |  #|#  | # |  #|#  | # |
+                           |#  |  #| # |#  |  #| # |#  |  #| # |
                            +---+---+---+---+---+---+---+---+---+
 
                            """)
@@ -235,13 +236,13 @@ final class TableTests: XCTestCase {
                            """
                            +-+---+---+---+---+---+---+---+---+---+
                            | |top|top|top|bot|bot|bot|mid|mid|mid|
-                           | |Rig|Lef|Cen|tom|tom|tom|dle|dle|dle|
-                           | | ht|t  |ter|Rig|Lef|Cen|Rig|Lef|Cen|
-                           | |   |   |   | ht|t  |ter| ht|t  |ter|
+                           | |Lef|Rig|Cen|tom|tom|tom|dle|dle|dle|
+                           | |t  | ht|ter|Lef|Rig|Cen|Lef|Rig|Cen|
+                           | |   |   |   |t  | ht|ter|t  | ht|ter|
                            +-+---+---+---+---+---+---+---+---+---+
-                           |1|  #|#  | # |   |   |   |   |   |   |
-                           |2|   |   |   |   |   |   |  #|#  | # |
-                           |3|   |   |   |  #|#  | # |   |   |   |
+                           |1|#  |  #| # |   |   |   |   |   |   |
+                           |2|   |   |   |   |   |   |#  |  #| # |
+                           |3|   |   |   |#  |  #| # |   |   |   |
                            +-+---+---+---+---+---+---+---+---+---+
 
                            """)
@@ -250,45 +251,45 @@ final class TableTests: XCTestCase {
     func test_wrappingChar() {
         do {
             // Wrpping taken from column's definition
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 12, wrapping: .char)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
                            |Quick brown |
-                           |fox jumped o|
-                           |ver the lazy|
-                           |dog.        |
+                           |fox jumps ov|
+                           |er the lazy |
+                           |dog         |
                            +------------+
 
                            """)
         }
         do {
             // Wrpping taken from Txt
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .char)]]
+            let data = [[Txt(pangram, wrapping: .char)]]
             let table = Tbl(columns: [Col(width: 12)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
                            |Quick brown |
-                           |fox jumped o|
-                           |ver the lazy|
-                           |dog.        |
+                           |fox jumps ov|
+                           |er the lazy |
+                           |dog         |
                            +------------+
 
                            """)
         }
         do {
             // Wrpping defined at column level, overidden by Txt
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .char)]]
+            let data = [[Txt(pangram, wrapping: .char)]]
             let table = Tbl(columns: [Col(width: 12, wrapping: .word)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
                            |Quick brown |
-                           |fox jumped o|
-                           |ver the lazy|
-                           |dog.        |
+                           |fox jumps ov|
+                           |er the lazy |
+                           |dog         |
                            +------------+
 
                            """)
@@ -297,43 +298,43 @@ final class TableTests: XCTestCase {
     func test_wrappingCut() {
         do {
             // Wrpping taken from column's definition
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 12, wrapping: .cut)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
-                           |Quick … dog.|
+                           |Quick …y dog|
                            +------------+
 
                            """)
         }
         do {
             // Wrpping taken from Txt
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .cut)]]
+            let data = [[Txt(pangram, wrapping: .cut)]]
             let table = Tbl(columns: [Col(width: 12)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
-                           |Quick … dog.|
+                           |Quick …y dog|
                            +------------+
 
                            """)
         }
         do {
             // Wrpping defined at column level, overidden by Txt
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .cut)]]
+            let data = [[Txt(pangram, wrapping: .cut)]]
             let table = Tbl(columns: [Col(width: 12, wrapping: .word)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
-                           |Quick … dog.|
+                           |Quick …y dog|
                            +------------+
 
                            """)
         }
         do {
             // Special case - column width = 1
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 1, wrapping: .cut)], data: data)
             XCTAssertEqual(table.render(),
                            """
@@ -345,7 +346,7 @@ final class TableTests: XCTestCase {
         }
         do {
             // Special case - column width = 2
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 2, wrapping: .cut)], data: data)
             XCTAssertEqual(table.render(),
                            """
@@ -357,12 +358,12 @@ final class TableTests: XCTestCase {
         }
         do {
             // Special case - column width = 3
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 3, wrapping: .cut)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +---+
-                           |Q….|
+                           |Q…g|
                            +---+
 
                            """)
@@ -371,29 +372,29 @@ final class TableTests: XCTestCase {
     func test_wrappingWord() {
         do {
             // Wrpping taken from column's definition
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.")]]
+            let data = [[Txt(pangram)]]
             let table = Tbl(columns: [Col(width: 12, wrapping: .word)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
-                           |Quick brown |
-                           |fox jumped  |
-                           |over the    |
-                           |lazy dog.   |
+                           |Quick       |
+                           |brown fox   |
+                           |jumps over  |
+                           |the lazy dog|
                            +------------+
 
                            """)
         }
         do {
             // Wrpping taken from Txt
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .word)]]
+            let data = [[Txt(pangram, wrapping: .word)]]
             let table = Tbl(columns: [Col(width: 16)], data: data)
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
                            |Quick brown     |
-                           |fox jumped over |
-                           |the lazy dog.   |
+                           |fox jumps over  |
+                           |the lazy dog    |
                            +----------------+
 
                            """)
@@ -404,7 +405,7 @@ final class TableTests: XCTestCase {
             //     - Spaces at the column width positions are removed (as below: "Quick" "brown")
             //     - Words which are too long to fit are "forcibly" wrapped at
             //       character boundary (as below: "jumpe" "d")
-            let data = [[Txt("Quick brown fox jumped over the lazy dog.", wrapping: .word)]]
+            let data = [[Txt(pangram, wrapping: .word)]]
             let table = Tbl(columns: [Col(width: 5, wrapping: .char)], data: data)
             XCTAssertEqual(table.render(),
                            """
@@ -412,13 +413,34 @@ final class TableTests: XCTestCase {
                            |Quick|
                            |brown|
                            |fox  |
-                           |jumpe|
-                           |d    |
+                           |jumps|
                            |over |
                            |the  |
                            |lazy |
-                           |dog. |
+                           |dog  |
                            +-----+
+
+                           """)
+        }
+        do {
+            // Wrpping taken from Txt
+            let data = [[Txt("RawDefinition(\"def\", width: 5, symbol: $dir!, fieldNumber: 253, value: [1, 2, 3])", wrapping: .word)]]
+            let table = Tbl(columns: [Col(width: 9, alignment: .topLeft)], data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +---------+
+                           |RawDefini|
+                           |tion(    |
+                           |"def",   |
+                           |width: 5,|
+                           |symbol:  |
+                           |$dir! ,  |
+                           |fieldNumb|
+                           |er: 253, |
+                           |value:   |
+                           |[ 1,     |
+                           |2, 3] )  |
+                           +---------+
 
                            """)
         }
@@ -1046,51 +1068,308 @@ final class TableTests: XCTestCase {
         }
     }
     func test_titleAlignment() {
-        // TODO
+        // NOTE: Titles have only horizontal alignment.
+        // From titles point of view .topLeft == .bottomLeft == .middleLeft
+        // ...and so on...
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Title narrower than column content
+            let table = Tbl("Title", columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |     Title      |
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Title wider than column content
+            let table = Tbl("English-language pangram — a sentence that contains all of the letters of the English alphabet.", columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |    English-    |
+                           |    language    |
+                           |   pangram —    |
+                           |a sentence that |
+                           |  contains all  |
+                           | of the letters |
+                           | of the English |
+                           |   alphabet.    |
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Left aligned
+            let table = Tbl(Txt("Title", alignment: .topLeft), columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title           |
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Right aligned
+            let table = Tbl(Txt("Title", alignment: .bottomRight), columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |           Title|
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Left aligned
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
+        do {
+            // Default is "middleCenter" with "word" wrapping
+            // Right aligned
+            let table = Tbl(Txt("Title wider than column width", alignment: .bottomRight), columns: [Col(width: 16)], data: [[Txt(pangram)]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |    column width|
+                           +----------------+
+                           |Quick brown fox |
+                           |jumps over the l|
+                           |azy dog         |
+                           +----------------+
+
+                           """)
+        }
     }
     func test_columnHeaderAlignment() {
-        // TODO
-    }
-    func testPerformance() {
-        var data:[[Txt]] = []
-        let rnd = ["by itself", "as part of the sentence"]
-        let sentences = [
-            ["A blessing in disguise", rnd.randomElement()!],
-            ["A dime a dozen", rnd.randomElement()!],
-            ["Beat around the bush", rnd.randomElement()!],
-            ["Better late than never", rnd.randomElement()!],
-            ["Bite the bullet", rnd.randomElement()!],
-            ["Break a leg", rnd.randomElement()!],
-            ["Call it a day", rnd.randomElement()!],
-            ["Cut somebody some slack", rnd.randomElement()!],
-            ["Cutting corners", rnd.randomElement()!],
-            ["Easy does it", rnd.randomElement()!],
-            ["Get out of hand", rnd.randomElement()!],
-            ["Get something out of your system", rnd.randomElement()!],
-            ["Get your act together", rnd.randomElement()!],
-            ["Give someone the benefit of the doubt", rnd.randomElement()!],
-            ["Go back to the drawing board", rnd.randomElement()!],
-            ["Hang in there", rnd.randomElement()!],
-            ["Hit the sack", rnd.randomElement()!],
-        ]
+        do {
+            let expected:[String] = [
+                // topLeft
+                """
+                +-+---+
+                |1|#  |
+                |2|   |
+                |3|   |
+                +-+---+
+                +-+---+
 
-        for _ in 0..<50000 {
-            let cols:[Txt] = sentences.randomElement()!.map { Txt($0, alignment: Alignment.allCases.randomElement()!) }
-            data.append(cols)
+                """,
+                // topRight
+                """
+                +-+---+
+                |1|  #|
+                |2|   |
+                |3|   |
+                +-+---+
+                +-+---+
+
+                """,
+                // topCenter
+                """
+                +-+---+
+                |1| # |
+                |2|   |
+                |3|   |
+                +-+---+
+                +-+---+
+
+                """,
+                // bottomLeft
+                """
+                +-+---+
+                |1|   |
+                |2|   |
+                |3|#  |
+                +-+---+
+                +-+---+
+
+                """,
+                // bottomRight
+                """
+                +-+---+
+                |1|   |
+                |2|   |
+                |3|  #|
+                +-+---+
+                +-+---+
+
+                """,
+                // bottomCenter
+                """
+                +-+---+
+                |1|   |
+                |2|   |
+                |3| # |
+                +-+---+
+                +-+---+
+
+                """,
+                // middleLeft
+                """
+                +-+---+
+                |1|   |
+                |2|#  |
+                |3|   |
+                +-+---+
+                +-+---+
+
+                """,
+                // middleRight
+                """
+                +-+---+
+                |1|   |
+                |2|  #|
+                |3|   |
+                +-+---+
+                +-+---+
+
+                """,
+                // middleCenter
+                """
+                +-+---+
+                |1|   |
+                |2| # |
+                |3|   |
+                +-+---+
+                +-+---+
+
+                """,
+            ]
+            XCTAssertEqual(Alignment.allCases.count, expected.count)
+            for (i,alignment) in Alignment.allCases.enumerated() {
+                let columns = [Col("123", width: 1), Col(Txt("#", alignment: alignment), width: 3)]
+                let table = Tbl(columns: columns, data: [[]])
+                XCTAssertEqual(table.render(), expected[i])
+            }
         }
-        let cols = [
-            Col(width: 8, alignment: .topLeft, contentHint: .unique),
-            Col(width: 6, alignment: .topCenter, contentHint: .repetitive),
+    }
+    lazy var perfDataSource:[[Txt]] = {
+        let src = [
+            ["A blessing in disguise", "by itself"],
+            ["A dime a dozen", "by itself"],
+            ["Beat around the bush", "as part of the sentence"],
+            ["Better late than never", "by itself"],
+            ["Bite the bullet", "as part of the sentence"],
+            ["Break a leg", "as part of the sentence"],
+            ["Call it a day", "by itself"],
+            ["Cutting corners", "by itself"],
+            ["Easy does it"], // <- second column data missing intentionally
+            ["Get out of hand", "by itself"],
+            ["Get something out of your system", "by itself"],
+            ["Get your act together", "as part of the sentence"],
+            ["Give someone the benefit of the doubt", "as part of the sentence"],
+            ["Go back to the drawing board", "as part of the sentence"],
+            ["Hang in there", "by itself"],
+            ["Hit the sack", "as part of the sentence"]
         ]
-        // Release version times:
-        // average: 0.788 -> print(..., to: &into)
-        // average: 0.668 -> into.append()
-        // average: 0.639 -> transposed() tweak
-        // average: 0.415 -> .char wrapping as default
+        var result:[[Txt]] = []
+        for i in 0..<2000 { // Generate 32000 unique rows
+            for (j,arr) in src.enumerated() {
+                result.append(arr.map({ Txt("[\(i),\(j)]" + $0) }))
+            }
+        }
+        return result
+    }()
+    // MARK: -
+    // MacBook Pro (15-inch, 2016)
+    // Processor 2,9 GHz Quad-Core Intel Core i7
+    // Memory 16GB 2133 MHz LPDDR3
+    // Radeon Pro 460 4GB, Intel HD Graphics 530 1536 MB
+    // macOS Big Sur 11.5.2
+    // Xcode version 12.5.1 (12E507)
+    // Apple Swift version 5.4.2 (swiftlang-1205.0.28.2 clang-1205.0.19.57)
+
+    func testPerformanceCharWrapping() {
+        var data:[[Txt]] = []
+        for _ in 0..<2 { // 64000 rows
+            data.append(contentsOf: perfDataSource)
+        }
+
+        let cols = [
+            Col(width: 8, alignment: .topLeft, wrapping: .char, contentHint: .unique),
+            Col(width: 6, alignment: .topCenter, wrapping: .char, contentHint: .repetitive),
+        ]
+        // Idicative performance metrics (of release build) with above setup:
+        // average should be within the range of 0,620...0,655 seconds
+
         measure {
-            let table = Tbl("Title", columns: cols, data: data)
-            var t = ""
-            table.render(into: &t)
+            // Tbl.init is intentionally included as part of the
+            // work is done there.
+            _ = Tbl("Title", columns: cols, data: data).render()
+        }
+    }
+    func testPerformanceCutWrapping() {
+        var data:[[Txt]] = []
+        for _ in 0..<2 { // 50000 rows, two columns
+            data.append(contentsOf: perfDataSource)
+        }
+
+        let cols = [
+            Col(width: 8, alignment: .topLeft, wrapping: .cut, contentHint: .unique),
+            Col(width: 6, alignment: .topCenter, wrapping: .cut, contentHint: .repetitive),
+        ]
+        // Idicative performance metrics (of release build) with above setup:
+        // average should be within the range of 0,330...0,340 seconds
+
+        measure {
+            // Tbl.init is intentionally included as part of the
+            // work is done there.
+            _ = Tbl("Title", columns: cols, data: data).render()
+        }
+    }
+    func testPerformanceWordWrapping() {
+        var data:[[Txt]] = []
+        for _ in 0..<2 { // 50000 rows, two columns
+            data.append(contentsOf: perfDataSource)
+        }
+
+        let cols = [
+            Col(width: 8, alignment: .topLeft, wrapping: .word, contentHint: .unique),
+            Col(width: 6, alignment: .topCenter, wrapping: .word, contentHint: .repetitive),
+        ]
+        // Idicative performance metrics (of release build) with above setup:
+        // average should be within the range of 1,750...1,810 seconds
+
+        measure {
+            // Tbl.init is intentionally included as part of the
+            // work is done there.
+            _ = Tbl("Title", columns: cols, data: data).render()
         }
     }
 }
