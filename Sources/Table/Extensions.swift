@@ -48,7 +48,7 @@ extension String {
          return wds
          */
 
-        let customSplitted = self.fragment(where: { c in
+        let customSplitted:[Substring] = self.fragment(where: { c in
             c.isPunctuation &&
                 (c.isWhitespace == false &&
                     c != "\"" &&
