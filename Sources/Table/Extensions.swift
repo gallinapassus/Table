@@ -23,7 +23,7 @@ extension Substring {
     }
 }
 extension String {
-    public func fragment(where character: (Character) -> Bool) -> [Substring] {
+    func fragment(where character: (Character) -> Bool) -> [Substring] {
         var splits:[Substring] = []
         var i = startIndex
         var cursor = i
@@ -48,7 +48,7 @@ extension String {
          return wds
          */
 
-        let customSplitted:[Substring] = self.fragment(where: { c in
+        let customSplitted:[Substring] = fragment(where: { c in
             c.isPunctuation &&
                 (c.isWhitespace == false &&
                     c != "\"" &&
