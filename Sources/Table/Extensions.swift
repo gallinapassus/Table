@@ -55,10 +55,12 @@ extension String {
                     c != "'" &&
                     c.isCurrencySymbol == false)
         })
-        .flatMap { $0.split(maxSplits: $0.count,
-                            omittingEmptySubsequences: true, whereSeparator: { $0.isWhitespace })
+        let splittedAtWhitespaces:[Substring] = customSplitted
+            .flatMap { $0.split(maxSplits: $0.count,
+                                omittingEmptySubsequences: true,
+                                whereSeparator: { $0.isWhitespace })
         }
-        let wds = customSplitted
+        let wds = splittedAtWhitespaces
             .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
         return wds
     }
