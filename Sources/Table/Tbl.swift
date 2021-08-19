@@ -1,7 +1,3 @@
-#if DEBUG
-import Foundation
-#endif
-
 public struct Tbl {
     public let data:[[Txt]]
     public let columns:[Col]
@@ -28,9 +24,6 @@ public struct Tbl {
             // Tbl supports only UInt16.max columns.
             self.columns = Array(columns.prefix(Int(UInt16.max)))
         }
-//        #if DEBUG
-//        let t0 = DispatchTime.now().uptimeNanoseconds
-//        #endif
         self.data = data
         self.title = title
         self.frameStyle = frameStyle
@@ -39,10 +32,6 @@ public struct Tbl {
         // Calculate column widths for autowidth columns
         self.actualColumns = calculateAutowidths()
 
-//        #if DEBUG
-//        let t1 = DispatchTime.now().uptimeNanoseconds
-//        print(#function, Double(t1 - t0) / 1_000_000)
-//        #endif
     }
     private func calculateAutowidths() -> [Col] {
         // Figure out actual column widths (for columns which have
@@ -120,9 +109,6 @@ public struct Tbl {
         }
     }
     public func render(into: inout String, leftPad:String = "", rightPad:String = "") {
-//        #if DEBUG
-//        let t0 = DispatchTime.now().uptimeNanoseconds
-//        #endif
         let lPad = leftPad
             .filter({ $0.isNewline == false })
         let rPad = rightPad
@@ -247,10 +233,6 @@ public struct Tbl {
         }
 
         // Data rows
-//        #if DEBUG
-//        let t1 = DispatchTime.now().uptimeNanoseconds
-//        //print(#function, "Header:", Double(t1 - t0) / 1_000_000, "ms")
-//        #endif
         var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
@@ -355,23 +337,6 @@ public struct Tbl {
                 into.append("\(rPad)\n")
             }
         }
-//        #if DEBUG
-//        let t2 = DispatchTime.now().uptimeNanoseconds
-//        print(#function, "Rows:", Double(t2 - t1) / 1_000_000, "ms")
-//        print(#function, "Total:",
-//              Double(t1 - t0) / 1_000_000, "ms",
-//              "+",
-//              Double(t2 - t1) / 1_000_000, "ms",
-//              "=>",
-//              Double(t2 - t0) / 1_000_000, "ms")
-//        let nf = NumberFormatter()
-//        nf.minimumFractionDigits = 1
-//        nf.maximumFractionDigits = 1
-//        print(#function, "hits =", cacheHits,
-//              ", misses =", cacheMisses,
-//              ", hit-miss ratio =", nf.string(from: NSNumber(value: (Double(cacheHits) / Double(cacheMisses)))) ?? "?")
-//        print("Frames:", frameRenderingOptions.optionsInEffect)
-//        #endif
     }
     public func render(leftPad:String = "", rightPad:String = "") -> String {
         var result = ""

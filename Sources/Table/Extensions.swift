@@ -6,30 +6,6 @@ extension Substring {
         var arr:[Substring] = []
         var c = startIndex
         while c != endIndex {
-            guard let e = self.index(c, offsetBy: multipleOf, limitedBy: endIndex) else {
-                arr.append(self[c..<endIndex])
-                return arr
-            }
-            arr.append(self[c..<e])
-            c = e
-        }
-        return arr
-    }
-}
-extension String {
-    func words(to width:Int) -> [Substring] {
-        let wds = self
-            .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
-            .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-        return wds
-    }
-    func split(to multipleOf:Int) -> [Substring] {
-        guard multipleOf > 0 else {
-            return [Substring(self)]
-        }
-        var arr:[Substring] = []
-        var c = self.startIndex
-        while c < endIndex {
             while c < endIndex, self[c].isWhitespace {
                 c = self.index(after: c)
             }
@@ -44,6 +20,46 @@ extension String {
             c = e
         }
         return arr
+    }
+}
+extension String {
+    func fragment(where character: (Character) -> Bool) -> [Substring] {
+        var splits:[Substring] = []
+        var i = startIndex
+        var cursor = i
+        while i != endIndex {
+            if character(self[i]) {
+                splits.append(self[cursor...i])
+                cursor = index(after: i)
+            }
+            i = index(after: i)
+        }
+        if i != cursor {
+            splits.append(self[cursor...])
+        }
+        return splits
+    }
+    func words(to width:Int) -> [Substring] {
+
+        /* Original implementation:
+         let wds = self
+             .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
+             .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
+         return wds
+         */
+
+        let customSplitted:[Substring] = fragment(where: { c in
+            let notExcludedFromPunctuation:Bool = c.isWhitespace == false && c != "\"" && c != "'" && c.isCurrencySymbol == false
+            return c.isPunctuation && notExcludedFromPunctuation
+        })
+        let splittedAtWhitespaces:[Substring] = customSplitted
+            .flatMap { $0.split(maxSplits: $0.count,
+                                omittingEmptySubsequences: true,
+                                whereSeparator: { $0.isWhitespace })
+        }
+        let wds = splittedAtWhitespaces
+            .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
+        return wds
     }
     internal func compressedWords(_ str:String, _ width:Int) -> [Substring] {
         words(to: width).compress(to: width)
@@ -77,6 +93,7 @@ extension Substring {
     }
 }
 extension Array where Element == Substring {
+    // Reverse-greedy
     func compress(to width:Int, binding with:Character = " ") -> [Substring] {
         guard isEmpty == false else {
             return []
@@ -106,6 +123,36 @@ extension Array where Element == Substring {
         }
         return self
     }
+    /* Forward-greedy
+    func compress_b(to width:Int, binding with:Character = " ") -> [Substring] {
+        guard isEmpty == false else {
+            return []
+        }
+        var lidx = startIndex
+        var ridx = index(after: lidx)
+        while ridx != endIndex {
+            if self[lidx].count + self[ridx].count + 1 <= width {
+                return (self[..<lidx] +
+                            [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
+                            self[index(after: ridx)...]).compress(to: width)
+            }
+            else {
+                lidx = self.index(after: lidx)
+                ridx = self.index(after: ridx)
+                if ridx == index(before: endIndex) {
+                    if self[lidx].count + self[ridx].count + 1 <= width {
+                        return (self[..<lidx] +
+                                    [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
+                                    self[index(after: ridx)...])
+                    }
+                    else {
+                        return self
+                    }
+                }
+            }
+        }
+        return self
+    }*/
 }
 
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {

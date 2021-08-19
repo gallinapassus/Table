@@ -22,7 +22,7 @@ public struct Txt : ExpressibleByStringLiteral {
             lines = string.compressedWords(string, width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         case .char:
-            lines = string.split(to: width)
+            lines = Substring(string).split(to: width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         case .cut:
             switch width {
@@ -56,7 +56,7 @@ public struct Txt : ExpressibleByStringLiteral {
                 if string.count > width {
                     let head = width / 2
                     let tail = width - 1 - head
-                    lines = ["\(string.prefix(head))…\(string.suffix(tail))".split(to: width).first?.render(to: width, alignment: self.alignment ?? alignment) ?? ""]
+                    lines = [(string.prefix(head) + "…" + string.suffix(tail)).split(to: width).first?.render(to: width, alignment: self.alignment ?? alignment) ?? ""]
                 }
                 else {
                     lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
