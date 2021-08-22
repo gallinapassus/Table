@@ -121,29 +121,26 @@ public struct Tbl {
 
 
         // Top frame
-        if frameRenderingOptions.contains(.topFrame), (hasTitle || hasVisibleColumns || (hasVisibleColumns && hasData)) {
+        if frameRenderingOptions.contains(.topFrame),
+           (hasTitle || hasVisibleColumns || (hasVisibleColumns && hasData)) {
+            into.append(lPad)
+            into.append(frameStyle.topLeftCorner.element(for: frameRenderingOptions))
             if hasTitle {
-                into.append(lPad)
-                into.append(frameStyle.topLeftCorner.element(for: frameRenderingOptions))
                 into.append(
                     String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
                            count: titleColumnWidth)
                 )
-                into.append(frameStyle.topRightCorner.element(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
             }
             else if (hasHeaderLabels && hasVisibleColumns) || hasData {
-                into.append(lPad)
-                into.append(frameStyle.topLeftCorner.element(for: frameRenderingOptions))
                 into.append(
                     actualColumns.map({
                         String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
                                count: $0.width.rawValue)
                     }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                 )
-                into.append(frameStyle.topRightCorner.element(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
             }
+            into.append(frameStyle.topRightCorner.element(for: frameRenderingOptions))
+            into.append("\(rPad)\n")
         }
 
 
@@ -166,31 +163,26 @@ public struct Tbl {
             // Divider between title and column headers -or-
             // divider between title and data
 
-            if (hasVisibleColumns && hasHeaderLabels) || hasData || hasTitle,
-               frameRenderingOptions.contains(.insideHorizontalFrame) {
+            if frameRenderingOptions.contains(.insideHorizontalFrame),
+               (hasVisibleColumns && hasHeaderLabels) || hasData || hasTitle {
+                into.append(lPad)
+                into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                 if hasVisibleColumns && (hasHeaderLabels || hasData) {
-                    into.append(lPad)
-                    into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                     into.append(
                         actualColumns.filter({ $0.width > .hidden }).map({
                             String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                    count: $0.width.rawValue)
                         }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
-                    into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
                 }
                 else {
-                    into.append(lPad)
-                    into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                     into.append(
                         String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                count: titleColumnWidth)
                 )
-                    into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
-
                 }
+                into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
+                into.append("\(rPad)\n")
             }
         }
 
@@ -220,21 +212,17 @@ public struct Tbl {
 
             // Divider, before data
             if frameRenderingOptions.contains(.insideHorizontalFrame) {
-                if hasHeaderLabels && hasVisibleColumns { // --+--
-                    into.append(lPad)
-                    into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
+                into.append(lPad)
+                into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
+                if hasHeaderLabels && hasVisibleColumns {
                     into.append(
                         actualColumns.filter({ $0.width > .hidden }).map({
                             String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                    count: $0.width.rawValue)
                         }).joined(separator: frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
-                    into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
                 }
-                else if title != nil { // --v--
-                    into.append(lPad)
-                    into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
+                else if title != nil {
                     if hasVisibleColumns {
                         into.append(
                             actualColumns.filter({ $0.width > .hidden }).map({
@@ -249,9 +237,9 @@ public struct Tbl {
                                    count: titleColumnWidth)
                         )
                     }
-                    into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
                 }
+                into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
+                into.append("\(rPad)\n")
             }
         }
 
@@ -269,6 +257,8 @@ public struct Tbl {
         let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
         let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
         let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
+        let lastValidIndex = data.index(before: data.endIndex)
+        let actualVisibleColumnCount = actualColumns.filter({ $0.width > .hidden }).count
         // Main loop to render row/column data
         for (i,row) in data.enumerated() {
             //let a0 = DispatchTime.now().uptimeNanoseconds
@@ -307,8 +297,7 @@ public struct Tbl {
                     }
                 })
                 .reduce(0, { Swift.max($0, $1) })
-//            let missingColumnCount = Swift.max(0, (columns.count - columnized.count))
-            let missingColumnCount = Swift.max(0, (actualColumns.filter({ $0.width > .hidden }).count - columnized.count))
+            let missingColumnCount = Swift.max(0, actualVisibleColumnCount - columnized.count)
             let currentCount = columnized.count
             //let a1 = DispatchTime.now().uptimeNanoseconds
             for k in 0..<missingColumnCount {
@@ -327,7 +316,7 @@ public struct Tbl {
                 into.append(rightVerticalSeparator)
                 into.append("\(rPad)\n")
             }
-            if i != data.index(before: data.endIndex), frameRenderingOptions.contains(.insideHorizontalFrame) {
+            if i != lastValidIndex, frameRenderingOptions.contains(.insideHorizontalFrame) {
                 //into.append("ins" + insideDivider)
                 into.append(lPad)
                 into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
@@ -345,40 +334,32 @@ public struct Tbl {
 
         // Bottom frame
         if frameRenderingOptions.contains(.bottomFrame) {
+            into.append(lPad)
+            into.append(frameStyle.bottomLeftCorner.element(for: frameRenderingOptions))
             if hasVisibleColumns {
                 if data.count > 0 {
-                    into.append(lPad)
-                    into.append(frameStyle.bottomLeftCorner.element(for: frameRenderingOptions))
                     into.append(
                         actualColumns.filter({ $0.width > .hidden }).map({
                             String(repeating: frameStyle.bottomHorizontalSeparator.element(for: frameRenderingOptions),
                                    count: $0.width.rawValue)
                         }).joined(separator: frameStyle.bottomHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
-                    into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
                 }
                 else {
-                    into.append(lPad)
-                    into.append(frameStyle.bottomLeftCorner.element(for: frameRenderingOptions))
                     into.append(
                         String(repeating: frameStyle.bottomHorizontalSeparator.element(for: frameRenderingOptions),
                                count: titleColumnWidth)
                     )
-                    into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-                    into.append("\(rPad)\n")
                 }
             }
             else {
-                into.append(lPad)
-                into.append(frameStyle.bottomLeftCorner.element(for: frameRenderingOptions))
                 into.append(
                     String(repeating: frameStyle.bottomHorizontalSeparator.element(for: frameRenderingOptions),
                            count: titleColumnWidth)
                 )
-                into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
             }
+            into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
+            into.append("\(rPad)\n")
         }
     }
     public func render(leftPad:String = "", rightPad:String = "") -> String {
