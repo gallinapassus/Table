@@ -40,12 +40,7 @@ final class TableTests: XCTestCase {
         }
         do {
             let table = Tbl(nil, columns: [], data: data)
-            XCTAssertEqual(table.render(),
-                           """
-                           ++
-                           ++
-
-                           """)
+            XCTAssertEqual(table.render(), "")
         }
         do {
             let table = Tbl("Title", columns: [], data: data)
@@ -1279,6 +1274,71 @@ final class TableTests: XCTestCase {
             }
         }
     }
+    func test_columnHide() {
+        do {
+            // Columns can be hidden with Width.hidden
+            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let columns = [Col("Col1"), Col("Col2", width: .hidden), Col("Col3")]
+            let table = Tbl("Title", columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +--------+
+                           | Title  |
+                           +-+------+
+                           |C|Col3  |
+                           |o|      |
+                           |l|      |
+                           |1|      |
+                           +-+------+
+                           |#|######|
+                           +-+------+
+                           |*|******|
+                           +-+------+
+
+                           """)
+        }
+        do {
+            // Columns can be hidden with Width.hidden
+            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3")]
+            let table = Tbl("Title", columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +------+
+                           |Title |
+                           +------+
+                           |Col3  |
+                           +------+
+                           |######|
+                           +------+
+                           |******|
+                           +------+
+
+                           """)
+        }
+        do {
+            // Columns can be hidden with Width.hidden
+            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
+            let table = Tbl("Title", columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +-----+
+                           |Title|
+                           +-----+
+
+                           """)
+        }
+        do {
+            // Columns can be hidden with Width.hidden
+            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(), "")
+        }
+    }
+    // MARK: -
+    // MARK: Performance tests
     lazy var perfDataSource:[[Txt]] = {
         let src = [
             ["A blessing in disguise", "by itself"],
@@ -1306,7 +1366,6 @@ final class TableTests: XCTestCase {
         }
         return result
     }()
-    // MARK: -
     // MacBook Pro (15-inch, 2016)
     // Processor 2,9 GHz Quad-Core Intel Core i7
     // Memory 16GB 2133 MHz LPDDR3
@@ -1314,10 +1373,9 @@ final class TableTests: XCTestCase {
     // macOS Big Sur 11.5.2
     // Xcode version 12.5.1 (12E507)
     // Apple Swift version 5.4.2 (swiftlang-1205.0.28.2 clang-1205.0.19.57)
-
     func testPerformanceCharWrapping() {
         var data:[[Txt]] = []
-        for _ in 0..<2 { // 64000 rows
+        for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
         }
 
@@ -1326,7 +1384,7 @@ final class TableTests: XCTestCase {
             Col(width: 6, alignment: .topCenter, wrapping: .char, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 0,620...0,655 seconds
+        // average should be within the range of 0,630...0,650 seconds
 
         measure {
             // Tbl.init is intentionally included as part of the
@@ -1336,7 +1394,7 @@ final class TableTests: XCTestCase {
     }
     func testPerformanceCutWrapping() {
         var data:[[Txt]] = []
-        for _ in 0..<2 { // 50000 rows, two columns
+        for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
         }
 
@@ -1345,7 +1403,7 @@ final class TableTests: XCTestCase {
             Col(width: 6, alignment: .topCenter, wrapping: .cut, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 0,330...0,340 seconds
+        // average should be within the range of 0,350...0,370 seconds
 
         measure {
             // Tbl.init is intentionally included as part of the
@@ -1355,7 +1413,7 @@ final class TableTests: XCTestCase {
     }
     func testPerformanceWordWrapping() {
         var data:[[Txt]] = []
-        for _ in 0..<2 { // 50000 rows, two columns
+        for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
         }
 
@@ -1364,7 +1422,7 @@ final class TableTests: XCTestCase {
             Col(width: 6, alignment: .topCenter, wrapping: .word, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 1,750...1,810 seconds
+        // average should be within the range of 1,750...1,850 seconds
 
         measure {
             // Tbl.init is intentionally included as part of the
