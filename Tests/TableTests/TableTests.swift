@@ -119,7 +119,7 @@ final class TableTests: XCTestCase {
     }
     func test_autofillMissingDataCells() {
         do {
-            let data:[[Txt]] = [["#"], ["#", "#"], ["#", "#", "#"]]
+            let data:[[Txt]] = [["A"], ["B", "C"], ["D", "E", "F"]]
             let columns = [Col("Col1", width: 4),
                            Col("Col2", width: 4, alignment: .topRight),
                            Col("Col3", width: 4)]
@@ -129,11 +129,11 @@ final class TableTests: XCTestCase {
                            +----+----+----+
                            |Col1|Col2|Col3|
                            +----+----+----+
-                           |#   |    |    |
+                           |A   |    |    |
                            +----+----+----+
-                           |#   |   #|    |
+                           |B   |   C|    |
                            +----+----+----+
-                           |#   |   #|#   |
+                           |D   |   E|F   |
                            +----+----+----+
 
                            """)
@@ -1277,7 +1277,11 @@ final class TableTests: XCTestCase {
     func test_columnHide() {
         do {
             // Columns can be hidden with Width.hidden
-            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let data:[[Txt]] = [
+                ["#"],
+                ["@", "@@"],
+                ["*", "**", "******"]
+            ]
             let columns = [Col("Col1"), Col("Col2", width: .hidden), Col("Col3")]
             let table = Tbl("Title", columns: columns, data: data)
             XCTAssertEqual(table.render(),
@@ -1290,7 +1294,9 @@ final class TableTests: XCTestCase {
                            |l|      |
                            |1|      |
                            +-+------+
-                           |#|######|
+                           |#|      |
+                           +-+------+
+                           |@|      |
                            +-+------+
                            |*|******|
                            +-+------+
