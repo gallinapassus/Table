@@ -120,6 +120,14 @@ public struct Tbl {
             .filter({ $0.isNewline == false })
 
 
+        // Assign elements before entering "busy" loop,
+        // so that they are not evaluated each iteration
+        let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
+        let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
+        let l = "\(lPad)\(leftVerticalSeparator)"
+        let r = "\(rightVerticalSeparator)\(rPad)\n"
+        let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
+
         // Top frame
         if frameRenderingOptions.contains(.topFrame),
            (hasTitle || hasVisibleColumns || (hasVisibleColumns && hasData)) {
@@ -151,12 +159,9 @@ public struct Tbl {
                 .verticallyAligned
 
             for f in alignedTitle {
-                into.append(
-                    lPad +
-                        frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions) +
-                        f.joined(separator: frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)) +
-                        frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions) +
-                        "\(rPad)\n")
+                into.append(l)
+                into.append(f.joined(separator: frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)))
+                into.append(r)
             }
 
 
@@ -179,7 +184,7 @@ public struct Tbl {
                     into.append(
                         String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
                                count: titleColumnWidth)
-                )
+                    )
                 }
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
                 into.append("\(rPad)\n")
@@ -200,12 +205,11 @@ public struct Tbl {
                 .dropFirst(0) // <= Convert Array to ArraySlice
                 .alignVertically
             for f in alignedColumnHeaders {
-                into.append(
-                    lPad +
-                        frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions) +
-                        f.joined(separator: frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)) +
-                        frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions) +
-                        "\(rPad)\n")
+                into.append(lPad)
+                into.append(frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions))
+                into.append(f.joined(separator: frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)))
+                into.append(frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions))
+                into.append("\(rPad)\n")
             }
 
 
@@ -252,13 +256,10 @@ public struct Tbl {
         var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
-        // Assign elements before entering "busy" loop,
-        // so that they are not evaluated each iteration
-        let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
-        let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
-        let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
         let lastValidIndex = data.index(before: data.endIndex)
-        let actualVisibleColumnCount = actualColumns.filter({ $0.width > .hidden }).count
+        let actualVisibleColumns = actualColumns.filter({ $0.width != .hidden })
+        let actualVisibleColumnCount = actualVisibleColumns.count
+
         // Main loop to render row/column data
         for (i,row) in data.enumerated() {
             //let a0 = DispatchTime.now().uptimeNanoseconds
@@ -301,7 +302,8 @@ public struct Tbl {
             let currentCount = columnized.count
             //let a1 = DispatchTime.now().uptimeNanoseconds
             for k in 0..<missingColumnCount {
-                let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width.rawValue) // TODO: Precalc these!
+                let len = actualVisibleColumns[currentCount + k].width.rawValue
+                let emptyLineFragment = String(repeating: " ", count: len)
                 columnized.append(
                     HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
                                         alignment: .topLeft,
@@ -310,11 +312,9 @@ public struct Tbl {
             }
             //let a2 = DispatchTime.now().uptimeNanoseconds
             for columnData in columnized.prefix(actualColumns.count).alignVertically {
-                into.append(lPad)
-                into.append(leftVerticalSeparator)
+                into.append(l)
                 into.append(columnData.joined(separator: insideVerticalSeparator))
-                into.append(rightVerticalSeparator)
-                into.append("\(rPad)\n")
+                into.append(r)
             }
             if i != lastValidIndex, frameRenderingOptions.contains(.insideHorizontalFrame) {
                 //into.append("ins" + insideDivider)

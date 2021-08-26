@@ -158,7 +158,7 @@ extension Array where Element == Substring {
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {
     internal func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
         return (self.first ?? Element()).indices.map { index in
-            self.map{ $0[index] }
+            self.map { $0[index] }
         }
     }
 }
@@ -178,19 +178,19 @@ extension ArraySlice where Element == HorizontallyAligned {
     internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
         /*let height = filter({ $0.wrapping != .fit }).reduce(0, { Swift.max($0, $1.lines.count) })*/
-        let foo:[ArraySlice<String>] = map {
+        let fragments:[ArraySlice<String>] = map {
             guard $0.lines.count != height else {
                 return ArraySlice<String>($0.lines)
             }
             return align($0, forHeight: height)
         }
-        return foo.transposed()
+        return fragments.transposed()
     }
 }
 internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
-    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count)
     let ret:[String]
+    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
         ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)
