@@ -192,7 +192,7 @@ internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) ->
     }
     let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     let ret:[String]
-    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
+//    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
         ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)

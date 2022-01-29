@@ -263,11 +263,11 @@ public struct Tbl {
         var cacheMisses:Int = 0
         // Assign elements before entering "busy" loop,
         // so that they are not evaluated each iteration
-        let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
-        let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
-        let l = lPad + leftVerticalSeparator
-        let r = rightVerticalSeparator + rPad + "\n"
-        let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
+//        let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
+//        let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
+//        let l = lPad + leftVerticalSeparator
+//        let r = rightVerticalSeparator + rPad + "\n"
+//        let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
         let lastValidIndex = data.index(before: data.endIndex)
         let actualVisibleColumns = actualColumns.filter({ $0.width != .hidden })
         let actualVisibleColumnCount = actualVisibleColumns.count
