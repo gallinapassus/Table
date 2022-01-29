@@ -160,7 +160,7 @@ extension Array where Element == Substring {
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {
     internal func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
         return (self.first ?? Element()).indices.map { index in
-            self.map{ $0[index] }
+            self.map { $0[index] }
         }
     }
 }
@@ -182,7 +182,6 @@ extension ArraySlice where Element == HorizontallyAligned {
             //print("align", $0.lines, height)
             return align($0, forHeight: height)
         }
-        //print(fragments)
         return fragments.transposed()
     }
 }
@@ -193,6 +192,7 @@ internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) ->
     }
     let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     let ret:[String]
+    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
         ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)
