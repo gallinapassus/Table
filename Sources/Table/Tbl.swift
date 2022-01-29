@@ -1,3 +1,5 @@
+import Foundation
+
 public struct Tbl {
     public let data:[[Txt]]
     public let columns:[Col]
@@ -146,15 +148,15 @@ public struct Tbl {
 
         // Title
         if let title = title {
-            let alignedTitle = title
-                .fragment(fallback: .middleCenter, width: titleColumnWidth, wrapping: .word)
-                .verticallyAligned
+            let alignedTitle = title.fragment(for: Col(width: .value(titleColumnWidth), alignment: title.alignment ?? .middleCenter, wrapping: title.wrapping ?? .word, contentHint: .unique))
+                //.fragment(fallback: .middleCenter, width: titleColumnWidth, wrapping: .word)
+                //.verticallyAligned
 
-            for f in alignedTitle {
+            for fragment in alignedTitle.lines {
                 into.append(
                     lPad +
                         frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions) +
-                        f.joined(separator: frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)) +
+                        fragment +
                         frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions) +
                         "\(rPad)\n")
             }
@@ -256,68 +258,81 @@ public struct Tbl {
         // so that they are not evaluated each iteration
         let leftVerticalSeparator = frameStyle.leftVerticalSeparator.element(for: frameRenderingOptions)
         let rightVerticalSeparator = frameStyle.rightVerticalSeparator.element(for: frameRenderingOptions)
+        let l = lPad + leftVerticalSeparator
+        let r = rightVerticalSeparator + rPad + "\n"
         let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
         let lastValidIndex = data.index(before: data.endIndex)
-        let actualVisibleColumnCount = actualColumns.filter({ $0.width > .hidden }).count
+        let actualVisibleColumns = actualColumns.filter({ $0.width != .hidden })
+        let actualVisibleColumnCount = actualVisibleColumns.count
+        let visibleColumnIndexes = actualColumns
+            .enumerated()
+            .filter({ $0.element.width > .hidden })
+            .map({ $0.offset })
+            .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
         // Main loop to render row/column data
+        /*
+        var cost1:UInt64 = 0
+        var cost2:UInt64 = 0
+        var cost3:UInt64 = 0
+         */
         for (i,row) in data.enumerated() {
             //let a0 = DispatchTime.now().uptimeNanoseconds
-            var columnized:ContiguousArray<HorizontallyAligned> = []
-            let maxHeight = row
-                .prefix(columns.count)
-                .enumerated()
-                .map({ j,col in
-                    if actualColumns[j].width == .hidden {
-                        return 0
-                    }
-                    if actualColumns[j].contentHint == .repetitive {
+            var columnized:ArraySlice<HorizontallyAligned> = []
+            let maxHeight:Int = visibleColumnIndexes
+                .filter { $0 < row.count }
+                .map {
+                    if actualColumns[$0].contentHint == .repetitive {
 
                         // Combine width & alignment
-                        let u32:UInt32 = (UInt32(actualColumns[j].width.rawValue) << 16) +
-                            UInt32(col.alignment?.rawValue ?? actualColumns[j].alignment.rawValue)
+                        let u32:UInt32 = (UInt32(actualColumns[$0].width.rawValue) << 16) +
+                            UInt32(row[$0].alignment?.rawValue ?? actualColumns[$0].alignment.rawValue)
 
-                        if let fromCache = cache[u32]?[col.string.hashValue] {
+                        if let fromCache = cache[u32]?[row[$0].string.hashValue] {
                             columnized.append(fromCache)
                             cacheHits += 1
                             return fromCache.lines.count
                         }
                         else {
-                            let fragmented = col.fragment(for: actualColumns[j])
+                            let fragmented = row[$0].fragment(for: actualColumns[$0])
                             // Write to cache
-                            cache[u32, default:[:]][col.string.hashValue] = fragmented
+                            cache[u32, default:[:]][row[$0].string.hashValue] = fragmented
                             columnized.append(fragmented)
                             cacheMisses += 1
                             return fragmented.lines.count
                         }
                     }
                     else {
-                        let fragmented = col.fragment(for: actualColumns[j])
+                        let fragmented = row[$0].fragment(for: actualColumns[$0])
                         columnized.append(fragmented)
                         return fragmented.lines.count
                     }
-                })
+                }
                 .reduce(0, { Swift.max($0, $1) })
             let missingColumnCount = Swift.max(0, actualVisibleColumnCount - columnized.count)
             let currentCount = columnized.count
             //let a1 = DispatchTime.now().uptimeNanoseconds
+//            print(row.map { $0.string },
+//                  "missingColumnCount", missingColumnCount,
+//                  actualColumns.map { $0.width.rawValue },
+//                  columnized.map { $0.lines }, terminator: " -> ")
             for k in 0..<missingColumnCount {
-                let emptyLineFragment = "".render(to: actualColumns[currentCount + k].width.rawValue) // TODO: Precalc these!
+                let len = actualVisibleColumns[currentCount + k].width.rawValue
+                let emptyLineFragment = String(repeating: " ", count: len)
+//                let emptyLineFragment = "".render(to: actualColumns.filter({ $0.width != .hidden })[currentCount + k].width.rawValue) // TODO: Precalc these!
+//                print("add '\(emptyLineFragment)' to index", currentCount + k, terminator: " -> ")
                 columnized.append(
                     HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
                                         alignment: .topLeft,
                                         width: actualColumns[currentCount + k].width)
                 )
             }
+//            print(columnized.map { $0.lines }.transposed())
+
             //let a2 = DispatchTime.now().uptimeNanoseconds
             for columnData in columnized.prefix(actualColumns.count).alignVertically {
-                into.append(lPad)
-                into.append(leftVerticalSeparator)
-                into.append(columnData.joined(separator: insideVerticalSeparator))
-                into.append(rightVerticalSeparator)
-                into.append("\(rPad)\n")
+                into.append(l + columnData.joined(separator: insideVerticalSeparator) + r)
             }
             if i != lastValidIndex, frameRenderingOptions.contains(.insideHorizontalFrame) {
-                //into.append("ins" + insideDivider)
                 into.append(lPad)
                 into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                 into.append(
@@ -329,8 +344,13 @@ public struct Tbl {
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
                 into.append("\(rPad)\n")
             }
+            /*
+            let a3 = DispatchTime.now().uptimeNanoseconds
+            cost1 += (a1 - a0)
+            cost2 += (a2 - a1)
+            cost3 += (a3 - a2)
+             */
         }
-
 
         // Bottom frame
         if frameRenderingOptions.contains(.bottomFrame) {
@@ -361,6 +381,11 @@ public struct Tbl {
             into.append(frameStyle.bottomRightCorner.element(for: frameRenderingOptions))
             into.append("\(rPad)\n")
         }
+        /*
+        print("missing column count cost", Double(cost1) / 1_000_000, "ms")
+        print("           maxHeight cost", Double(cost2) / 1_000_000, "ms")
+        print("              output cost", Double(cost3) / 1_000_000, "ms")
+         */
     }
     public func render(leftPad:String = "", rightPad:String = "") -> String {
         var result = ""

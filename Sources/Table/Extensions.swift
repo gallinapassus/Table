@@ -41,13 +41,13 @@ extension String {
     }
     func words(to width:Int) -> [Substring] {
 
-        /* Original implementation:
+        /* Original implementation: */
          let wds = self
              .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
              .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
          return wds
-         */
-
+         
+        /*
         let customSplitted:[Substring] = fragment(where: { c in
             let notExcludedFromPunctuation:Bool = c.isWhitespace == false && c != "\"" && c != "'" && c.isCurrencySymbol == false
             return c.isPunctuation && notExcludedFromPunctuation
@@ -59,17 +59,18 @@ extension String {
         }
         let wds = splittedAtWhitespaces
             .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-        return wds
+        return wds*/
     }
     internal func compressedWords(_ str:String, _ width:Int) -> [Substring] {
         words(to: width).compress(to: width)
     }
 }
 extension String {
+
     func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
-        guard width > 0 else {
-            return self
-        }
+//        guard width > 0 else {
+//            return self
+//        }
         guard self.count < width else {
             return String(self.prefix(width))
         }
@@ -88,6 +89,7 @@ extension String {
 }
 
 extension Substring {
+
     func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
         String(self).render(to: width, alignment: alignment, padding: with)
     }
@@ -162,34 +164,34 @@ extension Array where Element: RangeReplaceableCollection, Element.Element:Colle
         }
     }
 }
+/*
 extension Array where Element == Txt {
     internal func fragment(for column:Col) -> [HorizontallyAligned] {
         map { $0.fragment(for: column) }
     }
-}
-/*
-extension Array where Element == HorizontallyAligned {
-    internal var alignVertically:[[String]] {
-        let height = reduce(0, { Swift.max($0, $1.lines.count) })
-        return map { align($0, forHeight: height) }.transposed()
-    }
 }*/
 extension ArraySlice where Element == HorizontallyAligned {
+    @inline(__always)
     internal var alignVertically:[[String]] {
         let height = reduce(0, { Swift.max($0, $1.lines.count) })
-        /*let height = filter({ $0.wrapping != .fit }).reduce(0, { Swift.max($0, $1.lines.count) })*/
-        let foo:[ArraySlice<String>] = map {
+        let fragments:[ArraySlice<String>] = map {
             guard $0.lines.count != height else {
+                //print("here", $0.lines.count, height, ArraySlice<String>($0.lines))
                 return ArraySlice<String>($0.lines)
             }
+            //print("align", $0.lines, height)
             return align($0, forHeight: height)
         }
-        return foo.transposed()
+        //print(fragments)
+        return fragments.transposed()
     }
 }
 internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
+    let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count/*horizontallyAligned.width.rawValue*/)
+    guard padAmount > 0 else {
+        return horizontallyAligned.lines.prefix(forHeight)
+    }
     let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
-    let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count)
     let ret:[String]
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
