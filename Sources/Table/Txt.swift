@@ -14,7 +14,7 @@ public struct Txt : ExpressibleByStringLiteral {
         self.alignment = nil
         self.wrapping = nil
     }
-    internal func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
+    private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
         precondition(width >= 0, "Negative widths are not allowed here.")
         let lines:[String]
         switch wrapping {
