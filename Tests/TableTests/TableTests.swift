@@ -1342,6 +1342,92 @@ final class TableTests: XCTestCase {
             XCTAssertEqual(table.render(), "")
         }*/
     }
+    func test_csv() {
+        do {
+            let expected:[String] = [
+            """
+            A;Hidden;C;
+            1;2;3;
+            4;5;;
+            
+            """,
+            
+            """
+            A;C;
+            1;3;
+            4;;
+            
+            """,
+            
+            """
+            1;2;3;
+            4;5;;
+            
+            """,
+            
+            """
+            1;3;
+            4;;
+            
+            """,
+            ]
+            let table = Tbl("*", columns: [Col("A"),Col("Hidden", width: .hidden), Col("C")], data: [["1", "2", "3"],["4", "5"]], frameRenderingOptions: .all)
+            var i = 0
+            for withHeaders in [true, false] {
+                for includeHidden in [true, false] {
+                    guard expected.indices.contains(i) else {
+                        XCTFail("Test case internal error. Missing expected data.")
+                        continue
+                    }
+                    XCTAssertEqual(expected[i],
+                                   table.csv(delimiter: ";", withColumnHeaders: withHeaders, includingHiddenColumns: includeHidden))
+                    i += 1
+                }
+            }
+        }
+        do {
+            let expected:[String] = [
+            """
+            ;;;
+            1;2;3;
+            4;5;;
+            
+            """,
+            
+            """
+            ;;;
+            1;2;3;
+            4;5;;
+
+            """,
+            
+            """
+            1;2;3;
+            4;5;;
+            
+            """,
+            
+            """
+            1;2;3;
+            4;5;;
+            
+            """,
+            ]
+            let table = Tbl("*", columns: [], data: [["1", "2", "3"],["4", "5"]], frameRenderingOptions: .all)
+            var i = 0
+            for withHeaders in [true, false] {
+                for includeHidden in [true, false] {
+                    guard expected.indices.contains(i) else {
+                        XCTFail("Test case internal error. Missing expected data.")
+                        continue
+                    }
+                    XCTAssertEqual(expected[i],
+                                   table.csv(delimiter: ";", withColumnHeaders: withHeaders, includingHiddenColumns: includeHidden))
+                    i += 1
+                }
+            }
+        }
+    }
     // MARK: -
     // MARK: Performance tests
     lazy var perfDataSource:[[Txt]] = {

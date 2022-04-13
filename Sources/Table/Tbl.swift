@@ -397,4 +397,40 @@ public struct Tbl {
         render(into: &result, leftPad: leftPad, rightPad: rightPad)
         return result
     }
+    public func csv(delimiter:String = ";", withColumnHeaders:Bool = true, includingHiddenColumns:Bool = false) -> String {
+        var result = ""
+        if withColumnHeaders {
+            print(columns
+                .filter({
+                    if includingHiddenColumns {
+                        return true
+                    }
+                    else {
+                        return $0.width != .hidden
+                    }
+                })
+                .map({ $0.header?.string ?? ""})
+                .joined(separator: delimiter) + delimiter,
+                  to: &result)
+        }
+
+        for row in data {
+            var rowElements:[String] = []
+            for (i,col) in row.enumerated() {
+                if columns.indices.contains(i) == true {
+                    if columns[i].width == .hidden && includingHiddenColumns == false {
+                        continue
+                    }
+                    else {
+                        rowElements.append(col.string)
+                    }
+                }
+                else {
+                    continue
+                }
+            }
+            print(rowElements.joined(separator: delimiter) + String(repeating: delimiter, count: Swift.max(0, columns.count - row.count)) + delimiter, to: &result)
+        }
+        return result
+    }
 }
