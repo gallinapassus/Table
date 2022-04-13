@@ -400,7 +400,7 @@ public struct Tbl {
     public func csv(delimiter:String = ";", withColumnHeaders:Bool = true, includingHiddenColumns:Bool = false) -> String {
         var result = ""
         if withColumnHeaders {
-            print(columns
+            let headers = columns
                 .filter({
                     if includingHiddenColumns {
                         return true
@@ -410,24 +410,20 @@ public struct Tbl {
                     }
                 })
                 .map({ $0.header?.string ?? ""})
-                .joined(separator: delimiter) + delimiter,
-                  to: &result)
+                .joined(separator: delimiter)
+            print(headers + (headers.isEmpty ? "" : delimiter), to: &result)
         }
 
         for row in data {
             var rowElements:[String] = []
             for (i,col) in row.enumerated() {
-                if columns.indices.contains(i) == true {
-                    if columns[i].width == .hidden && includingHiddenColumns == false {
-                        continue
-                    }
-                    else {
-                        rowElements.append(col.string)
-                    }
+                guard columns.indices.contains(i) else {
+                    break
                 }
-                else {
+                guard (columns[i].width == .hidden && includingHiddenColumns == false) == false else {
                     continue
                 }
+                rowElements.append(col.string)
             }
             print(rowElements.joined(separator: delimiter) + String(repeating: delimiter, count: Swift.max(0, columns.count - row.count)) + delimiter, to: &result)
         }
