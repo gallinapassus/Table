@@ -1,5 +1,5 @@
 [![Tests](https://github.com/gallinapassus/Table/actions/workflows/table-ci.yml/badge.svg)](https://github.com/gallinapassus/Table/actions/workflows/table-ci.yml)
-![Version](https://img.shields.io/static/v1?label=Version&message=0.0.1&color=green)
+![Version](https://img.shields.io/static/v1?label=Version&message=0.0.4&color=green)
 
 # Table
 Simple table
