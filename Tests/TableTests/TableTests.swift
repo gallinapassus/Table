@@ -10,6 +10,7 @@ final class TableTests: XCTestCase {
             Col("Col 2", width: 2, alignment: .topLeft),
             Col(Txt("Col 3"), width: 3, alignment: .topLeft),
         ]
+        
         do {
             let table = Tbl("Title", columns: columns, data: data)
             XCTAssertEqual(table.render(),
@@ -113,6 +114,76 @@ final class TableTests: XCTestCase {
                            +---------------+-----------------------+
                            |Quick brown fox|jumps over the lazy dog|
                            +---------------+-----------------------+
+
+                           """)
+        }
+        do {
+            let data:[[Txt]] = [
+                ["Value 1", "Value 2", ""],
+                ["A", "B"],
+                ["", "", "Hidden"],
+                ["C", "D", "", ""],
+                []
+            ]
+            let columns:[Col] = [
+                Col(Txt("Header A"), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt("Header B"), width: 4, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt("Hidden"), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt(""), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                ]
+            let table = Tbl("Title", columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +------------+
+                           |   Title    |
+                           +-------+----+
+                           |Header |Head|
+                           |A      |er B|
+                           +-------+----+
+                           |       |Valu|
+                           |Value 1|e 2 |
+                           +-------+----+
+                           |A      |B   |
+                           +-------+----+
+                           +-------+----+
+                           |C      |D   |
+                           +-------+----+
+                           +-------+----+
+                           
+                           """)
+        }
+        do {
+            let data:[[Txt]] = [
+                ["Value 1", "Value 2", ""],
+                ["A", "B"],
+                ["", "", "Hidden"],
+                ["C", "D", "", ""],
+                []
+            ]
+            let columns:[Col] = [
+                Col(Txt("Header A"), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt("Header B"), width: 4, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt("Hidden"), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(Txt(""), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                ]
+            let table = Tbl("Title", columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +-------------+
+                           |    Title    |
+                           +-------+----++
+                           |Header |Head||
+                           |A      |er B||
+                           +-------+----++
+                           |       |Valu||
+                           |Value 1|e 2 ||
+                           +-------+----++
+                           |A      |B   ||
+                           +-------+----++
+                           +-------+----++
+                           |C      |D   ||
+                           +-------+----++
+                           +-------+----++
 
                            """)
         }
@@ -1302,7 +1373,7 @@ final class TableTests: XCTestCase {
 
                            """)
         }
-        /*do {
+        do {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
             let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3")]
@@ -1340,7 +1411,7 @@ final class TableTests: XCTestCase {
             let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
             let table = Tbl(columns: columns, data: data)
             XCTAssertEqual(table.render(), "")
-        }*/
+        }
     }
     func test_csv() {
         do {
@@ -1428,6 +1499,13 @@ final class TableTests: XCTestCase {
             }
         }
     }
+    func test_maxColumnCount() {
+        let columns = Array(repeating: Col(), count: Int(UInt16.max))
+        let table = Tbl(columns: columns, data: [])
+        print(table.render())
+    }
+}
+final class TablePerformanceTests: XCTestCase {
     // MARK: -
     // MARK: Performance tests
     lazy var perfDataSource:[[Txt]] = {

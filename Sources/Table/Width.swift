@@ -1,11 +1,11 @@
 
 public enum Width : RawRepresentable, Equatable, Hashable, Comparable, ExpressibleByIntegerLiteral {
     public init?(rawValue: Int) {
-        let allowedRange = 1...Int16.max
-        if rawValue == -1 {
+        let allowedRange = 0...Int16.max
+        if rawValue == -2 {
             self = .auto
         }
-        else if rawValue == 0 {
+        else if rawValue == -1 {
             self = .hidden
         }
         else if let i16 = Int16(exactly: rawValue),
@@ -13,14 +13,14 @@ public enum Width : RawRepresentable, Equatable, Hashable, Comparable, Expressib
             self = .value(rawValue)
         }
         else {
-            fatalError("\(Self.self) must be in range \(allowedRange) or .auto or .hidden")
+            fatalError("\(Self.self) value must be in range \(allowedRange) or .auto or .hidden (\(rawValue) was given)")
         }
     }
 
     public var rawValue: Int {
         switch self {
-        case .auto: return -1
-        case .hidden: return 0
+        case .auto: return -2
+        case .hidden: return -1
         case let .value(i): return i
         }
     }

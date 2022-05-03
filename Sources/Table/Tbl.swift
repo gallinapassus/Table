@@ -14,21 +14,20 @@ public struct Tbl {
     public init(_ title:Txt? = nil, columns: [Col] = [], data:[[Txt]],
                 frameStyle:FrameElements = .default,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
+        precondition(columns.count <= UInt16.max, "Maximum column count is limited to \(UInt16.max).")
         if columns.isEmpty {
             // Let's treat empty column set as "automatic columns"
             let maxColCount = data.reduce(0, { Swift.max($0, $1.count) })
             if maxColCount == 0 {
-                // Actually, there is no data either, let's fake one
-                self.columns = [Col(width: .auto, alignment: .topLeft)]
+                // Actually, there is no data either, no columns then
+                self.columns = []
             }
             else {
                 self.columns = Array(repeating: Col(width: .auto, alignment: .topLeft), count: maxColCount)
             }
         }
         else {
-            // Silently cut-off the excess columns as
-            // Tbl supports only UInt16.max columns.
-            self.columns = Array(columns.prefix(Int(UInt16.max)))
+            self.columns = columns
         }
         self.data = data
         self.hasData = !data.isEmpty
@@ -38,21 +37,20 @@ public struct Tbl {
 
         // Calculate column widths for autowidth columns
         self.actualColumns = Tbl.calculateAutowidths(for: self.columns, from: data)
-        self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden })
+        self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && self.actualColumns.reduce(0, { $0 + $1.width.rawValue}) > 0
         self.hasHeaderLabels =   !actualColumns.allSatisfy({ $0.header == nil })
         self.hasTitle = title != nil
     }
     private static func calculateAutowidths(for columns:[Col], from data: [[Txt]]) -> [Col] {
-        // Figure out actual column widths (for columns which have
-        // specified width as 0 => autowidth)
-        if columns.allSatisfy({ $0.width > 0 }) {
+        // Figure out actual column widths
+        if columns.allSatisfy({ [Width.auto, .hidden].contains($0.width) == false }) {
             // No autowidths or hidden columns defined, use columns as they are
             return columns
         }
         else {
             // One or more columns are autowidth column -or- hidden column
             var tmp = columns
-            let recalc = columns.enumerated().compactMap({ columns[$0.offset].width.rawValue > Width.auto.rawValue ? nil : $0.offset })
+            let recalc = columns.enumerated().compactMap({ columns[$0.offset].width.rawValue != Width.auto.rawValue ? nil : $0.offset })
             for i in recalc {
                 for r in data {
                     guard r.count > i else { continue }
@@ -102,17 +100,20 @@ public struct Tbl {
         }
         var description: String { string }
     }
-    private var titleColumnWidth:Int {
-        let w = Swift.max(0, actualColumns
-            .reduce(0, { $0 + $1.width.rawValue }) +
-                            ((actualColumns
-                                .filter({ $0.width > .hidden }).count - 1) *
-                frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count))
-        if w == 0 {
+    private func calculateTitleColumnWidth() -> Int {
+        guard actualColumns.allSatisfy({ $0.width == .hidden }) == false else {
+            return title?.count ?? 0
+        }
+        
+        let visibleColumnCount = actualColumns.filter({ $0.width != .hidden}).count - 1
+        let calculatedWidth = actualColumns.filter({ $0.width != .hidden })
+            .reduce(Swift.max(0, visibleColumnCount) * frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count,
+                    { $0 + $1.width.rawValue })
+        if calculatedWidth == 0 {
             return title?.count ?? 0
         }
         else {
-            return w
+            return calculatedWidth
         }
     }
     public func render(into: inout String, leftPad:String = "", rightPad:String = "") {
@@ -129,7 +130,8 @@ public struct Tbl {
         let l = "\(lPad)\(leftVerticalSeparator)"
         let r = "\(rightVerticalSeparator)\(rPad)\n"
         let insideVerticalSeparator = frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions)
-
+        let titleColumnWidth = calculateTitleColumnWidth()
+        
         // Top frame
         if frameRenderingOptions.contains(.topFrame),
            (hasTitle || hasVisibleColumns || (hasVisibleColumns && hasData)) {
@@ -141,7 +143,7 @@ public struct Tbl {
                            count: titleColumnWidth)
                 )
             }
-            else if (hasHeaderLabels && hasVisibleColumns) || hasData {
+            else if (hasHeaderLabels && hasVisibleColumns) || (hasVisibleColumns && hasData) {
                 into.append(
                     actualColumns.map({
                         String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
@@ -273,7 +275,7 @@ public struct Tbl {
         let actualVisibleColumnCount = actualVisibleColumns.count
         let visibleColumnIndexes = actualColumns
             .enumerated()
-            .filter({ $0.element.width > .hidden })
+            .filter({ $0.element.width > .hidden || $0.element.width == .auto })
             .map({ $0.offset })
             .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
         // Main loop to render row/column data
