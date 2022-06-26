@@ -1,4 +1,4 @@
-public enum Width : /*RawRepresentable,*/ Equatable, Hashable, ExpressibleByIntegerLiteral {
+public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral {
 
     private static let allowedRange = 0...Int(Int16.max)
 
@@ -54,7 +54,6 @@ public enum Width : /*RawRepresentable,*/ Equatable, Hashable, ExpressibleByInte
         }
     }
     
-    //public typealias Int = Int
     public typealias IntegerLiteralType = Int
     case auto, hidden, value(Int), min(Int), max(Int), range(Range<Int>), `in`(ClosedRange<Int>)
 }
