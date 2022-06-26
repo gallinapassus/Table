@@ -2,16 +2,16 @@ public struct Txt : ExpressibleByStringLiteral {
     public typealias StringLiteralType = String
 
     public let string:String
-    public let alignment:Alignment?
+    public let align:Alignment?
     public let wrapping:Wrapping?
-    public init(_ str:String, alignment: Alignment? = nil, wrapping:Wrapping? = nil) {
+    public init(_ str:String, align: Alignment? = nil, wrapping:Wrapping? = nil) {
         self.string = str
-        self.alignment = alignment
+        self.align = align
         self.wrapping = wrapping
     }
     public init(stringLiteral:StringLiteralType) {
         self.string = stringLiteral
-        self.alignment = nil
+        self.align = nil
         self.wrapping = nil
     }
     private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
@@ -20,10 +20,10 @@ public struct Txt : ExpressibleByStringLiteral {
         switch wrapping {
         case .word:
             lines = string.compressedWords(string, width)
-                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+                .map { $0.render(to: width, alignment: self.align ?? alignment) }
         case .char:
             lines = Substring(string).split(to: width)
-                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+                .map { $0.render(to: width, alignment: self.align ?? alignment) }
         case .cut:
             switch width {
             case 0:
@@ -40,34 +40,34 @@ public struct Txt : ExpressibleByStringLiteral {
                     lines = ["\(string.prefix(1))…"]
                 }
                 else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                    lines = [string.render(to: width, alignment: self.align ?? alignment)]
                 }
             case 3:
                 if string.count > width {
                     lines = ["\(string.prefix(1))…\(string.suffix(1))"]
                 }
                 else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                    lines = [string.render(to: width, alignment: self.align ?? alignment)]
                 }
             default:
-                guard width > Width.auto.rawValue else {
+                guard width > Width.auto.value else {
                     fatalError("Negative widths are not allowed here.")
                 }
                 if string.count > width {
                     let head = width / 2
                     let tail = width - 1 - head
-                    lines = [(string.prefix(head) + "…" + string.suffix(tail)).split(to: width).first?.render(to: width, alignment: self.alignment ?? alignment) ?? ""]
+                    lines = [(string.prefix(head) + "…" + string.suffix(tail)).split(to: width).first?.render(to: width, alignment: self.align ?? alignment) ?? ""]
                 }
                 else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
+                    lines = [string.render(to: width, alignment: self.align ?? alignment)]
                 }
             }
         }
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col) -> HorizontallyAligned {
-        return self.fragment(fallback: self.alignment ?? column.alignment,
-                             width: column.width.rawValue,
+        return self.fragment(fallback: self.align ?? column.alignment,
+                             width: column.width.value,
                              wrapping: self.wrapping ?? column.wrapping)
     }
 }

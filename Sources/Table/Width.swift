@@ -1,6 +1,8 @@
-public enum Width : RawRepresentable, Equatable, Hashable, ExpressibleByIntegerLiteral {
-    
-    public var rawValue: Int {
+public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral {
+
+    private static let allowedRange = 0...Int(Int16.max)
+
+    public var value: Int {
         switch self {
         case .in: return -6
         case .range: return -5
@@ -12,36 +14,38 @@ public enum Width : RawRepresentable, Equatable, Hashable, ExpressibleByIntegerL
         }
     }
 
-    public init?(rawValue: Int) {
-        let allowedRange = 0...Int16.max
-        if rawValue == -2 {
+    public init(_ value: Int) {
+        if value == -2 {
             self = .auto
         }
-        else if rawValue == -1 {
+        else if value == -1 {
             self = .hidden
         }
-        else if let i16 = Int16(exactly: rawValue),
-                allowedRange.contains(i16) {
-            self = .value(rawValue)
-        }
         else {
-            fatalError("\(Self.self) value must be in range \(allowedRange) or .auto or .hidden (\(rawValue) was given)")
+            precondition(Self.allowedRange.contains(value),
+                         "\(Self.self) value must be in the range \(Self.allowedRange) or .auto or .hidden (\(value) was given)")
+            self = .value(value)
         }
     }
-
     public init(integerLiteral value: IntegerLiteralType) {
         precondition(value >= 0)
-        self = .value(value)
+        self.init(value)
     }
 
-    public init(range value:Range<RawValue>) {
+    public init(range value:Range<Int>) {
         precondition(value.lowerBound >= 0)
-        self = .range(value)
+        precondition(Int(Self.allowedRange.upperBound) >= value.upperBound)
+        if value.lowerBound.distance(to: value.upperBound) == 1 {
+            self = .value(value.lowerBound)
+        }
+        else {
+            self = .range(value)
+        }
     }
     
-    public init(range value:ClosedRange<RawValue>) {
+    public init(range value:ClosedRange<Int>) {
         precondition(value.lowerBound >= 0)
-        precondition(value.upperBound < RawValue.max)
+        precondition(value.upperBound < Int.max)
         if value.lowerBound == value.upperBound {
             self = .value(value.lowerBound)
         }
@@ -50,7 +54,6 @@ public enum Width : RawRepresentable, Equatable, Hashable, ExpressibleByIntegerL
         }
     }
     
-    public typealias RawValue = Int
-    public typealias IntegerLiteralType = RawValue
-    case auto, hidden, value(RawValue), min(RawValue), max(RawValue), range(Range<RawValue>), `in`(ClosedRange<RawValue>)
+    public typealias IntegerLiteralType = Int
+    case auto, hidden, value(Int), min(Int), max(Int), range(Range<Int>), `in`(ClosedRange<Int>)
 }

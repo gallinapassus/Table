@@ -190,7 +190,7 @@ internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) ->
     guard padAmount > 0 else {
         return horizontallyAligned.lines.prefix(forHeight)
     }
-    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
+    let hpad = String(repeating: " ", count: horizontallyAligned.width.value)
     let ret:[String]
 //    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     switch horizontallyAligned.alignment {
