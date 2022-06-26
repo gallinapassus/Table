@@ -197,21 +197,21 @@ extension FrameElements {
     }
     public static var roundedPadded: Self {
         FrameElements(
-            topLeftCorner:                        "╭──",
+            topLeftCorner:                        "╭─",
             topHorizontalSeparator:               "─",
-            topHorizontalVerticalSeparator:       "──┬──",
-            topRightCorner:                       "──╮",
-            leftVerticalSeparator:                "│  ",
-            rightVerticalSeparator:               "  │",
-            insideLeftVerticalSeparator:          "├──",
+            topHorizontalVerticalSeparator:       "─┬─",
+            topRightCorner:                       "─╮",
+            leftVerticalSeparator:                "│ ",
+            rightVerticalSeparator:               " │",
+            insideLeftVerticalSeparator:          "├─",
             insideHorizontalSeparator:            "─",
-            insideRightVerticalSeparator:         "──┤",
-            insideHorizontalVerticalSeparator:    "──┼──",
-            insideVerticalSeparator:              "  │  ",
-            bottomLeftCorner:                     "╰──",
+            insideRightVerticalSeparator:         "─┤",
+            insideHorizontalVerticalSeparator:    "─┼─",
+            insideVerticalSeparator:              " │ ",
+            bottomLeftCorner:                     "╰─",
             bottomHorizontalSeparator:            "─",
-            bottomHorizontalVerticalSeparator:    "──┴──",
-            bottomRightCorner:                    "──╯"
+            bottomHorizontalVerticalSeparator:    "─┴─",
+            bottomRightCorner:                    "─╯"
         )
     }
 }

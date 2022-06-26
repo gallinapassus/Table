@@ -55,16 +55,16 @@ final class TableTests: XCTestCase {
         }
     }
     func test_autoColumns() {
-        do {
-            let table = Tbl("Title", columns: [], data: [])
-            XCTAssertEqual(table.render(),
-                           """
-                           +-----+
-                           |Title|
-                           +-----+
-
-                           """)
-        }
+//        do {
+//            let table = Tbl("Title", columns: [], data: [])
+//            XCTAssertEqual(table.render(),
+//                           """
+//                           +-----+
+//                           |Title|
+//                           +-----+
+//
+//                           """)
+//        }
         do {
             let data:[[Txt]] = [["#"]]
             let table = Tbl("Title", data: data)
@@ -537,14 +537,14 @@ final class TableTests: XCTestCase {
 
                 """,
                 """
-                ╭───────────╮
-                │     *     │
-                ├─────┬─────┤
-                │  1  │  2  │
-                ├─────┼─────┤
-                │  3  │  4  │
-                ╰─────┴─────╯
-
+                ╭───────╮
+                │   *   │
+                ├───┬───┤
+                │ 1 │ 2 │
+                ├───┼───┤
+                │ 3 │ 4 │
+                ╰───┴───╯
+                
                 """,
                 "     \n  *  \n     \n 1 2 \n     \n 3 4 \n     \n",
                 """
@@ -1503,6 +1503,196 @@ final class TableTests: XCTestCase {
         let columns = Array(repeating: Col(), count: Int(UInt16.max))
         let table = Tbl(columns: columns, data: [])
         print(table.render())
+    }
+    func test_columnMin() {
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col("Col1", width: .min(4)), Col("Col2", width: .min(3)), Col("Col3", width: .min(2))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +----+---+---+
+                           |Col1|Col|Col|
+                           |    |2  |3  |
+                           +----+---+---+
+                           |#   |## |###|
+                           +----+---+---+
+                           
+                           """
+            )
+        }
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col(width: .min(4)), Col(width: .min(3)), Col(width: .min(2))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +----+---+---+
+                           |#   |## |###|
+                           +----+---+---+
+                           
+                           """
+            )
+        }
+    }
+    func test_columnMax() {
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col("Col1", width: .max(4)), Col("Col2", width: .max(3)), Col("Col3", width: .max(2))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +-+--+--+
+                           |C|Co|Co|
+                           |o|l2|l3|
+                           |l|  |  |
+                           |1|  |  |
+                           +-+--+--+
+                           |#|##|##|
+                           | |  |# |
+                           +-+--+--+
+
+                           """
+            )
+        }
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col(width: .max(4)), Col(width: .max(3)), Col(width: .max(2))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +-+--+--+
+                           |#|##|##|
+                           | |  |# |
+                           +-+--+--+
+                           
+                           """
+            )
+        }
+    }
+    func test_columnRange() {
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col("Col1", width: .range(3..<5)),
+                           Col("Col2", width: .range(2..<4)),
+                           Col("Col3", width: .range(1..<3))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +---+--+---+
+                           |Col|Co|Col|
+                           |1  |l2|3  |
+                           +---+--+---+
+                           |#  |##|###|
+                           +---+--+---+
+                           
+                           """
+            )
+        }
+        do {
+            let data:[[Txt]] = [["#", "#", "##", "###"], ["", "##", "#####", "####"]]
+            let columns = [Col(width: .range(3..<5)),
+                           Col(width: .range(3..<5)),
+                           Col(width: .in(2...3)),
+                           Col(width: .range(1..<3))]
+            let table = Tbl(columns: columns, data: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +---+---+---+---+
+                           |#  |#  |## |###|
+                           +---+---+---+---+
+                           |   |## |###|###|
+                           |   |   |## |#  |
+                           +---+---+---+---+
+                           
+                           """
+            )
+        }
+        do {
+            let data:[[Txt]] = [["#", "#", "##", "###", "###"], ["", "##", "#####", "####", "####"]]
+            let columns = [Col(width: .range(3..<5)),
+                           Col(width: Width(range: 3..<5)),
+                           Col(width: .in(2...3), alignment: .bottomCenter),
+                           Col(width: Width(range: 2...2), alignment: .bottomRight),
+                           Col(width: .range(1..<3))]
+            let table = Tbl(columns: columns, data: data,frameStyle: .roundedPadded)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭─────┬─────┬─────┬────┬─────╮
+                           │ #   │ #   │     │ ## │ ### │
+                           │     │     │ ##  │  # │     │
+                           ├─────┼─────┼─────┼────┼─────┤
+                           │     │ ##  │ ### │ ## │ ### │
+                           │     │     │ ##  │ ## │ #   │
+                           ╰─────┴─────┴─────┴────┴─────╯
+                           
+                           """
+            )
+        }
+    }
+    func test_README() {
+        do {
+            let data:[[Txt]] = [
+                ["123", Txt("x", alignment: .topLeft), Txt("x", alignment: .topCenter), Txt("x", alignment: .topRight)],
+                ["123", Txt("x", alignment: .middleLeft), Txt("x", alignment: .middleCenter), Txt("x", alignment: .middleRight)],
+                ["123", Txt("x", alignment: .bottomLeft), Txt("x", alignment: .bottomCenter), Txt("x", alignment: .bottomRight)],
+            ]
+            let width:Width = 5
+
+            let cols = [
+                Col("#", width: 1, alignment: .topLeft),
+                Col("Col 1", width: width, alignment: .bottomCenter),
+                Col("Col 2", width: width, alignment: .bottomCenter),
+                Col("Col 3", width: width, alignment: .bottomCenter),
+            ]
+            let table = Tbl("Table title",
+                            columns: cols,
+                            data: data,
+                            frameStyle: .roundedPadded)
+            var t = ""
+            table.render(into: &t)
+            print(t)
+            // Produces ->
+            //╭───────────────────────────╮
+            //│        Table title        │
+            //├───┬───────┬───────┬───────┤
+            //│ # │ Col 1 │ Col 2 │ Col 3 │
+            //├───┼───────┼───────┼───────┤
+            //│ 1 │ x     │   x   │     x │
+            //│ 2 │       │       │       │
+            //│ 3 │       │       │       │
+            //├───┼───────┼───────┼───────┤
+            //│ 1 │       │       │       │
+            //│ 2 │ x     │   x   │     x │
+            //│ 3 │       │       │       │
+            //├───┼───────┼───────┼───────┤
+            //│ 1 │       │       │       │
+            //│ 2 │       │       │       │
+            //│ 3 │ x     │   x   │     x │
+            //╰───┴───────┴───────┴───────╯
+            XCTAssertEqual(t,
+                           """
+                           ╭───────────────────────────╮
+                           │        Table title        │
+                           ├───┬───────┬───────┬───────┤
+                           │ # │ Col 1 │ Col 2 │ Col 3 │
+                           ├───┼───────┼───────┼───────┤
+                           │ 1 │ x     │   x   │     x │
+                           │ 2 │       │       │       │
+                           │ 3 │       │       │       │
+                           ├───┼───────┼───────┼───────┤
+                           │ 1 │       │       │       │
+                           │ 2 │ x     │   x   │     x │
+                           │ 3 │       │       │       │
+                           ├───┼───────┼───────┼───────┤
+                           │ 1 │       │       │       │
+                           │ 2 │       │       │       │
+                           │ 3 │ x     │   x   │     x │
+                           ╰───┴───────┴───────┴───────╯
+                           
+                           """
+            )
+        }
     }
 }
 final class TablePerformanceTests: XCTestCase {
