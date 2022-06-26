@@ -7,10 +7,10 @@ Simple table
 ```swift
 import Table
 
-let data:[[Txt]] = [
-    ["123", Txt("x", alignment: .topLeft), Txt("x", alignment: .topCenter), Txt("x", alignment: .topRight)],
-    ["123", Txt("x", alignment: .middleLeft), Txt("x", alignment: .middleCenter), Txt("x", alignment: .middleRight)],
-    ["123", Txt("x", alignment: .bottomLeft), Txt("x", alignment: .bottomCenter), Txt("x", alignment: .bottomRight)],
+let cells:[[Txt]] = [
+    ["123", Txt("x", align: .topLeft), Txt("x", align: .topCenter), Txt("x", align: .topRight)],
+    ["123", Txt("x", align: .middleLeft), Txt("x", align: .middleCenter), Txt("x", align: .middleRight)],
+    ["123", Txt("x", align: .bottomLeft), Txt("x", align: .bottomCenter), Txt("x", align: .bottomRight)],
 ]
 let width:Width = 5
 
@@ -22,8 +22,9 @@ let cols = [
 ]
 let table = Tbl("Table title",
                 columns: cols,
-                data: data,
+                cells: cells,
                 frameStyle: .roundedPadded)
+
 var t = ""
 table.render(into: &t)
 print(t)

@@ -11,13 +11,15 @@ public struct Tbl {
     private let hasVisibleColumns:Bool
     private let hasHeaderLabels:Bool
     private let hasTitle:Bool
-    public init(_ title:Txt? = nil, columns: [Col] = [], data:[[Txt]],
+    public init(_ title:Txt? = nil,
+                columns: [Col] = [],
+                cells:[[Txt]],
                 frameStyle:FrameElements = .default,
                 frameRenderingOptions:FrameRenderingOptions = .all) {
         precondition(columns.count <= UInt16.max, "Maximum column count is limited to \(UInt16.max).")
         if columns.isEmpty {
             // Let's treat empty column set as "automatic columns"
-            let maxColCount = data.reduce(0, { Swift.max($0, $1.count) })
+            let maxColCount = cells.reduce(0, { Swift.max($0, $1.count) })
             if maxColCount == 0 {
                 // Actually, there is no data either, no columns then
                 self.columns = []
@@ -29,15 +31,15 @@ public struct Tbl {
         else {
             self.columns = columns
         }
-        self.data = data
+        self.data = cells
         self.hasData = !data.isEmpty
         self.title = title
         self.frameStyle = frameStyle
         self.frameRenderingOptions = frameRenderingOptions
 
         // Calculate column widths for autowidth columns
-        self.actualColumns = Tbl.calculateAutowidths(for: self.columns, from: data)
-        self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && self.actualColumns.reduce(0, { $0 + $1.width.rawValue}) > 0
+        self.actualColumns = Tbl.calculateAutowidths(for: self.columns, from: cells)
+        self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && self.actualColumns.reduce(0, { $0 + $1.width.value}) > 0
         self.hasHeaderLabels =   !actualColumns.allSatisfy({ $0.header == nil })
         self.hasTitle = title != nil
     }
@@ -71,7 +73,7 @@ public struct Tbl {
                     lo = Swift.min(lo, Swift.max(r.lowerBound, row[i].count))
                     hi = Swift.max(lo, Swift.min(r.upperBound, row[i].count))
                 case .auto:
-                    tmp[i].width = .value(Swift.max(tmp[i].width.rawValue, row[i].count))
+                    tmp[i].width = .value(Swift.max(tmp[i].width.value, row[i].count))
                 case .value: continue
                 }
             }
@@ -83,12 +85,14 @@ public struct Tbl {
         }
         return tmp
     }
-    public init(_ title:String, columns: [Col], data:[[Txt]],
-                frameStyle:FrameElements = .default,
-                frameRenderingOptions:FrameRenderingOptions = .all) {
-        self.init(Txt(title, alignment: .middleCenter), columns: columns, data: data,
-                  frameStyle: frameStyle, frameRenderingOptions: frameRenderingOptions)
-    }
+//    public init(_ title:String,
+//                columns: [Col],
+//                data:[[Txt]],
+//                frameStyle:FrameElements = .default,
+//                frameRenderingOptions:FrameRenderingOptions = .all) {
+//        self.init(Txt(title, align: .middleCenter), columns: columns, textData: data,
+//                  frameStyle: frameStyle, frameRenderingOptions: frameRenderingOptions)
+//    }
     private class FrameElement : ExpressibleByStringLiteral, Collection, CustomStringConvertible {
         typealias StringLiteralType = String
         public typealias Index = String.Index
@@ -121,7 +125,7 @@ public struct Tbl {
         let visibleColumnCount = actualColumns.filter({ $0.width != .hidden}).count - 1
         let calculatedWidth = actualColumns.filter({ $0.width != .hidden })
             .reduce(Swift.max(0, visibleColumnCount) * frameStyle.insideVerticalSeparator.element(for: frameRenderingOptions).count,
-                    { $0 + $1.width.rawValue })
+                    { $0 + $1.width.value })
         if calculatedWidth == 0 {
             return title?.count ?? 0
         }
@@ -160,7 +164,7 @@ public struct Tbl {
                 into.append(
                     actualColumns.map({
                         String(repeating: frameStyle.topHorizontalSeparator.element(for: frameRenderingOptions),
-                               count: $0.width.rawValue)
+                               count: $0.width.value)
                     }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                 )
             }
@@ -171,7 +175,7 @@ public struct Tbl {
 
         // Title
         if let title = title {
-            let alignedTitle = title.fragment(for: Col(width: .value(titleColumnWidth), alignment: title.alignment ?? .middleCenter, wrapping: title.wrapping ?? .word, contentHint: .unique))
+            let alignedTitle = title.fragment(for: Col(width: .value(titleColumnWidth), alignment: title.align ?? .middleCenter, wrapping: title.wrapping ?? .word, contentHint: .unique))
                 //.fragment(fallback: .middleCenter, width: titleColumnWidth, wrapping: .word)
                 //.verticallyAligned
 
@@ -194,9 +198,9 @@ public struct Tbl {
                 into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                 if hasVisibleColumns && (hasHeaderLabels || hasData) {
                     into.append(
-                        actualColumns.filter({ $0.width.rawValue > Width.hidden.rawValue }).map({
+                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             return String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
-                                          count: Swift.max(0, $0.width.rawValue))
+                                          count: Swift.max(0, $0.width.value))
                         }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
                 }
@@ -218,7 +222,7 @@ public struct Tbl {
         if hasHeaderLabels, hasVisibleColumns {
 
             let alignedColumnHeaders = actualColumns
-                .filter({ $0.width.rawValue > Width.hidden.rawValue })
+                .filter({ $0.width.value > Width.hidden.value })
                 .compactMap({ column in
                     return (column.header ?? Txt("")).fragment(for: column)
                 })
@@ -240,18 +244,18 @@ public struct Tbl {
                 into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                 if hasHeaderLabels && hasVisibleColumns {
                     into.append(
-                        actualColumns.filter({ $0.width.rawValue > Width.hidden.rawValue }).map({
+                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
-                                   count: $0.width.rawValue)
+                                   count: $0.width.value)
                         }).joined(separator: frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
                 }
                 else if title != nil {
                     if hasVisibleColumns {
                         into.append(
-                            actualColumns.filter({ $0.width.rawValue > Width.hidden.rawValue }).map({
+                            actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                                 String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
-                                       count: $0.width.rawValue)
+                                       count: $0.width.value)
                             }).joined(separator: frameStyle.topHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                         )
                     }
@@ -288,7 +292,7 @@ public struct Tbl {
         let actualVisibleColumnCount = actualVisibleColumns.count
         let visibleColumnIndexes = actualColumns
             .enumerated()
-            .filter({ $0.element.width.rawValue > Width.hidden.rawValue || $0.element.width == .auto })
+            .filter({ $0.element.width.value > Width.hidden.value || $0.element.width == .auto })
             .map({ $0.offset })
             .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
         // Main loop to render row/column data
@@ -306,8 +310,8 @@ public struct Tbl {
                     if actualColumns[$0].contentHint == .repetitive {
 
                         // Combine width & alignment
-                        let u32:UInt32 = (UInt32(actualColumns[$0].width.rawValue) << 16) +
-                            UInt32(row[$0].alignment?.rawValue ?? actualColumns[$0].alignment.rawValue)
+                        let u32:UInt32 = (UInt32(actualColumns[$0].width.value) << 16) +
+                            UInt32(row[$0].align?.rawValue ?? actualColumns[$0].alignment.rawValue)
 
                         if let fromCache = cache[u32]?[row[$0].string.hashValue] {
                             columnized.append(fromCache)
@@ -338,7 +342,7 @@ public struct Tbl {
 //                  actualColumns.map { $0.width.rawValue },
 //                  columnized.map { $0.lines }, terminator: " -> ")
             for k in 0..<missingColumnCount {
-                let len = actualVisibleColumns[currentCount + k].width.rawValue
+                let len = actualVisibleColumns[currentCount + k].width.value
                 let emptyLineFragment = String(repeating: " ", count: len)
                 columnized.append(
                     HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
@@ -356,9 +360,9 @@ public struct Tbl {
                 into.append(lPad)
                 into.append(frameStyle.insideLeftVerticalSeparator.element(for: frameRenderingOptions))
                 into.append(
-                    actualColumns.filter({ $0.width.rawValue > Width.hidden.rawValue }).map({
+                    actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                         String(repeating: frameStyle.insideHorizontalSeparator.element(for: frameRenderingOptions),
-                               count: $0.width.rawValue)
+                               count: $0.width.value)
                     }).joined(separator: frameStyle.insideHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                 )
                 into.append(frameStyle.insideRightVerticalSeparator.element(for: frameRenderingOptions))
@@ -379,9 +383,9 @@ public struct Tbl {
             if hasVisibleColumns {
                 if data.count > 0 {
                     into.append(
-                        actualColumns.filter({ $0.width.rawValue > Width.hidden.rawValue }).map({
+                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             String(repeating: frameStyle.bottomHorizontalSeparator.element(for: frameRenderingOptions),
-                                   count: $0.width.rawValue)
+                                   count: $0.width.value)
                         }).joined(separator: frameStyle.bottomHorizontalVerticalSeparator.element(for: frameRenderingOptions))
                     )
                 }
@@ -443,5 +447,17 @@ public struct Tbl {
             print(rowElements.joined(separator: delimiter) + String(repeating: delimiter, count: Swift.max(0, columns.count - row.count)) + delimiter, to: &result)
         }
         return result
+    }
+}
+extension Tbl {
+    public init(_ title:Txt? = nil,
+                columns:[Col] = [],
+                strings:[[String]],
+                frameStyle:FrameElements = .default,
+                frameRenderingOptions:FrameRenderingOptions = .all) {
+        self.init(title, columns: columns,
+                  cells: strings.map({ $0.map({ Txt($0) })}),
+                  frameStyle: frameStyle,
+                  frameRenderingOptions: frameRenderingOptions)
     }
 }
