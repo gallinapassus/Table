@@ -1,5 +1,17 @@
+public enum Width : RawRepresentable, Equatable, Hashable, ExpressibleByIntegerLiteral {
+    
+    public var rawValue: Int {
+        switch self {
+        case .in: return -6
+        case .range: return -5
+        case .max: return -4
+        case .min: return -3
+        case .auto: return -2
+        case .hidden: return -1
+        case let .value(i): return i
+        }
+    }
 
-public enum Width : RawRepresentable, Equatable, Hashable, Comparable, ExpressibleByIntegerLiteral {
     public init?(rawValue: Int) {
         let allowedRange = 0...Int16.max
         if rawValue == -2 {
@@ -17,20 +29,28 @@ public enum Width : RawRepresentable, Equatable, Hashable, Comparable, Expressib
         }
     }
 
-    public var rawValue: Int {
-        switch self {
-        case .auto: return -2
-        case .hidden: return -1
-        case let .value(i): return i
+    public init(integerLiteral value: IntegerLiteralType) {
+        precondition(value >= 0)
+        self = .value(value)
+    }
+
+    public init(range value:Range<RawValue>) {
+        precondition(value.lowerBound >= 0)
+        self = .range(value)
+    }
+    
+    public init(range value:ClosedRange<RawValue>) {
+        precondition(value.lowerBound >= 0)
+        precondition(value.upperBound < RawValue.max)
+        if value.lowerBound == value.upperBound {
+            self = .value(value.lowerBound)
+        }
+        else {
+            self = .in(value)
         }
     }
-
-    public init(integerLiteral value: RawValue) {
-        self = Width(rawValue: value)!
-//        self = .value(Swift.min(Int(Int16.max), value))
-    }
-
+    
     public typealias RawValue = Int
     public typealias IntegerLiteralType = RawValue
-    case auto, hidden, value(Int)
+    case auto, hidden, value(RawValue), min(RawValue), max(RawValue), range(Range<RawValue>), `in`(ClosedRange<RawValue>)
 }
