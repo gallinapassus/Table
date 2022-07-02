@@ -27,7 +27,6 @@ let table = Tbl("Table title",
 var t = ""
 table.render(into: &t)
 print(t)
-// Produces ->
 //╭───────────────────────────╮
 //│        Table title        │
 //├───┬───────┬───────┬───────┤
@@ -45,4 +44,40 @@ print(t)
 //│ 2 │       │       │       │
 //│ 3 │ x     │   x   │     x │
 //╰───┴───────┴───────┴───────╯
+```
+
+Another simple table with DSL (domain specific language).
+
+```swift
+import Table
+
+let table = Tbl("Summer Olympics") {
+                
+    FrameElements.rounded
+    FrameRenderingOptions.all
+    
+    Columns {
+        Col("Year", width: .auto)
+        Col("Host", width: .in(5...25), wrapping: .word)
+        Col("Country")
+    }
+    
+    Rows {
+        ["1952", "Helsinki", "Finland"]
+        ["1956", "Stockholm", "Sweden"]
+        ["1960", "Rome", "Italy"]
+    }
+}
+print(table.render())
+// ╭──────────────────────╮
+// │   Summer Olympics    │
+// ├────┬─────────┬───────┤
+// │Year│Host     │Country│
+// ├────┼─────────┼───────┤
+// │1952│Helsinki │Finland│
+// ├────┼─────────┼───────┤
+// │1956│Stockholm│Sweden │
+// ├────┼─────────┼───────┤
+// │1960│Rome     │Italy  │
+// ╰────┴─────────┴───────╯
 ```
