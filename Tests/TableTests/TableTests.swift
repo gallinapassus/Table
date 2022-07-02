@@ -2619,6 +2619,53 @@ final class TableTests: XCTestCase {
                            """
             )
         }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col("Year", width: .auto)
+                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            print(table.render())
+            // ╭──────────────────────╮
+            // │   Summer Olympics    │
+            // ├────┬─────────┬───────┤
+            // │Year│Host     │Country│
+            // ├────┼─────────┼───────┤
+            // │1952│Helsinki │Finland│
+            // ├────┼─────────┼───────┤
+            // │1956│Stockholm│Sweden │
+            // ├────┼─────────┼───────┤
+            // │1960│Rome     │Italy  │
+            // ╰────┴─────────┴───────╯
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭──────────────────────╮
+                           │   Summer Olympics    │
+                           ├────┬─────────┬───────┤
+                           │Year│Host     │Country│
+                           ├────┼─────────┼───────┤
+                           │1952│Helsinki │Finland│
+                           ├────┼─────────┼───────┤
+                           │1956│Stockholm│Sweden │
+                           ├────┼─────────┼───────┤
+                           │1960│Rome     │Italy  │
+                           ╰────┴─────────┴───────╯
+                           
+                           """
+            )
+        }
     }
 }
 final class WidthTests: XCTestCase {
