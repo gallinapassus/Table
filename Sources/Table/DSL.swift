@@ -73,4 +73,34 @@ public enum TblBuilder {
                                   _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
         (frameStyle, frameRenderingOptions, columnDefinitions.data, data.rows)
     }
+    public static func buildBlock(_ frameRenderingOptions: FrameRenderingOptions,
+                                  _ columnDefinitions: Columns,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (.default, frameRenderingOptions, columnDefinitions.data, data.rows)
+    }
+    public static func buildBlock(_ frameStyle: FrameElements,
+                                  _ columnDefinitions: Columns,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (frameStyle, .all, columnDefinitions.data, data.rows)
+    }
+    public static func buildBlock(_ columnDefinitions: Columns,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (.default, .all, columnDefinitions.data, data.rows)
+    }
+    public static func buildBlock(_ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (.default, .all, [], data.rows)
+    }
+    public static func buildBlock(_ frameStyle: FrameElements,
+                                  _ frameRenderingOptions: FrameRenderingOptions,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (frameStyle, frameRenderingOptions, [], data.rows)
+    }
+    public static func buildBlock(_ frameStyle: FrameElements,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (frameStyle, .all, [], data.rows)
+    }
+    public static func buildBlock(_ frameRenderingOptions: FrameRenderingOptions,
+                                  _ data: Rows) -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]]) {
+        (.default, frameRenderingOptions, [], data.rows)
+    }
 }

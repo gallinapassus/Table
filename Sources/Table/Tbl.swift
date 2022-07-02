@@ -463,11 +463,11 @@ extension Tbl {
     }
     // DSL
     public init(_ title:Txt?,
-                @TblBuilder _ makeTable: () -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]])) {
+                @TblBuilder _ makeTable: () -> (FrameElements?, FrameRenderingOptions?, [Col], [[Txt]])) {
         let (frameStyle, options, columns, data) = makeTable()
         self.init(title, columns: columns,
                   cells: data,
-                  frameStyle: frameStyle,
-                  frameRenderingOptions: options)
+                  frameStyle: frameStyle ?? .default,
+                  frameRenderingOptions: options ?? .all)
     }
 }
