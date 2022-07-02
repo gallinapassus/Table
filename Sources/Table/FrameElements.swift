@@ -1,5 +1,10 @@
-public struct FrameElements {
-    public struct Element : CustomStringConvertible, ExpressibleByStringLiteral {
+public struct FrameElements : Equatable, Codable {
+    
+    public struct Element : CustomStringConvertible, ExpressibleByStringLiteral, Equatable, Codable {
+        public static func == (lhs: FrameElements.Element, rhs: FrameElements.Element) -> Bool {
+            lhs.element == rhs.element
+        }
+        
         public typealias StringLiteralType = String
 
         public var description: String { element }
@@ -13,6 +18,17 @@ public struct FrameElements {
         }
         public init(_ value:String) {
             self.element = value
+        }
+        public enum CodingKeys : CodingKey {
+            case element
+        }
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.element = try container.decode(String.self, forKey: .element)
+        }
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(self.element, forKey: .element)
         }
         public func element(for options:FrameRenderingOptions) -> String {
             return customEvaluation?(options) ?? defaultLogic(options)

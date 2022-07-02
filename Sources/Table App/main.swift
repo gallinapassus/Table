@@ -18,12 +18,12 @@ for i in 0..<50000 {
     data.append(cols)
 }
 let cols = [
-    Col(Txt("Column 1", align: .topLeft),      width: 8,  alignment: .topLeft),
-    Col(Txt("Hidden 2", align: .topCenter),    width: .hidden,  alignment: .topRight),
-    Col(Txt("Column 3", align: .bottomCenter), width: 12,  alignment: .topCenter),
-    Col(Txt("Hidden 4", align: .bottomCenter), width: .hidden,  alignment: .topCenter),
-    Col(Txt("Column 5", align: .bottomCenter), width: 16,  alignment: .topCenter),
-    Col(Txt("Hidden 6", align: .bottomCenter), width: .hidden,  alignment: .topLeft),
+    Col(header: Txt("Column 1", align: .topLeft),      width: 8,  columnDefaultAlignment: .topLeft),
+    Col(header: Txt("Hidden 2", align: .topCenter),    width: .hidden,  columnDefaultAlignment: .topRight),
+    Col(header: Txt("Column 3", align: .bottomCenter), width: 12,  columnDefaultAlignment: .topCenter),
+    Col(header: Txt("Hidden 4", align: .bottomCenter), width: .hidden,  columnDefaultAlignment: .topCenter),
+    Col(header: Txt("Column 5", align: .bottomCenter), width: 16,  columnDefaultAlignment: .topCenter),
+    Col(header: Txt("Hidden 6", align: .bottomCenter), width: .hidden,  columnDefaultAlignment: .topLeft),
 ]
 let table = Tbl("On narrow table this title wraps on multiple lines?", columns: cols, cells: data)
 var t:String = ""

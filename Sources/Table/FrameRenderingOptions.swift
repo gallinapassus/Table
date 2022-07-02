@@ -1,5 +1,5 @@
 
-public struct FrameRenderingOptions : OptionSet, Hashable {
+public struct FrameRenderingOptions : OptionSet, Hashable, Codable {
     public typealias RawValue = Int
     public var rawValue:RawValue
     public init(rawValue: RawValue) {

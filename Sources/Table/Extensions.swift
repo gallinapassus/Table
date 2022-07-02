@@ -45,21 +45,7 @@ extension String {
          let wds = self
              .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
              .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-         return wds
-         
-        /*
-        let customSplitted:[Substring] = fragment(where: { c in
-            let notExcludedFromPunctuation:Bool = c.isWhitespace == false && c != "\"" && c != "'" && c.isCurrencySymbol == false
-            return c.isPunctuation && notExcludedFromPunctuation
-        })
-        let splittedAtWhitespaces:[Substring] = customSplitted
-            .flatMap { $0.split(maxSplits: $0.count,
-                                omittingEmptySubsequences: true,
-                                whereSeparator: { $0.isWhitespace })
-        }
-        let wds = splittedAtWhitespaces
-            .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-        return wds*/
+         return wds         
     }
     internal func compressedWords(_ str:String, _ width:Int) -> [Substring] {
         words(to: width).compress(to: width)
@@ -67,10 +53,7 @@ extension String {
 }
 extension String {
 
-    func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
-//        guard width > 0 else {
-//            return self
-//        }
+    func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
         guard self.count < width else {
             return String(self.prefix(width))
         }
@@ -90,7 +73,7 @@ extension String {
 
 extension Substring {
 
-    func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
+    func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
         String(self).render(to: width, alignment: alignment, padding: with)
     }
 }
@@ -192,7 +175,6 @@ internal func align(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) ->
     }
     let hpad = String(repeating: " ", count: horizontallyAligned.width.value)
     let ret:[String]
-//    let hpad = String(repeating: " ", count: horizontallyAligned.width.rawValue)
     switch horizontallyAligned.alignment {
     case .topLeft, .topRight, .topCenter:
         ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)

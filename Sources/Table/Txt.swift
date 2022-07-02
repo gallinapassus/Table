@@ -1,4 +1,4 @@
-public struct Txt : ExpressibleByStringLiteral {
+public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
     public typealias StringLiteralType = String
 
     public let string:String
@@ -66,7 +66,7 @@ public struct Txt : ExpressibleByStringLiteral {
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col) -> HorizontallyAligned {
-        return self.fragment(fallback: self.align ?? column.alignment,
+        return self.fragment(fallback: self.align ?? column.columnAlignment,
                              width: column.width.value,
                              wrapping: self.wrapping ?? column.wrapping)
     }

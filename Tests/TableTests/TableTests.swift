@@ -1,70 +1,222 @@
 import XCTest
 import Table
 
+final class AlignmentTests: XCTestCase {
+    func test_Default() {
+        XCTAssertEqual(Alignment.default, Alignment.topLeft)
+        for c in Alignment.allCases.dropFirst() {
+            XCTAssertFalse(Alignment.default == c)
+        }
+    }
+    func test_Codable() {
+        do {
+            for target in Alignment.allCases + [.default] {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                let encoded = try encoder.encode(target)
+                let decoder = JSONDecoder()
+                let decoded = try decoder.decode(Alignment.self, from: encoded)
+                XCTAssertEqual(target, decoded)
+            }
+        } catch let e {
+            dump(e)
+        }
+    }
+}
 final class TableTests: XCTestCase {
     let pangram = "Quick brown fox jumps over the lazy dog"
     func test_noData() {
-        let data:[[Txt]] = []
+        var data:[[Txt]] = []
         let columns = [
-            Col("Col 1", width: 1, alignment: .topLeft),
-            Col("Col 2", width: 2, alignment: .topLeft),
-            Col(Txt("Col 3"), width: 3, alignment: .topLeft),
+            Col(header: "Col 1", width: 1, columnDefaultAlignment: .topLeft),
+            Col(header: "Col 2", width: 2, columnDefaultAlignment: .topLeft),
+            Col(header: Txt("Col 3"), width: 3, columnDefaultAlignment: .topLeft),
         ]
         
         do {
-            let table = Tbl("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data, frameStyle: .rounded)
             XCTAssertEqual(table.render(),
                            """
-                           +--------+
-                           | Title  |
-                           +-+--+---+
-                           |C|Co|Col|
-                           |o|l |3  |
-                           |l|2 |   |
-                           |1|  |   |
-                           +-+--+---+
+                           ╭────────╮
+                           │ Title  │
+                           ├─┬──┬───┤
+                           │C│Co│Col│
+                           │o│l │3  │
+                           │l│2 │   │
+                           │1│  │   │
+                           ├─┼──┼───┤
+                           ╰─┴──┴───╯
+                           
+                           """)
+        }
+        do {
+            data = [[]]
+            let table = Tbl("Title", columns: columns, cells: data, frameStyle: .rounded)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭────────╮
+                           │ Title  │
+                           ├─┬──┬───┤
+                           │C│Co│Col│
+                           │o│l │3  │
+                           │l│2 │   │
+                           │1│  │   │
+                           ├─┼──┼───┤
+                           ╰─┴──┴───╯
+                           
+                           """)
+        }
+        do {
+            data = []
+            let table = Tbl(nil, columns: columns, cells: data, frameStyle: .rounded)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭─┬──┬───╮
+                           │C│Co│Col│
+                           │o│l │3  │
+                           │l│2 │   │
+                           │1│  │   │
+                           ├─┼──┼───┤
+                           ╰─┴──┴───╯
 
                            """)
         }
         do {
-            let table = Tbl(nil, columns: columns, cells: data)
+            data = [[]]
+            let table = Tbl(nil, columns: columns, cells: data, frameStyle: .rounded)
             XCTAssertEqual(table.render(),
                            """
-                           +-+--+---+
-                           |C|Co|Col|
-                           |o|l |3  |
-                           |l|2 |   |
-                           |1|  |   |
-                           +-+--+---+
+                           ╭─┬──┬───╮
+                           │C│Co│Col│
+                           │o│l │3  │
+                           │l│2 │   │
+                           │1│  │   │
+                           ├─┼──┼───┤
+                           ╰─┴──┴───╯
 
                            """)
         }
         do {
             let table = Tbl(nil, columns: [], cells: data)
-            XCTAssertEqual(table.render(), "")
-        }
-        do {
-            let table = Tbl("Title", columns: [], cells: data)
             XCTAssertEqual(table.render(),
                            """
-                           +-----+
-                           |Title|
-                           +-----+
+                           ++
+                           ++
+                           
+                           """
+            )
+        }
+        do {
+            let table = Tbl(columns: [], cells: data, frameRenderingOptions: .none)
+            XCTAssertEqual(table.render(),
+                           """
+                           
+                           """
+            )
+        }
+        do {
+            let table = Tbl("Title", columns: [], cells: data, frameStyle: .roundedPadded)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭──╮
+                           │  │
+                           ├──┤
+                           ╰──╯
+                           
+                           """)
+        }
+        do {
+            let expected:[String] = [
+                """
+                ┌┐
+                └┘
+
+                """,
+                """
+                ┌┐
+                └┘
+                
+                """,
+                """
+                ┌┬┐
+                └┴┘
+                
+                """,
+                """
+                ┌┬┬┐
+                └┴┴┘
+                
+                """,
+            ]
+            for i in 0...3 {
+                let columns = Array(repeating: Col(width: .value(0)), count: i)
+                let table = Tbl(columns: columns, cells: [[]], frameStyle: .squared)
+                XCTAssertEqual(table.render(), expected[i])
+            }
+        }
+        do {
+            let expected:[String] = [
+                """
+                ┌┐
+                └┘
+
+                """,
+                """
+                ┌┐
+                ││
+                ├┤
+                └┘
+                
+                """,
+                """
+                ┌┬┐
+                │││
+                ├┼┤
+                └┴┘
+                
+                """,
+                """
+                ┌┬┬┐
+                ││││
+                ├┼┼┤
+                └┴┴┘
+                
+                """,
+            ]
+            for i in 0...3 {
+                let columns = Array(repeating: Col(string: "#", width: .value(0)), count: i)
+                let table = Tbl(columns: columns, cells: [[]], frameStyle: .squared)
+                XCTAssertEqual(table.render(), expected[i])
+            }
+        }
+        do {
+            let table = Tbl("Title", columns: ["#", "#", "#", "#"], cells: [], frameStyle: .rounded, frameRenderingOptions: .all)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭───╮
+                           │Tit│
+                           │le │
+                           ├┬┬┬┤
+                           │││││
+                           ├┼┼┼┤
+                           ╰┴┴┴╯
 
                            """)
         }
     }
     func test_autoColumns() {
-//        do {
-//            let table = Tbl("Title", columns: [], data: [])
-//            XCTAssertEqual(table.render(),
-//                           """
-//                           +-----+
-//                           |Title|
-//                           +-----+
-//
-//                           """)
-//        }
+        
+        do {
+            let table = Tbl("Title", columns: [], cells: [])
+            XCTAssertEqual(table.render(),
+                           """
+                           ++
+                           ||
+                           ++
+                           ++
+
+                           """)
+        }
         do {
             let data:[[Txt]] = [["#"]]
             let table = Tbl("Title", cells: data)
@@ -126,10 +278,10 @@ final class TableTests: XCTestCase {
                 []
             ]
             let columns:[Col] = [
-                Col(Txt("Header A"), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt("Header B"), width: 4, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt("Hidden"), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt(""), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Header A"), width: .auto, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Header B"), width: 4, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Hidden"), width: .hidden, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt(""), width: .hidden, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
                 ]
             let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
@@ -161,10 +313,10 @@ final class TableTests: XCTestCase {
                 []
             ]
             let columns:[Col] = [
-                Col(Txt("Header A"), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt("Header B"), width: 4, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt("Hidden"), width: .hidden, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
-                Col(Txt(""), width: .auto, alignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Header A"), width: .auto, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Header B"), width: 4, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt("Hidden"), width: .hidden, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
+                Col(header: Txt(""), width: .auto, columnDefaultAlignment: .bottomLeft, wrapping: .char, contentHint: .unique),
                 ]
             let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
@@ -191,9 +343,9 @@ final class TableTests: XCTestCase {
     func test_autofillMissingDataCells() {
         do {
             let data:[[Txt]] = [["A"], ["B", "C"], ["D", "E", "F"]]
-            let columns = [Col("Col1", width: 4),
-                           Col("Col2", width: 4, alignment: .topRight),
-                           Col("Col3", width: 4)]
+            let columns = [Col(header: "Col1", width: 4),
+                           Col(header: "Col2", width: 4, columnDefaultAlignment: .topRight),
+                           Col(header: "Col3", width: 4)]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -213,7 +365,7 @@ final class TableTests: XCTestCase {
     func test_leftAndRightPadding() {
         do {
             let data:[[Txt]] = [["#"]]
-            let columns = [Col("Col1", width: 4)]
+            let columns = [Col(header: "Col1", width: 4)]
             let table = Tbl("Ttle", columns: columns, cells: data)
             XCTAssertEqual(table.render(leftPad: "[L]", rightPad: "[R]"),
                            """
@@ -237,7 +389,7 @@ final class TableTests: XCTestCase {
             // data contains elements for three.
             // In the test below, "###" must not be shown
             let data:[[Txt]] = [["#", "##", "###"]]
-            let columns = [Col("Col1", width: 4), Col("Col2", width: 4, alignment: .topRight)]
+            let columns = [Col(header: "Col1", width: 4), Col(header: "Col2", width: 4, columnDefaultAlignment: .topRight)]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -256,7 +408,7 @@ final class TableTests: XCTestCase {
             // full content of the data (maximum width of the
             // data elements in the column).
             let data:[[Txt]] = [["#", "##", "######"]]
-            let columns = [Col("Col1"), Col("Col2"), Col("Col3")]
+            let columns = [Col(header: "Col1"), Col(header: "Col2"), Col(header: "Col3")]
             let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -276,7 +428,7 @@ final class TableTests: XCTestCase {
     }
     func test_horizontalAlignment() {
         do {
-            let columns = Alignment.allCases.map({ Col(Txt("\($0)"), width: 3, alignment: $0) })
+            let columns = Alignment.allCases.map({ Col(header: Txt("\($0)"), width: 3, columnDefaultAlignment: $0) })
             let data:[[Txt]] = [Array(repeating: Txt("#"), count: columns.count)]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
@@ -295,7 +447,7 @@ final class TableTests: XCTestCase {
     }
     func test_verticalAlignment() {
         do {
-            let columns = Alignment.allCases.map({ Col(Txt("\($0)"),width: 3, alignment: $0) })
+            let columns = Alignment.allCases.map({ Col(header: Txt("\($0)"),width: 3, columnDefaultAlignment: $0) })
             let data:[[Txt]] = [["123"] + Array(repeating: Txt("#"), count: columns.count)]
             let table = Tbl(columns: [Col(width: 1)] + columns, cells: data)
             XCTAssertEqual(table.render(),
@@ -491,7 +643,7 @@ final class TableTests: XCTestCase {
         do {
             // Wrpping taken from Txt
             let data = [[Txt("RawDefinition(\"def\", width: 5, symbol: $dir!, fieldNumber: 253, value: [1, 2, 3])", wrapping: .word)]]
-            let table = Tbl(columns: [Col(width: 9, alignment: .topLeft)], cells: data)
+            let table = Tbl(columns: [Col(width: 9, columnDefaultAlignment: .topLeft)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---------+
@@ -1126,9 +1278,576 @@ final class TableTests: XCTestCase {
             ]
             XCTAssertEqual(combinations.count, expected.count)
             for (i, opt) in combinations.enumerated() {
-                let table = Tbl("*", columns: [Col("A"),Col("B")], cells: [["1", "2"],["3", "4"]], frameRenderingOptions: opt)
+                let table = Tbl("*", columns: [Col(header: "A"),Col(header: "B")], cells: [["1", "2"],["3", "4"]], frameRenderingOptions: opt)
                 // Next line: correct answer generator ;-)
                 // print("[ // \(opt.optionsInEffect)\n" + table.render().split(separator: "\n").map({ "\"\($0)\"" }).joined(separator: ",\n") + "\n],")
+                XCTAssertEqual(table.render(), expected[i].joined(separator: "\n") + "\n")
+            }
+        }
+    }
+    func test_frameRenderingOptions2() {
+        do {
+            let combinations:[FrameRenderingOptions] = (0...63).map({ FrameRenderingOptions(rawValue: $0) })
+            let expected:[[String]] = [
+                [ //
+                "Title",
+                "ACE  ",
+                "123  ",
+                "45end"
+                ],
+                [ // topFrame
+                "─────",
+                "Title",
+                "ACE  ",
+                "123  ",
+                "45end"
+                ],
+                [ // bottomFrame
+                "Title",
+                "ACE  ",
+                "123  ",
+                "45end",
+                "─────"
+                ],
+                [ // topFrame, bottomFrame
+                "─────",
+                "Title",
+                "ACE  ",
+                "123  ",
+                "45end",
+                "─────"
+                ],
+                [ // leftFrame
+                "│Title",
+                "│ACE  ",
+                "│123  ",
+                "│45end"
+                ],
+                [ // topFrame, leftFrame
+                "╭─────",
+                "│Title",
+                "│ACE  ",
+                "│123  ",
+                "│45end"
+                ],
+                [ // bottomFrame, leftFrame
+                "│Title",
+                "│ACE  ",
+                "│123  ",
+                "│45end",
+                "╰─────"
+                ],
+                [ // topFrame, bottomFrame, leftFrame
+                "╭─────",
+                "│Title",
+                "│ACE  ",
+                "│123  ",
+                "│45end",
+                "╰─────"
+                ],
+                [ // rightFrame
+                "Title│",
+                "ACE  │",
+                "123  │",
+                "45end│"
+                ],
+                [ // topFrame, rightFrame
+                "─────╮",
+                "Title│",
+                "ACE  │",
+                "123  │",
+                "45end│"
+                ],
+                [ // bottomFrame, rightFrame
+                "Title│",
+                "ACE  │",
+                "123  │",
+                "45end│",
+                "─────╯"
+                ],
+                [ // topFrame, bottomFrame, rightFrame
+                "─────╮",
+                "Title│",
+                "ACE  │",
+                "123  │",
+                "45end│",
+                "─────╯"
+                ],
+                [ // leftFrame, rightFrame
+                "│Title│",
+                "│ACE  │",
+                "│123  │",
+                "│45end│"
+                ],
+                [ // topFrame, leftFrame, rightFrame
+                "╭─────╮",
+                "│Title│",
+                "│ACE  │",
+                "│123  │",
+                "│45end│"
+                ],
+                [ // bottomFrame, leftFrame, rightFrame
+                "│Title│",
+                "│ACE  │",
+                "│123  │",
+                "│45end│",
+                "╰─────╯"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, rightFrame
+                "╭─────╮",
+                "│Title│",
+                "│ACE  │",
+                "│123  │",
+                "│45end│",
+                "╰─────╯"
+                ],
+                [ // insideHorizontalFrame
+                "Title",
+                "─────",
+                "ACE  ",
+                "─────",
+                "123  ",
+                "─────",
+                "45end"
+                ],
+                [ // topFrame, insideHorizontalFrame
+                "─────",
+                "Title",
+                "─────",
+                "ACE  ",
+                "─────",
+                "123  ",
+                "─────",
+                "45end"
+                ],
+                [ // bottomFrame, insideHorizontalFrame
+                "Title",
+                "─────",
+                "ACE  ",
+                "─────",
+                "123  ",
+                "─────",
+                "45end",
+                "─────"
+                ],
+                [ // topFrame, bottomFrame, insideHorizontalFrame
+                "─────",
+                "Title",
+                "─────",
+                "ACE  ",
+                "─────",
+                "123  ",
+                "─────",
+                "45end",
+                "─────"
+                ],
+                [ // leftFrame, insideHorizontalFrame
+                "│Title",
+                "├─────",
+                "│ACE  ",
+                "├─────",
+                "│123  ",
+                "├─────",
+                "│45end"
+                ],
+                [ // topFrame, leftFrame, insideHorizontalFrame
+                "╭─────",
+                "│Title",
+                "├─────",
+                "│ACE  ",
+                "├─────",
+                "│123  ",
+                "├─────",
+                "│45end"
+                ],
+                [ // bottomFrame, leftFrame, insideHorizontalFrame
+                "│Title",
+                "├─────",
+                "│ACE  ",
+                "├─────",
+                "│123  ",
+                "├─────",
+                "│45end",
+                "╰─────"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, insideHorizontalFrame
+                "╭─────",
+                "│Title",
+                "├─────",
+                "│ACE  ",
+                "├─────",
+                "│123  ",
+                "├─────",
+                "│45end",
+                "╰─────"
+                ],
+                [ // rightFrame, insideHorizontalFrame
+                "Title│",
+                "─────┤",
+                "ACE  │",
+                "─────┤",
+                "123  │",
+                "─────┤",
+                "45end│"
+                ],
+                [ // topFrame, rightFrame, insideHorizontalFrame
+                "─────╮",
+                "Title│",
+                "─────┤",
+                "ACE  │",
+                "─────┤",
+                "123  │",
+                "─────┤",
+                "45end│"
+                ],
+                [ // bottomFrame, rightFrame, insideHorizontalFrame
+                "Title│",
+                "─────┤",
+                "ACE  │",
+                "─────┤",
+                "123  │",
+                "─────┤",
+                "45end│",
+                "─────╯"
+                ],
+                [ // topFrame, bottomFrame, rightFrame, insideHorizontalFrame
+                "─────╮",
+                "Title│",
+                "─────┤",
+                "ACE  │",
+                "─────┤",
+                "123  │",
+                "─────┤",
+                "45end│",
+                "─────╯"
+                ],
+                [ // leftFrame, rightFrame, insideHorizontalFrame
+                "│Title│",
+                "├─────┤",
+                "│ACE  │",
+                "├─────┤",
+                "│123  │",
+                "├─────┤",
+                "│45end│"
+                ],
+                [ // topFrame, leftFrame, rightFrame, insideHorizontalFrame
+                "╭─────╮",
+                "│Title│",
+                "├─────┤",
+                "│ACE  │",
+                "├─────┤",
+                "│123  │",
+                "├─────┤",
+                "│45end│"
+                ],
+                [ // bottomFrame, leftFrame, rightFrame, insideHorizontalFrame
+                "│Title│",
+                "├─────┤",
+                "│ACE  │",
+                "├─────┤",
+                "│123  │",
+                "├─────┤",
+                "│45end│",
+                "╰─────╯"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, rightFrame, insideHorizontalFrame
+                "╭─────╮",
+                "│Title│",
+                "├─────┤",
+                "│ACE  │",
+                "├─────┤",
+                "│123  │",
+                "├─────┤",
+                "│45end│",
+                "╰─────╯"
+                ],
+                [ // insideVerticalFrame
+                "  Title  ",
+                "A│C││E  │",
+                "1│2││3  │",
+                "4│5││end│"
+                ],
+                [ // topFrame, insideVerticalFrame
+                "─────────",
+                "  Title  ",
+                "A│C││E  │",
+                "1│2││3  │",
+                "4│5││end│"
+                ],
+                [ // bottomFrame, insideVerticalFrame
+                "  Title  ",
+                "A│C││E  │",
+                "1│2││3  │",
+                "4│5││end│",
+                "─┴─┴┴───┴"
+                ],
+                [ // topFrame, bottomFrame, insideVerticalFrame
+                "─────────",
+                "  Title  ",
+                "A│C││E  │",
+                "1│2││3  │",
+                "4│5││end│",
+                "─┴─┴┴───┴"
+                ],
+                [ // leftFrame, insideVerticalFrame
+                "│  Title  ",
+                "│A│C││E  │",
+                "│1│2││3  │",
+                "│4│5││end│"
+                ],
+                [ // topFrame, leftFrame, insideVerticalFrame
+                "╭─────────",
+                "│  Title  ",
+                "│A│C││E  │",
+                "│1│2││3  │",
+                "│4│5││end│"
+                ],
+                [ // bottomFrame, leftFrame, insideVerticalFrame
+                "│  Title  ",
+                "│A│C││E  │",
+                "│1│2││3  │",
+                "│4│5││end│",
+                "╰─┴─┴┴───┴"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, insideVerticalFrame
+                "╭─────────",
+                "│  Title  ",
+                "│A│C││E  │",
+                "│1│2││3  │",
+                "│4│5││end│",
+                "╰─┴─┴┴───┴"
+                ],
+                [ // rightFrame, insideVerticalFrame
+                "  Title  │",
+                "A│C││E  ││",
+                "1│2││3  ││",
+                "4│5││end││"
+                ],
+                [ // topFrame, rightFrame, insideVerticalFrame
+                "─────────╮",
+                "  Title  │",
+                "A│C││E  ││",
+                "1│2││3  ││",
+                "4│5││end││"
+                ],
+                [ // bottomFrame, rightFrame, insideVerticalFrame
+                "  Title  │",
+                "A│C││E  ││",
+                "1│2││3  ││",
+                "4│5││end││",
+                "─┴─┴┴───┴╯"
+                ],
+                [ // topFrame, bottomFrame, rightFrame, insideVerticalFrame
+                "─────────╮",
+                "  Title  │",
+                "A│C││E  ││",
+                "1│2││3  ││",
+                "4│5││end││",
+                "─┴─┴┴───┴╯"
+                ],
+                [ // leftFrame, rightFrame, insideVerticalFrame
+                "│  Title  │",
+                "│A│C││E  ││",
+                "│1│2││3  ││",
+                "│4│5││end││"
+                ],
+                [ // topFrame, leftFrame, rightFrame, insideVerticalFrame
+                "╭─────────╮",
+                "│  Title  │",
+                "│A│C││E  ││",
+                "│1│2││3  ││",
+                "│4│5││end││"
+                ],
+                [ // bottomFrame, leftFrame, rightFrame, insideVerticalFrame
+                "│  Title  │",
+                "│A│C││E  ││",
+                "│1│2││3  ││",
+                "│4│5││end││",
+                "╰─┴─┴┴───┴╯"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, rightFrame, insideVerticalFrame
+                "╭─────────╮",
+                "│  Title  │",
+                "│A│C││E  ││",
+                "│1│2││3  ││",
+                "│4│5││end││",
+                "╰─┴─┴┴───┴╯"
+                ],
+                [ // insideHorizontalFrame, insideVerticalFrame
+                "  Title  ",
+                "─┬─┬┬───┬",
+                "A│C││E  │",
+                "─┼─┼┼───┼",
+                "1│2││3  │",
+                "─┼─┼┼───┼",
+                "4│5││end│"
+                ],
+                [ // topFrame, insideHorizontalFrame, insideVerticalFrame
+                "─────────",
+                "  Title  ",
+                "─┬─┬┬───┬",
+                "A│C││E  │",
+                "─┼─┼┼───┼",
+                "1│2││3  │",
+                "─┼─┼┼───┼",
+                "4│5││end│"
+                ],
+                [ // bottomFrame, insideHorizontalFrame, insideVerticalFrame
+                "  Title  ",
+                "─┬─┬┬───┬",
+                "A│C││E  │",
+                "─┼─┼┼───┼",
+                "1│2││3  │",
+                "─┼─┼┼───┼",
+                "4│5││end│",
+                "─┴─┴┴───┴"
+                ],
+                [ // topFrame, bottomFrame, insideHorizontalFrame, insideVerticalFrame
+                "─────────",
+                "  Title  ",
+                "─┬─┬┬───┬",
+                "A│C││E  │",
+                "─┼─┼┼───┼",
+                "1│2││3  │",
+                "─┼─┼┼───┼",
+                "4│5││end│",
+                "─┴─┴┴───┴"
+                ],
+                [ // leftFrame, insideHorizontalFrame, insideVerticalFrame
+                "│  Title  ",
+                "├─┬─┬┬───┬",
+                "│A│C││E  │",
+                "├─┼─┼┼───┼",
+                "│1│2││3  │",
+                "├─┼─┼┼───┼",
+                "│4│5││end│"
+                ],
+                [ // topFrame, leftFrame, insideHorizontalFrame, insideVerticalFrame
+                "╭─────────",
+                "│  Title  ",
+                "├─┬─┬┬───┬",
+                "│A│C││E  │",
+                "├─┼─┼┼───┼",
+                "│1│2││3  │",
+                "├─┼─┼┼───┼",
+                "│4│5││end│"
+                ],
+                [ // bottomFrame, leftFrame, insideHorizontalFrame, insideVerticalFrame
+                "│  Title  ",
+                "├─┬─┬┬───┬",
+                "│A│C││E  │",
+                "├─┼─┼┼───┼",
+                "│1│2││3  │",
+                "├─┼─┼┼───┼",
+                "│4│5││end│",
+                "╰─┴─┴┴───┴"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, insideHorizontalFrame, insideVerticalFrame
+                "╭─────────",
+                "│  Title  ",
+                "├─┬─┬┬───┬",
+                "│A│C││E  │",
+                "├─┼─┼┼───┼",
+                "│1│2││3  │",
+                "├─┼─┼┼───┼",
+                "│4│5││end│",
+                "╰─┴─┴┴───┴"
+                ],
+                [ // rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "  Title  │",
+                "─┬─┬┬───┬┤",
+                "A│C││E  ││",
+                "─┼─┼┼───┼┤",
+                "1│2││3  ││",
+                "─┼─┼┼───┼┤",
+                "4│5││end││"
+                ],
+                [ // topFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "─────────╮",
+                "  Title  │",
+                "─┬─┬┬───┬┤",
+                "A│C││E  ││",
+                "─┼─┼┼───┼┤",
+                "1│2││3  ││",
+                "─┼─┼┼───┼┤",
+                "4│5││end││"
+                ],
+                [ // bottomFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "  Title  │",
+                "─┬─┬┬───┬┤",
+                "A│C││E  ││",
+                "─┼─┼┼───┼┤",
+                "1│2││3  ││",
+                "─┼─┼┼───┼┤",
+                "4│5││end││",
+                "─┴─┴┴───┴╯"
+                ],
+                [ // topFrame, bottomFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "─────────╮",
+                "  Title  │",
+                "─┬─┬┬───┬┤",
+                "A│C││E  ││",
+                "─┼─┼┼───┼┤",
+                "1│2││3  ││",
+                "─┼─┼┼───┼┤",
+                "4│5││end││",
+                "─┴─┴┴───┴╯"
+                ],
+                [ // leftFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "│  Title  │",
+                "├─┬─┬┬───┬┤",
+                "│A│C││E  ││",
+                "├─┼─┼┼───┼┤",
+                "│1│2││3  ││",
+                "├─┼─┼┼───┼┤",
+                "│4│5││end││"
+                ],
+                [ // topFrame, leftFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "╭─────────╮",
+                "│  Title  │",
+                "├─┬─┬┬───┬┤",
+                "│A│C││E  ││",
+                "├─┼─┼┼───┼┤",
+                "│1│2││3  ││",
+                "├─┼─┼┼───┼┤",
+                "│4│5││end││"
+                ],
+                [ // bottomFrame, leftFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "│  Title  │",
+                "├─┬─┬┬───┬┤",
+                "│A│C││E  ││",
+                "├─┼─┼┼───┼┤",
+                "│1│2││3  ││",
+                "├─┼─┼┼───┼┤",
+                "│4│5││end││",
+                "╰─┴─┴┴───┴╯"
+                ],
+                [ // topFrame, bottomFrame, leftFrame, rightFrame, insideHorizontalFrame, insideVerticalFrame
+                "╭─────────╮",
+                "│  Title  │",
+                "├─┬─┬┬───┬┤",
+                "│A│C││E  ││",
+                "├─┼─┼┼───┼┤",
+                "│1│2││3  ││",
+                "├─┼─┼┼───┼┤",
+                "│4│5││end││",
+                "╰─┴─┴┴───┴╯"
+                ],
+            ]
+            XCTAssertEqual(combinations.count, expected.count)
+            for (i, opt) in combinations.enumerated() {
+                let columns = [
+                    Col(header: "A"),
+                    Col(header: "B-hidden", width: .hidden),
+                    Col(header: "C"),
+                    Col(header: "D-zero", width: .value(0)),
+                    Col(header: "E"),
+                    Col(header: "F-zero", width: .value(0)),
+                ]
+                let cells:[[Txt]] = [["1", "hidden", "2", "zero width", "3"],["4", "hidden", "5", "zero width", "end", "f"]]
+                let table = Tbl("Title", columns: columns, cells: cells, frameStyle: .rounded, frameRenderingOptions: opt)
+                // Next line: correct answer generator ;-)
+                //print("[ // \(opt.optionsInEffect)\n" + table.render().split(separator: "\n").map({ "\"\($0)\"" }).joined(separator: ",\n") + "\n],")
                 XCTAssertEqual(table.render(), expected[i].joined(separator: "\n") + "\n")
             }
         }
@@ -1338,7 +2057,7 @@ final class TableTests: XCTestCase {
             ]
             XCTAssertEqual(Alignment.allCases.count, expected.count)
             for (i,alignment) in Alignment.allCases.enumerated() {
-                let columns = [Col("123", width: 1), Col(Txt("#", align: alignment), width: 3)]
+                let columns = [Col(header: "123", width: 1), Col(header: Txt("#", align: alignment), width: 3)]
                 let table = Tbl(columns: columns, cells: [[]])
                 XCTAssertEqual(table.render(), expected[i])
             }
@@ -1352,7 +2071,7 @@ final class TableTests: XCTestCase {
                 ["@", "@@"],
                 ["*", "**", "******"]
             ]
-            let columns = [Col("Col1"), Col("Col2", width: .hidden), Col("Col3")]
+            let columns = [Col(header: "Col1"), Col(header: "Col2", width: .hidden), Col(header: "Col3")]
             let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -1376,41 +2095,49 @@ final class TableTests: XCTestCase {
         do {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
-            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3")]
-            let table = Tbl("Title", columns: columns, cells: data)
+            let columns = [Col(header: "Col1", width: .hidden), Col(header: "Col2", width: .hidden), Col(header: "Col3")]
+            let table = Tbl("Title", columns: columns, cells: data, frameStyle: .squared)
             XCTAssertEqual(table.render(),
                            """
-                           +------+
-                           |Title |
-                           +------+
-                           |Col3  |
-                           +------+
-                           |######|
-                           +------+
-                           |******|
-                           +------+
-
+                           ┌──────┐
+                           │Title │
+                           ├──────┤
+                           │Col3  │
+                           ├──────┤
+                           │######│
+                           ├──────┤
+                           │******│
+                           └──────┘
+                           
+                           """)
+        }
+        
+        do {
+            // Columns can be hidden with Width.hidden
+            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
+            let columns = [Col(header: "Col1", width: .hidden), Col(header: "Col2", width: .hidden), Col(header: "Col3", width: .hidden)]
+            let table = Tbl("Title", columns: columns, cells: data, frameStyle: .squared)
+            XCTAssertEqual(table.render(),
+                           """
+                           ┌┐
+                           ││
+                           ├┤
+                           └┘
+                           
                            """)
         }
         do {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
-            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
-            let table = Tbl("Title", columns: columns, cells: data)
+            let columns = [Col(header: "Col1", width: .hidden), Col(header: "Col2", width: .hidden), Col(header: "Col3", width: .hidden)]
+            let table = Tbl(columns: columns, cells: data, frameStyle: .squared)
             XCTAssertEqual(table.render(),
                            """
-                           +-----+
-                           |Title|
-                           +-----+
+                           ┌┐
+                           └┘
 
-                           """)
-        }
-        do {
-            // Columns can be hidden with Width.hidden
-            let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
-            let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
-            let table = Tbl(columns: columns, cells: data)
-            XCTAssertEqual(table.render(), "")
+                           """
+            )
         }
     }
     func test_csv() {
@@ -1443,8 +2170,8 @@ final class TableTests: XCTestCase {
             """,
             ]
             let table = Tbl("*",
-                            columns: [Col("A"),Col("Hidden", width: .hidden),
-                                      Col("C")],
+                            columns: [Col(header: "A"),Col(header: "Hidden", width: .hidden),
+                                      Col(header: "C")],
                             cells: [["1", "2", "3"],["4", "5"]],
                             frameRenderingOptions: .all)
             var i = 0
@@ -1505,15 +2232,10 @@ final class TableTests: XCTestCase {
             }
         }
     }
-    func test_maxColumnCount() {
-        let columns = Array(repeating: Col(), count: Int(UInt16.max))
-        let table = Tbl(columns: columns, cells: [])
-        print(table.render())
-    }
     func test_columnMin() {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
-            let columns = [Col("Col1", width: .min(4)), Col("Col2", width: .min(3)), Col("Col3", width: .min(2))]
+            let columns = [Col(header: "Col1", width: .min(4)), Col(header: "Col2", width: .min(3)), Col(header: "Col3", width: .min(2))]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -1544,7 +2266,7 @@ final class TableTests: XCTestCase {
     func test_columnMax() {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
-            let columns = [Col("Col1", width: .max(4)), Col("Col2", width: .max(3)), Col("Col3", width: .max(2))]
+            let columns = [Col(header: "Col1", width: .max(4)), Col(header: "Col2", width: .max(3)), Col(header: "Col3", width: .max(2))]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -1578,10 +2300,31 @@ final class TableTests: XCTestCase {
     }
     func test_columnRange() {
         do {
+            let data:[[Txt]] = [["#", "##", "###", "####", "######"]]
+            let columns = [Col(header: "Col1", width: .range(0..<1)),
+                           Col(header: "Col2", width: .in(0...0)),
+                           Col(header: "Col3", width: .value(0)),
+                           Col(header: "Col4", width: .in(4...4)),
+                           Col(header: "Col5", width: .range(5..<6)),
+            ]
+            let table = Tbl(columns: columns, cells: data, frameStyle: .rounded)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭┬┬┬────┬─────╮
+                           ││││Col4│Col5 │
+                           ├┼┼┼────┼─────┤
+                           ││││####│#####│
+                           ││││    │#    │
+                           ╰┴┴┴────┴─────╯
+                           
+                           """
+            )
+        }
+        do {
             let data:[[Txt]] = [["#", "##", "###"]]
-            let columns = [Col("Col1", width: .range(3..<5)),
-                           Col("Col2", width: .range(2..<4)),
-                           Col("Col3", width: .range(1..<3))]
+            let columns = [Col(header: "Col1", width: .range(3..<5)),
+                           Col(header: "Col2", width: .in(2...3)),
+                           Col(header: "Col3", width: .in(1...3))]
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
@@ -1604,12 +2347,13 @@ final class TableTests: XCTestCase {
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
-                           +---+---+---+---+
-                           |#  |#  |## |###|
-                           +---+---+---+---+
-                           |   |## |###|###|
-                           |   |   |## |#  |
-                           +---+---+---+---+
+                           +---+---+---+--+
+                           |#  |#  |## |##|
+                           |   |   |   |# |
+                           +---+---+---+--+
+                           |   |## |###|##|
+                           |   |   |## |##|
+                           +---+---+---+--+
                            
                            """
             )
@@ -1618,22 +2362,197 @@ final class TableTests: XCTestCase {
             let data:[[Txt]] = [["#", "#", "##", "###", "###"], ["", "##", "#####", "####", "####"]]
             let columns = [Col(width: .range(3..<5)),
                            Col(width: Width(range: 3..<5)),
-                           Col(width: .in(2...3), alignment: .bottomCenter),
-                           Col(width: Width(range: 2...2), alignment: .bottomRight),
+                           Col(width: .in(2...3), columnDefaultAlignment: .bottomCenter),
+                           Col(width: Width(range: 2...2), columnDefaultAlignment: .bottomRight),
                            Col(width: .range(1..<3))]
             let table = Tbl(columns: columns, cells: data,frameStyle: .roundedPadded)
             XCTAssertEqual(table.render(),
                            """
-                           ╭─────┬─────┬─────┬────┬─────╮
-                           │ #   │ #   │     │ ## │ ### │
-                           │     │     │ ##  │  # │     │
-                           ├─────┼─────┼─────┼────┼─────┤
-                           │     │ ##  │ ### │ ## │ ### │
-                           │     │     │ ##  │ ## │ #   │
-                           ╰─────┴─────┴─────┴────┴─────╯
+                           ╭─────┬─────┬─────┬────┬────╮
+                           │ #   │ #   │     │ ## │ ## │
+                           │     │     │ ##  │  # │ #  │
+                           ├─────┼─────┼─────┼────┼────┤
+                           │     │ ##  │ ### │ ## │ ## │
+                           │     │     │ ##  │ ## │ ## │
+                           ╰─────┴─────┴─────┴────┴────╯
                            
                            """
             )
+        }
+    }
+    func test_hiddenVsZeroWidth() {
+        do {
+            // Zero width
+            let cells:[[String]] = [
+                ["a", "b", "c"],
+                ["d", "e"],
+                ["f"]
+            ]
+            let cols = [
+                Col(header: "A"),
+                Col(header: "B", width: .value(0)),
+                Col(header: "C"),
+                Col(header: "D"),
+            ]
+            let t = Tbl("Table Title",
+                        columns: cols,
+                        strings: cells)
+            XCTAssertEqual(t.render(),
+                           """
+                           +-----+
+                           |Table|
+                           |Title|
+                           +-++-++
+                           |A||C||
+                           +-++-++
+                           |a||c||
+                           +-++-++
+                           |d|| ||
+                           +-++-++
+                           |f|| ||
+                           +-++-++
+                           
+                           """
+            )
+        }
+        do {
+            // Hidden
+            let cells:[[String]] = [
+                ["a", "b", "c"],
+                ["d", "e"],
+                ["f"]
+            ]
+            let cols = [
+                Col(header: "A"),
+                Col(header: "B", width: .hidden),
+                Col(header: "C"),
+                Col(header: "D"),
+            ]
+            let t = Tbl("Table Title",
+                        columns: cols,
+                        strings: cells)
+            XCTAssertEqual(t.render(),
+                           """
+                           +----+
+                           |Tabl|
+                           | e  |
+                           |Titl|
+                           | e  |
+                           +-+-++
+                           |A|C||
+                           +-+-++
+                           |a|c||
+                           +-+-++
+                           |d| ||
+                           +-+-++
+                           |f| ||
+                           +-+-++
+                           
+                           """
+            )
+        }
+
+    }
+    func test_ExpressibleByIntegerLiteralCol() {
+        do {
+            let test:Col = 42
+            let expected:Col = Col(header: nil,
+                                   width: Width.value(42),
+                                   columnDefaultAlignment: .topLeft,
+                                   wrapping: .default,
+                                   contentHint: .repetitive)
+            XCTAssertEqual(test, expected)
+        }
+    }
+    func test_Tricky() {
+        do {
+            let cells:[[String]] = [
+                ["a", "b", "c"],
+                ["d", "e"],
+                ["f"]
+            ]
+            let cols = [
+                Col(header: "#"),
+                Col(header: "Year"),
+                Col(header: "Model"),
+                Col(header: "X"),
+                Col(header: "Y"),
+                Col(header: "W"),
+            ]
+            let t = Tbl("Table Title",
+                        columns: cols,
+                        strings: cells)
+            XCTAssertEqual(t.render(),
+                           """
+                           +--------+
+                           | Table  |
+                           | Title  |
+                           +-+-+-++++
+                           |#|Y|M||||
+                           | |e|o||||
+                           | |a|d||||
+                           | |r|e||||
+                           | | |l||||
+                           +-+-+-++++
+                           |a|b|c||||
+                           +-+-+-++++
+                           |d|e| ||||
+                           +-+-+-++++
+                           |f| | ||||
+                           +-+-+-++++
+                           
+                           """
+            )
+        }
+    }
+    func test_Codable() {
+        let expected =
+        """
+        ╭──────────────────────╮
+        │   Summer Olympics    │
+        ├────┬─────────┬───────┤
+        │Year│Host     │Country│
+        ├────┼─────────┼───────┤
+        │1952│Helsinki │Finland│
+        ├────┼─────────┼───────┤
+        │1956│Stockholm│Sweden │
+        ├────┼─────────┼───────┤
+        │1960│Rome     │Italy  │
+        ╰────┴─────────┴───────╯
+
+        """
+        do {
+            let table = Tbl("Summer Olympics") {
+                
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col(header: "Year", width: .auto)
+                    Col(header: "Host", width: .in(5...25), wrapping: .word)
+                    Col(string: "Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let encoded = try encoder.encode(table)
+            //print(String(bytes: encoded, encoding: .utf8)!)
+            let decoder = JSONDecoder()
+            var decoded = try decoder.decode(Tbl.self, from: encoded)
+            XCTAssertEqual(table, decoded)
+            // TODO: Fix FrameElements encoding/decoding
+            // This test should pass without us setting the frameStyle to .rounded here
+            decoded.frameStyle = .rounded
+            XCTAssertEqual(decoded.render(), expected)
+        } catch let e {
+            dump(e)
         }
     }
     func test_README() {
@@ -1646,10 +2565,10 @@ final class TableTests: XCTestCase {
             let width:Width = 5
 
             let cols = [
-                Col("#", width: 1, alignment: .topLeft),
-                Col("Col 1", width: width, alignment: .bottomCenter),
-                Col("Col 2", width: width, alignment: .bottomCenter),
-                Col("Col 3", width: width, alignment: .bottomCenter),
+                Col(header: "#", width: 1, columnDefaultAlignment: .topLeft),
+                Col(header: "Col 1", width: width, columnDefaultAlignment: .bottomCenter),
+                Col(header: "Col 2", width: width, columnDefaultAlignment: .bottomCenter),
+                Col(header: "Col 3", width: width, columnDefaultAlignment: .bottomCenter),
             ]
             let table = Tbl("Table title",
                             columns: cols,
@@ -1744,6 +2663,87 @@ final class WidthTests: XCTestCase {
         }
     }
 }
+final class DSLTests: XCTestCase {
+    func test_DSL() {
+        let expected =
+        """
+        ╭──────────────────────╮
+        │   Summer Olympics    │
+        ├────┬─────────┬───────┤
+        │Year│Host     │Country│
+        ├────┼─────────┼───────┤
+        │1952│Helsinki │Finland│
+        ├────┼─────────┼───────┤
+        │1956│Stockholm│Sweden │
+        ├────┼─────────┼───────┤
+        │1960│Rome     │Italy  │
+        ╰────┴─────────┴───────╯
+
+        """
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col(header: "Year", width: .auto)
+                    Col(header: "Host", width: .in(5...25), wrapping: .word)
+                    Col(string: "Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col(header: "Year", width: .auto)
+                    Col(header: "Host", width: .in(5...25), wrapping: .word)
+                    Col(string: "Country")
+                }
+                
+                Rows {
+                    Row("1952", "Helsinki", "Finland")
+                    Row("1956", "Stockholm", "Sweden")
+                    Row("1960", "Rome", "Italy")
+                }
+            }
+            XCTAssertEqual(table.render(), expected)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col(header: "Year", width: .auto)
+                    Col(header: "Host", width: .in(5...25), wrapping: .word)
+                    Col(string: "Country")
+                }
+                
+                Rows {
+                    [
+                        [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
+                        [Txt("1956"), Txt("Stockholm"), Txt("Sweden")],
+                        [Txt("1960"), Txt("Rome"), Txt("Italy")]
+                    ]
+                }
+            }
+            XCTAssertEqual(table.render(), expected)
+        }
+    }
+}
 final class TablePerformanceTests: XCTestCase {
     // MARK: -
     // MARK: Performance tests
@@ -1788,8 +2788,8 @@ final class TablePerformanceTests: XCTestCase {
         }
 
         let cols = [
-            Col(width: 8, alignment: .topLeft, wrapping: .char, contentHint: .unique),
-            Col(width: 6, alignment: .topCenter, wrapping: .char, contentHint: .repetitive),
+            Col(width: 8, columnDefaultAlignment: .topLeft, wrapping: .char, contentHint: .unique),
+            Col(width: 6, columnDefaultAlignment: .topCenter, wrapping: .char, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
         // average should be within the range of 0,630...0,650 seconds
@@ -1807,8 +2807,8 @@ final class TablePerformanceTests: XCTestCase {
         }
 
         let cols = [
-            Col(width: 8, alignment: .topLeft, wrapping: .cut, contentHint: .unique),
-            Col(width: 6, alignment: .topCenter, wrapping: .cut, contentHint: .repetitive),
+            Col(width: 8, columnDefaultAlignment: .topLeft, wrapping: .cut, contentHint: .unique),
+            Col(width: 6, columnDefaultAlignment: .topCenter, wrapping: .cut, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
         // average should be within the range of 0,350...0,370 seconds
@@ -1826,8 +2826,8 @@ final class TablePerformanceTests: XCTestCase {
         }
 
         let cols = [
-            Col(width: 8, alignment: .topLeft, wrapping: .word, contentHint: .unique),
-            Col(width: 6, alignment: .topCenter, wrapping: .word, contentHint: .repetitive),
+            Col(width: 8, columnDefaultAlignment: .topLeft, wrapping: .word, contentHint: .unique),
+            Col(width: 6, columnDefaultAlignment: .topCenter, wrapping: .word, contentHint: .repetitive),
         ]
         // Idicative performance metrics (of release build) with above setup:
         // average should be within the range of 1,750...1,850 seconds
