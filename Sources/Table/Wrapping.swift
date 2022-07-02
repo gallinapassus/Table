@@ -1,5 +1,5 @@
 
-public enum Wrapping : UInt8, RawRepresentable {
+public enum Wrapping : UInt8, RawRepresentable, Codable {
     case word // Prefer wrapping at word boundary (if possible)
     case char // Wrap at character boundary
     case cut  // Disable wrapping, forcibly cut to given space

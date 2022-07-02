@@ -1,4 +1,4 @@
-public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral {
+public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable {
 
     private static let allowedRange = 0...Int(Int16.max)
 
@@ -20,6 +20,9 @@ public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral {
         }
         else if value == -1 {
             self = .hidden
+        }
+        else if value < 0 {
+            fatalError("\(Self.self) min, max, in or range can not be initialized with \(#function)")
         }
         else {
             precondition(Self.allowedRange.contains(value),

@@ -1,5 +1,5 @@
 
-internal class HorizontallyAligned {
+internal class HorizontallyAligned : Codable {
     let lines:[String]
     let alignment:Alignment
     let width:Width
