@@ -439,6 +439,28 @@ extension Tbl {
                   frameStyle: frameStyle,
                   frameRenderingOptions: frameRenderingOptions)
     }
+    // Convenience
+    public init(_ title:String,
+                columns:[Col] = [],
+                strings:[[String]],
+                frameStyle:FrameElements = .default,
+                frameRenderingOptions:FrameRenderingOptions = .all) {
+        self.init(Txt(title), columns: columns,
+                  cells: strings.map({ $0.map({ Txt($0) })}),
+                  frameStyle: frameStyle,
+                  frameRenderingOptions: frameRenderingOptions)
+    }
+    // Convenience
+    public init(_ title:String,
+                columns:[Col] = [],
+                cells:[[Txt]],
+                frameStyle:FrameElements = .default,
+                frameRenderingOptions:FrameRenderingOptions = .all) {
+        self.init(Txt(title), columns: columns,
+                  cells: cells,
+                  frameStyle: frameStyle,
+                  frameRenderingOptions: frameRenderingOptions)
+    }
     // DSL
     public init(_ title:Txt?,
                 @TblBuilder _ makeTable: () -> (FrameElements, FrameRenderingOptions, [Col], [[Txt]])) {

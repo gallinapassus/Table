@@ -5,7 +5,7 @@ public struct Col : Equatable, Codable {
     public let columnAlignment:Alignment
     public let wrapping:Wrapping
     public let contentHint:ColumnContentHint
-    public init(header:Txt? = nil,
+    public init(_ header:Txt? = nil,
                 width:Width = .auto,
                 columnDefaultAlignment:Alignment = .default,
                 wrapping:Wrapping = .default,
@@ -16,6 +16,9 @@ public struct Col : Equatable, Codable {
         self.wrapping = wrapping
         self.contentHint = contentHint
     }
+}
+extension Col : ExpressibleByStringLiteral {
+    public typealias StringLiteralType = String
     public  init(stringLiteral value: String) {
         self.header = Txt(value)
         self.width = .auto
@@ -24,20 +27,19 @@ public struct Col : Equatable, Codable {
         self.contentHint = .repetitive
     }
 }
-extension Col : ExpressibleByStringLiteral {
-    public typealias StringLiteralType = String
-    public init(string:String,
-                width:Width = .auto,
-                columnDefaultAlignment:Alignment = .default,
-                wrapping:Wrapping = .default,
-                contentHint:ColumnContentHint = .repetitive) {
-        self.init(header: Txt(string), width: width, columnDefaultAlignment: columnDefaultAlignment, wrapping: wrapping, contentHint: contentHint)
-    }
-}
 extension Col : ExpressibleByIntegerLiteral {
     public typealias IntegerLiteralType = Int
     public init(integerLiteral value: Int) {
         self.init(width: Width.value(value))
+    }
+}
+extension Col {
+    public init(_ string:String,
+                width:Width = .auto,
+                align:Alignment = .default,
+                wrapping:Wrapping = .default,
+                contentHint:ColumnContentHint = .repetitive) {
+        self.init(Txt(string), width: width, columnDefaultAlignment: align, wrapping: wrapping, contentHint: contentHint)
     }
 }
 public enum ColumnContentHint : Equatable, Codable {

@@ -24,7 +24,7 @@ public enum ColumnBuilder {
         components
     }
     public static func buildBlock(_ components: String...) -> [Col] {
-        components.map({ Col(string: $0) })
+        components.map({ Col($0) })
     }
 }
 @resultBuilder
