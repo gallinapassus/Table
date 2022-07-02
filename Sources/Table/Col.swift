@@ -5,7 +5,7 @@ public struct Col : Equatable, Codable {
     public let columnAlignment:Alignment
     public let wrapping:Wrapping
     public let contentHint:ColumnContentHint
-    public init(header:Txt? = nil,
+    public init(_ header:Txt? = nil,
                 width:Width = .auto,
                 columnDefaultAlignment:Alignment = .default,
                 wrapping:Wrapping = .default,
@@ -39,7 +39,7 @@ extension Col {
                 align:Alignment = .default,
                 wrapping:Wrapping = .default,
                 contentHint:ColumnContentHint = .repetitive) {
-        self.init(header: Txt(string), width: width, columnDefaultAlignment: align, wrapping: wrapping, contentHint: contentHint)
+        self.init(Txt(string), width: width, columnDefaultAlignment: align, wrapping: wrapping, contentHint: contentHint)
     }
 }
 public enum ColumnContentHint : Equatable, Codable {
