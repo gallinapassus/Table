@@ -184,7 +184,7 @@ final class TableTests: XCTestCase {
                 """,
             ]
             for i in 0...3 {
-                let columns = Array(repeating: Col(string: "#", width: .value(0)), count: i)
+                let columns = Array(repeating: Col("#", width: .value(0)), count: i)
                 let table = Tbl(columns: columns, cells: [[]], frameStyle: .squared)
                 XCTAssertEqual(table.render(), expected[i])
             }
@@ -2530,7 +2530,7 @@ final class TableTests: XCTestCase {
                 Columns {
                     Col(header: "Year", width: .auto)
                     Col(header: "Host", width: .in(5...25), wrapping: .word)
-                    Col(string: "Country")
+                    Col("Country")
                 }
                 
                 Rows {
@@ -2689,7 +2689,7 @@ final class DSLTests: XCTestCase {
                 Columns {
                     Col(header: "Year", width: .auto)
                     Col(header: "Host", width: .in(5...25), wrapping: .word)
-                    Col(string: "Country")
+                    Col("Country")
                 }
                 
                 Rows {
@@ -2709,7 +2709,7 @@ final class DSLTests: XCTestCase {
                 Columns {
                     Col(header: "Year", width: .auto)
                     Col(header: "Host", width: .in(5...25), wrapping: .word)
-                    Col(string: "Country")
+                    Col("Country")
                 }
                 
                 Rows {
@@ -2729,7 +2729,7 @@ final class DSLTests: XCTestCase {
                 Columns {
                     Col(header: "Year", width: .auto)
                     Col(header: "Host", width: .in(5...25), wrapping: .word)
-                    Col(string: "Country")
+                    Col("Country")
                 }
                 
                 Rows {
