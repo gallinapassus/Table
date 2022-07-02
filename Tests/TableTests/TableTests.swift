@@ -2665,7 +2665,7 @@ final class WidthTests: XCTestCase {
 }
 final class DSLTests: XCTestCase {
     func test_DSL() {
-        let expected =
+        let expected_rounded =
         """
         ╭──────────────────────╮
         │   Summer Olympics    │
@@ -2679,6 +2679,47 @@ final class DSLTests: XCTestCase {
         │1960│Rome     │Italy  │
         ╰────┴─────────┴───────╯
 
+        """
+        let expected_rounded_no_columns =
+        """
+        ╭──────────────────────╮
+        │   Summer Olympics    │
+        ├────┬─────────┬───────┤
+        │1952│Helsinki │Finland│
+        ├────┼─────────┼───────┤
+        │1956│Stockholm│Sweden │
+        ├────┼─────────┼───────┤
+        │1960│Rome     │Italy  │
+        ╰────┴─────────┴───────╯
+
+        """
+        let expected_default =
+        """
+        +----------------------+
+        |   Summer Olympics    |
+        +----+---------+-------+
+        |Year|Host     |Country|
+        +----+---------+-------+
+        |1952|Helsinki |Finland|
+        +----+---------+-------+
+        |1956|Stockholm|Sweden |
+        +----+---------+-------+
+        |1960|Rome     |Italy  |
+        +----+---------+-------+
+        
+        """
+        let expected_default_no_columns =
+        """
+        +----------------------+
+        |   Summer Olympics    |
+        +----+---------+-------+
+        |1952|Helsinki |Finland|
+        +----+---------+-------+
+        |1956|Stockholm|Sweden |
+        +----+---------+-------+
+        |1960|Rome     |Italy  |
+        +----+---------+-------+
+        
         """
         do {
             let table = Tbl("Summer Olympics") {
@@ -2698,7 +2739,7 @@ final class DSLTests: XCTestCase {
                     ["1960", "Rome", "Italy"]
                 }
             }
-            XCTAssertEqual(table.render(), expected)
+            XCTAssertEqual(table.render(), expected_rounded)
         }
         do {
             let table = Tbl("Summer Olympics") {
@@ -2718,7 +2759,7 @@ final class DSLTests: XCTestCase {
                     Row("1960", "Rome", "Italy")
                 }
             }
-            XCTAssertEqual(table.render(), expected)
+            XCTAssertEqual(table.render(), expected_rounded)
         }
         do {
             let table = Tbl("Summer Olympics") {
@@ -2740,7 +2781,119 @@ final class DSLTests: XCTestCase {
                     ]
                 }
             }
-            XCTAssertEqual(table.render(), expected)
+            XCTAssertEqual(table.render(), expected_rounded)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                
+                FrameRenderingOptions.all
+                
+                Columns {
+                    Col("Year", width: .auto)
+                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_default)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                
+                FrameElements.rounded
+                
+                Columns {
+                    Col("Year", width: .auto)
+                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_rounded)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                                
+                Columns {
+                    Col("Year", width: .auto)
+                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Country")
+                }
+                
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_default)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+
+                Rows {
+                    ["1952", "Helsinki", "Finland"]
+                    ["1956", "Stockholm", "Sweden"]
+                    ["1960", "Rome", "Italy"]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_default_no_columns)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                FrameRenderingOptions.all
+                            
+                Rows {
+                    [
+                        [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
+                        [Txt("1956"), Txt("Stockholm"), Txt("Sweden")],
+                        [Txt("1960"), Txt("Rome"), Txt("Italy")]
+                    ]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_rounded_no_columns)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameElements.rounded
+                            
+                Rows {
+                    [
+                        [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
+                        [Txt("1956"), Txt("Stockholm"), Txt("Sweden")],
+                        [Txt("1960"), Txt("Rome"), Txt("Italy")]
+                    ]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_rounded_no_columns)
+        }
+        do {
+            let table = Tbl("Summer Olympics") {
+                            
+                FrameRenderingOptions.all
+                            
+                Rows {
+                    [
+                        [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
+                        [Txt("1956"), Txt("Stockholm"), Txt("Sweden")],
+                        [Txt("1960"), Txt("Rome"), Txt("Italy")]
+                    ]
+                }
+            }
+            XCTAssertEqual(table.render(), expected_default_no_columns)
         }
     }
 }
