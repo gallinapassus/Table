@@ -53,7 +53,7 @@ import Table
 
 let table = Tbl("Summer Olympics") {
                 
-    FrameElements.rounded
+    FrameStyle.rounded
     FrameRenderingOptions.all
     
     Columns {

@@ -665,7 +665,7 @@ final class TableTests: XCTestCase {
     }
     func test_frameStyles() {
         do {
-            let styles:[FrameElements] = [.default, .rounded, .roundedPadded,
+            let styles:[FrameStyle] = [.default, .rounded, .roundedPadded,
                                           .singleSpace, .squared, .squaredDouble]
             let expected = [
                 """
@@ -2524,7 +2524,7 @@ final class TableTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                 
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                 
                 Columns {
@@ -2545,14 +2545,24 @@ final class TableTests: XCTestCase {
             let encoded = try encoder.encode(table)
             //print(String(bytes: encoded, encoding: .utf8)!)
             let decoder = JSONDecoder()
-            var decoded = try decoder.decode(Tbl.self, from: encoded)
+            let decoded = try decoder.decode(Tbl.self, from: encoded)
             XCTAssertEqual(table, decoded)
-            // TODO: Fix FrameElements encoding/decoding
-            // This test should pass without us setting the frameStyle to .rounded here
-            decoded.frameStyle = .rounded
             XCTAssertEqual(decoded.render(), expected)
         } catch let e {
             dump(e)
+        }
+        do {
+            let elements = FrameStyle.rounded
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let encoded = try encoder.encode(elements)
+            //print(String(bytes: encoded, encoding: .utf8)!)
+            let decoder = JSONDecoder()
+            let decoded = try decoder.decode(FrameStyle.self, from: encoded)
+            XCTAssertEqual(elements, decoded)
+        } catch let e {
+            dump(e)
+            XCTFail(e.localizedDescription)
         }
     }
     func test_README() {
@@ -2622,7 +2632,7 @@ final class TableTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                 
                 Columns {
@@ -2771,7 +2781,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                 
                 Columns {
@@ -2791,7 +2801,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                 
                 Columns {
@@ -2811,7 +2821,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                 
                 Columns {
@@ -2852,7 +2862,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                 
-                FrameElements.rounded
+                FrameStyle.rounded
                 
                 Columns {
                     Col("Year", width: .auto)
@@ -2899,7 +2909,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                 FrameRenderingOptions.all
                             
                 Rows {
@@ -2915,7 +2925,7 @@ final class DSLTests: XCTestCase {
         do {
             let table = Tbl("Summer Olympics") {
                             
-                FrameElements.rounded
+                FrameStyle.rounded
                             
                 Rows {
                     [

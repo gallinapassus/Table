@@ -1,5 +1,5 @@
 extension Substring {
-    func split(to multipleOf:Int) -> [Substring] {
+    internal func split(to multipleOf:Int) -> [Substring] {
         guard multipleOf > 0 else {
             return [Substring(self)]
         }
@@ -23,7 +23,7 @@ extension Substring {
     }
 }
 extension String {
-    func fragment(where character: (Character) -> Bool) -> [Substring] {
+    internal func fragment(where character: (Character) -> Bool) -> [Substring] {
         var splits:[Substring] = []
         var i = startIndex
         var cursor = i
@@ -39,7 +39,7 @@ extension String {
         }
         return splits
     }
-    func words(to width:Int) -> [Substring] {
+    internal func words(to width:Int) -> [Substring] {
 
         /* Original implementation: */
          let wds = self
@@ -53,7 +53,7 @@ extension String {
 }
 extension String {
 
-    func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
+    internal func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
         guard self.count < width else {
             return String(self.prefix(width))
         }
@@ -73,13 +73,14 @@ extension String {
 
 extension Substring {
 
-    func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
+    @inline(__always)
+    internal func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
         String(self).render(to: width, alignment: alignment, padding: with)
     }
 }
 extension Array where Element == Substring {
     // Reverse-greedy
-    func compress(to width:Int, binding with:Character = " ") -> [Substring] {
+    internal func compress(to width:Int, binding with:Character = " ") -> [Substring] {
         guard isEmpty == false else {
             return []
         }
@@ -108,36 +109,7 @@ extension Array where Element == Substring {
         }
         return self
     }
-    /* Forward-greedy
-    func compress_b(to width:Int, binding with:Character = " ") -> [Substring] {
-        guard isEmpty == false else {
-            return []
-        }
-        var lidx = startIndex
-        var ridx = index(after: lidx)
-        while ridx != endIndex {
-            if self[lidx].count + self[ridx].count + 1 <= width {
-                return (self[..<lidx] +
-                            [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
-                            self[index(after: ridx)...]).compress(to: width)
-            }
-            else {
-                lidx = self.index(after: lidx)
-                ridx = self.index(after: ridx)
-                if ridx == index(before: endIndex) {
-                    if self[lidx].count + self[ridx].count + 1 <= width {
-                        return (self[..<lidx] +
-                                    [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
-                                    self[index(after: ridx)...])
-                    }
-                    else {
-                        return self
-                    }
-                }
-            }
-        }
-        return self
-    }*/
+    // Forward-greedy <tbi>
 }
 
 extension Array where Element: RangeReplaceableCollection, Element.Element:Collection {
