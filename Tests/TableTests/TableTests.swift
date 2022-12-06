@@ -2565,6 +2565,200 @@ final class TableTests: XCTestCase {
             XCTFail(e.localizedDescription)
         }
     }
+    func test_obeyNewline() {
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("Quick brown\nfox jumps over the lazy dog")
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |Quick brown     |
+                           |fox jumps over t|
+                           |he lazy dog     |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("Quick brown\nfox jumps\nover the lazy dog")
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |Quick brown     |
+                           |fox jumps       |
+                           |over the lazy do|
+                           |g               |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |Quick brown     |
+                           |fox jumps       |
+                           |                |
+                           |over the lazy do|
+                           |g               |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+                            columns: [Col(width: 16, columnDefaultAlignment: .topRight)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |     Quick brown|
+                           |       fox jumps|
+                           |                |
+                           |over the lazy do|
+                           |               g|
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter)
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+                            columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |                |
+                           |                |
+                           |  Quick brown   |
+                           |   fox jumps    |
+                           |                |
+                           |over the lazy do|
+                           |       g        |
+                           |                |
+                           |                |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .word)
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+                            columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |                |
+                           |                |
+                           |  Quick brown   |
+                           |   fox jumps    |
+                           |                |
+                           |      over      |
+                           |  the lazy dog  |
+                           |                |
+                           |                |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+                            columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title wider than|
+                           |column width    |
+                           +----------------+
+                           |                |
+                           |                |
+                           |  Quick brown   |
+                           |   fox jumps    |
+                           |                |
+                           |over the…azy dog|
+                           |                |
+                           |                |
+                           +----------------+
+                           
+                           """)
+        }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title obeys\nnewlines as well", align: .middleLeft, wrapping: .word),
+                            columns: [Col(width: 16)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +----------------+
+                           |Title obeys     |
+                           |newlines as well|
+                           +----------------+
+                           |                |
+                           |                |
+                           |  Quick brown   |
+                           |   fox jumps    |
+                           |                |
+                           |over the…azy dog|
+                           |                |
+                           |                |
+                           +----------------+
+                           
+                           """)
+        }
+    }
     func test_README() {
         do {
             let cells:[[Txt]] = [

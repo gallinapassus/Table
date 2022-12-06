@@ -41,11 +41,11 @@ extension String {
     }
     internal func words(to width:Int) -> [Substring] {
 
-        /* Original implementation: */
-         let wds = self
-             .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
-             .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-         return wds         
+        let wds:[Substring]
+            wds = self
+                .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
+                .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
+        return wds.isEmpty ? [Substring("")] : wds
     }
     internal func compressedWords(_ str:String, _ width:Int) -> [Substring] {
         words(to: width).compress(to: width)

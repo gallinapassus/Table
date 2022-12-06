@@ -8,7 +8,7 @@ public struct Tbl : Equatable, Codable {
         lhs.frameStyle == rhs.frameStyle &&
         lhs.frameRenderingOptions == rhs.frameRenderingOptions
     }
-    
+
     public let data:[[Txt]]
     public let columns:[Col]
     public let title:Txt?
@@ -44,7 +44,7 @@ public struct Tbl : Equatable, Codable {
         self.title = title
         self.frameStyle = frameStyle
         self.frameRenderingOptions = frameRenderingOptions
-        
+
         // Calculate column widths for autowidth columns
         self.actualColumns = Tbl.calculateAutowidths(for: self.columns, from: cells)
         self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && self.actualColumns.reduce(0, { $0 + $1.width.value}) >= 0
@@ -100,8 +100,8 @@ public struct Tbl : Equatable, Codable {
             .filter({ $0.isNewline == false })
         let rPad = rightPad
             .filter({ $0.isNewline == false })
-        
-        
+
+
         // Assign elements before entering "busy" loop,
         // so that they are not evaluated each iteration
         let leftVerticalSeparator = frameStyle.leftVerticalSeparator(for: frameRenderingOptions)
@@ -110,8 +110,8 @@ public struct Tbl : Equatable, Codable {
         let r = "\(rightVerticalSeparator)\(rPad)\n"
         let insideVerticalSeparator = frameStyle.insideVerticalSeparator(for: frameRenderingOptions)
         let titleColumnWidth = calculateTitleColumnWidth()
-        
-        
+
+
         // Top frame
         if frameRenderingOptions.contains(.topFrame) {
             into.append(lPad)
@@ -133,14 +133,20 @@ public struct Tbl : Equatable, Codable {
             into.append(frameStyle.topRightCorner(for: frameRenderingOptions))
             into.append("\(rPad)\n")
         }
-        
-        
+
+
         // Title
         if let title = title {
-            let alignedTitle = title.fragment(for: Col(width: .value(titleColumnWidth), columnDefaultAlignment: title.align ?? .middleCenter, wrapping: title.wrapping ?? .word, contentHint: .unique))
-            //.fragment(fallback: .middleCenter, width: titleColumnWidth, wrapping: .word)
-            //.verticallyAligned
-            
+            let splitted = title.string.split(separator: "\n", omittingEmptySubsequences: false)
+                .map({ Txt(String($0), align: title.align, wrapping: title.wrapping) })
+            var combined:[HorizontallyAligned] = []
+            for split in splitted {
+                let foo = split.fragment(for: Col(width: .value(titleColumnWidth), columnDefaultAlignment: title.align ?? .middleCenter, wrapping: title.wrapping ?? .word, contentHint: .unique))
+                combined.append(foo)
+            }
+            let alignedTitle = HorizontallyAligned(lines: combined.flatMap({ $0.lines }), alignment: title.align ?? .middleCenter,
+                                                   wrapping: title.wrapping ?? .word)
+
             for fragment in alignedTitle.lines {
                 into.append(
                     lPad +
@@ -149,8 +155,8 @@ public struct Tbl : Equatable, Codable {
                     frameStyle.rightVerticalSeparator(for: frameRenderingOptions) +
                     "\(rPad)\n")
             }
-            
-            
+
+
             // Divider between title and column headers -or-
             // divider between title and data
             
@@ -176,8 +182,8 @@ public struct Tbl : Equatable, Codable {
                 into.append("\(rPad)\n")
             }
         }
-        
-        
+
+
         // Column headers
         if hasHeaderLabels, hasVisibleColumns {
             
@@ -230,13 +236,13 @@ public struct Tbl : Equatable, Codable {
                 into.append("\(rPad)\n")
             }
         }
-        
-        
+
+
         // Data rows
         var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
         var cacheHits:Int = 0
         var cacheMisses:Int = 0
-        
+
         let lastValidIndex = data.index(before: data.endIndex)
         let actualVisibleColumns = actualColumns.filter({ $0.width.value > Width.hidden.value })
         let actualVisibleColumnCount = actualVisibleColumns.count
@@ -258,18 +264,35 @@ public struct Tbl : Equatable, Codable {
                 .filter { $0 < row.count }
                 .map {
                     if actualColumns[$0].contentHint == .repetitive {
-                        
+
                         // Combine width & alignment
                         let u32:UInt32 = (UInt32(actualColumns[$0].width.value) << 16) +
                         UInt32(row[$0].align?.rawValue ?? actualColumns[$0].columnAlignment.rawValue)
-                        
+
                         if let fromCache = cache[u32]?[row[$0].string.hashValue] {
                             columnized.append(fromCache)
                             cacheHits += 1
                             return fromCache.lines.count
                         }
                         else {
-                            let fragmented = row[$0].fragment(for: actualColumns[$0])
+                            let w = actualColumns[$0].width.value
+                            let a = row[$0].align ?? actualColumns[$0].columnAlignment
+                            let wr = row[$0].wrapping ?? actualColumns[$0].wrapping
+                            let splits = row[$0].string
+                                .split(separator: "\n", omittingEmptySubsequences: false)
+                                .map({ ele in
+                                    ele.isEmpty ? Txt(String(repeating: " ", count: w), align: a, wrapping: wr)
+                                    :
+                                    Txt(String(ele), align: a, wrapping: wr)
+                                })
+                            var combined:[String] = []
+                            for split in splits {
+                                combined.append(contentsOf: split.fragment(for: actualColumns[$0]).lines)
+                            }
+                            let fragmented = HorizontallyAligned(lines: combined,
+                                                                 alignment: a,
+                                                                 width: actualColumns[$0].width,
+                                                                 wrapping: actualColumns[$0].wrapping)
                             // Write to cache
                             cache[u32, default:[:]][row[$0].string.hashValue] = fragmented
                             columnized.append(fragmented)
@@ -302,7 +325,7 @@ public struct Tbl : Equatable, Codable {
                                         width: actualColumns[currentCount + k].width)
                 )
             }
-            
+
             //let a2 = DispatchTime.now().uptimeNanoseconds
             for columnData in columnized.prefix(actualColumns.count).alignVertically {
                 into.append(l + columnData.joined(separator: insideVerticalSeparator) + r)
@@ -326,8 +349,8 @@ public struct Tbl : Equatable, Codable {
              cost3 += (a3 - a2)
              */
         }
-        
-        
+
+
         // Bottom frame
         if frameRenderingOptions.contains(.bottomFrame) {
             into.append(lPad)
