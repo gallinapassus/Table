@@ -3,15 +3,20 @@ public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable {
     private static let allowedRange = 0...Int(Int16.max)
 
     public var value: Int {
+        let retval:Int
         switch self {
-        case .in: return -6
-        case .range: return -5
-        case .max: return -4
-        case .min: return -3
-        case .auto: return -2
-        case .hidden: return -1
-        case let .value(i): return i
+        case .in: retval = -6
+        case .range: retval = -5
+        case .max(let m): retval = m
+        case .min(let m): retval = m
+        case .auto: retval = -2
+        case .hidden: retval = -1
+        case .value(let i): retval = i
         }
+        guard Self.allowedRange.contains(retval) || [-6, -5, -2, -1].contains(retval) else {
+            fatalError("Width out of bounds (\(retval)), allowed range \(Self.allowedRange)")
+        }
+        return retval
     }
 
     public init(_ value: Int) {

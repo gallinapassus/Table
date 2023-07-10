@@ -63,7 +63,18 @@ public struct Tbl : Equatable, Codable {
         })
         //        print("recalc", recalc)
         for i in recalc {
-            var lo = Int.max
+            var lo = columns.reduce(0, {
+                switch $1.width {
+                case .auto: return $0
+                case .min(let m): return $0 + m
+                case .max(let m): return $0 + m
+                case .range(let r): return $0 + r.lowerBound
+                case .in(let r): return $0 + r.lowerBound
+                case .value(let v): return $0 + v
+                case .hidden: return $0
+                }
+                //$0 + $1.width.value
+            })//Int.max
             var hi = 0
             for (_/*j*/,row) in data.enumerated() {
                 guard row.count > i else {
@@ -74,7 +85,9 @@ public struct Tbl : Equatable, Codable {
             }
             //print("[\(i)] min ... max = \(lo) ... \(hi)")
             switch tmp[i].width {
-            case .min(let min): tmp[i].width = .value(Swift.max(min, lo))
+            case .min(let min):
+                tmp[i].width = .value(Swift.max(min, lo))
+//                tmp[i].width = .value(Swift.max(min, (hi + lo)/2))
             case .max(let max): tmp[i].width = .value(Swift.min(max, hi))
             case .in(let closedRange):
                 tmp[i].width = .value(Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))

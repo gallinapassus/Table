@@ -203,6 +203,32 @@ final class TableTests: XCTestCase {
 
                            """)
         }
+        do {
+            let src:[[Txt]] = []
+            let columns = [
+                Col("Hash", width: .min(1), align: .bottomLeft, wrapping: .word, contentHint: .unique),
+                Col("Value", width: .auto, align: .bottomRight, wrapping: .word, contentHint: .unique),
+                Col("Unit", width: .auto, align: .bottomLeft, wrapping: .word, contentHint: .unique),
+            ]
+            
+            let table = Tbl("title", columns: columns, cells: src,
+                            frameStyle: .roundedPadded, frameRenderingOptions: .all)
+            XCTAssertEqual(table.render(),
+                           """
+                           ╭─────────╮
+                           │  title  │
+                           ├───┬──┬──┤
+                           │ H │  │  │
+                           │ a │  │  │
+                           │ s │  │  │
+                           │ h │  │  │
+                           ├───┼──┼──┤
+                           ╰───┴──┴──╯
+                           
+                           """
+            )
+        }
+
     }
     func test_autoColumns() {
         
@@ -2234,17 +2260,25 @@ final class TableTests: XCTestCase {
     }
     func test_columnMin() {
         do {
-            let data:[[Txt]] = [["#", "##", "###"]]
+            let data:[[Txt]] = [["#", "##", "#########"], ["###", "##", "#"]]
             let columns = [Col("Col1", width: .min(4)), Col("Col2", width: .min(3)), Col("Col3", width: .min(2))]
-            let table = Tbl(columns: columns, cells: data)
+            let table = Tbl("title",columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
-                           +----+---+---+
-                           |Col1|Col|Col|
-                           |    |2  |3  |
-                           +----+---+---+
-                           |#   |## |###|
-                           +----+---+---+
+                           +-----------+
+                           |   title   |
+                           +----+---+--+
+                           |Col1|Col|Co|
+                           |    |2  |l3|
+                           +----+---+--+
+                           |#   |## |##|
+                           |    |   |##|
+                           |    |   |##|
+                           |    |   |##|
+                           |    |   |# |
+                           +----+---+--+
+                           |### |## |# |
+                           +----+---+--+
                            
                            """
             )
@@ -2255,6 +2289,23 @@ final class TableTests: XCTestCase {
             let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
+                           +----+---+---+
+                           |#   |## |###|
+                           +----+---+---+
+                           
+                           """
+            )
+        }
+        do {
+            let data:[[Txt]] = [["#", "##", "###"]]
+            let columns = [Col(width: .min(4)), Col(width: .min(3)), Col(width: .min(2))]
+            let table = Tbl("With title longer than columns", columns: columns, cells: data)
+            XCTAssertEqual(table.render(),
+                           """
+                           +------------+
+                           |    With    |
+                           |title longer|
+                           |than columns|
                            +----+---+---+
                            |#   |## |###|
                            +----+---+---+
@@ -2888,12 +2939,12 @@ final class WidthTests: XCTestCase {
 
             XCTAssertEqual(Width.value(i), 42)
             XCTAssertEqual(Width.value(i).value, i)
-            XCTAssertEqual(Width.min(i).value, -3)
+            XCTAssertEqual(Width.min(i).value, 42)
             if case let Width.min(j) = Width.min(i) {
                 XCTAssertEqual(j, i)
             }
             
-            XCTAssertEqual(Width.max(i).value, -4)
+            XCTAssertEqual(Width.max(i).value, i)
             if case let Width.max(j) = Width.max(i) {
                 XCTAssertEqual(j, i)
             }
