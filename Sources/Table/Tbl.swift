@@ -19,11 +19,28 @@ public struct Tbl : Equatable, Codable {
     private let hasVisibleColumns:Bool
     private let hasHeaderLabels:Bool
     private let hasTitle:Bool
+    /// Initializes table
+    ///
+    /// - Parameters:
+    ///     - title: Table title
+    ///     - columns: Table column definitions
+    ///     - cells: Table cell data
+    ///     - frameStyle: Frame style for rendering
+    ///     - frameRenderingOptions: Frame rendering options (default: all)
+    ///     - cellsMayHaveNewlines: Boolean value indicating if table cell data may contain newlines
+    ///     (default: true).
+    ///
+    /// - Note: Main purpose of `cellsMayHaveNewlines` setting is performance optimisation.
+    ///     For large tables, there should be a performance benefit in setting this `false` for
+    ///     tables which have one or more autowidth / range columns defined and which
+    ///     cell data is known to be clean from newlines.
+
     public init(_ title:Txt? = nil,
                 columns: [Col] = [],
                 cells:[[Txt]],
                 frameStyle:FrameStyle = .default,
-                frameRenderingOptions:FrameRenderingOptions = .all) {
+                frameRenderingOptions:FrameRenderingOptions = .all,
+                cellsMayHaveNewlines:Bool = true) {
         precondition(columns.count <= UInt16.max, "Maximum column count is limited to \(UInt16.max).")
         if columns.isEmpty {
             // Let's treat empty column set as "automatic columns"
@@ -46,12 +63,17 @@ public struct Tbl : Equatable, Codable {
         self.frameRenderingOptions = frameRenderingOptions
 
         // Calculate column widths for autowidth columns
-        self.actualColumns = Tbl.calculateAutowidths(for: self.columns, from: cells)
+        self.actualColumns = Tbl
+            .calculateAutowidths(for: self.columns,
+                                 from: cells,
+                                 newlines: cellsMayHaveNewlines)
         self.hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && self.actualColumns.reduce(0, { $0 + $1.width.value}) >= 0
         self.hasHeaderLabels = !actualColumns.allSatisfy({ $0.header == nil })
         self.hasTitle = title != nil
     }
-    private static func calculateAutowidths(for columns:[Col], from data: [[Txt]]) -> [Col] {
+    private static func calculateAutowidths(for columns:[Col],
+                                            from data: [[Txt]],
+                                            newlines:Bool) -> [Col] {
         // Figure out actual column widths
         //print("got", columns.map({ $0.width }))
         var tmp = columns
@@ -61,7 +83,6 @@ public struct Tbl : Equatable, Codable {
             default: return i
             }
         })
-        //        print("recalc", recalc)
         for i in recalc {
             var lo = columns.reduce(0, {
                 switch $1.width {
@@ -73,21 +94,29 @@ public struct Tbl : Equatable, Codable {
                 case .value(let v): return $0 + v
                 case .hidden: return $0
                 }
-                //$0 + $1.width.value
-            })//Int.max
+            })
             var hi = 0
-            for (_/*j*/,row) in data.enumerated() {
+            for row in data {
                 guard row.count > i else {
                     continue
                 }
-                lo = Swift.min(lo, row[i].count)
-                hi = Swift.max(hi, row[i].count)
+                if newlines {
+                    row[i]
+                        .split(separator: "\n", omittingEmptySubsequences: false)
+                        .forEach({
+                            lo = Swift.min(lo, $0.count)
+                            hi = Swift.max(hi, $0.count)
+                        })
+                }
+                else {
+                    lo = Swift.min(lo, row[i].count)
+                    hi = Swift.max(hi, row[i].count)
+                }
             }
             //print("[\(i)] min ... max = \(lo) ... \(hi)")
             switch tmp[i].width {
             case .min(let min):
                 tmp[i].width = .value(Swift.max(min, lo))
-//                tmp[i].width = .value(Swift.max(min, (hi + lo)/2))
             case .max(let max): tmp[i].width = .value(Swift.min(max, hi))
             case .in(let closedRange):
                 tmp[i].width = .value(Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))
