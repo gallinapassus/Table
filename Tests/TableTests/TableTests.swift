@@ -2809,6 +2809,77 @@ final class TableTests: XCTestCase {
                            
                            """)
         }
+        do {
+            // Newline handling
+            // Txt elements are first splitted into separate elements at each newline.
+            // After separation, wrapping is applied individually on each separated element.
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title obeys\nnewlines as well", align: .middleLeft, wrapping: .word),
+                            columns: [Col(width: .auto)],
+                            cells: [[textWithNewline]])
+            XCTAssertEqual(table.render(),
+                           """
+                           +-----------------+
+                           |Title obeys      |
+                           |newlines as well |
+                           +-----------------+
+                           |                 |
+                           |                 |
+                           |   Quick brown   |
+                           |    fox jumps    |
+                           |                 |
+                           |over the lazy dog|
+                           |                 |
+                           |                 |
+                           +-----------------+
+                           
+                           """)
+        }
+        do {
+            func gendata(_ cc:Int, _ rc:Int, _ seed:String) -> [[Txt]] {
+                var data:[[Txt]] = []
+                for _ in 0..<rc {
+                    var row:[Txt] = []
+                    for _ in 0..<cc {
+                        let s = (0...(6...20).randomElement()!)
+                            .map({ _ in seed.randomElement()! })
+                            .map({ String($0) })
+                            .joined()
+                        row.append(Txt(s))
+                    }
+                    data.append(row)
+                }
+                return data
+            }
+            let cc = (5...10).randomElement()!
+            let rc = 10_000
+            // Cell data with newlines
+            let noNewLines = gendata(cc, rc, "abcdefg")
+
+            // Define all auto column widths
+            let autocol = Array(repeating: Col("Column", width: .auto),
+                                count: cc)
+
+            // cellsMayHaveNewlines optimization promise is:
+            // for data without newlines & with one or more
+            // autocolumns setting cellsMayHaveNewlines to
+            // false IS faster than leaving it to true
+            let t0 = DispatchTime.now().uptimeNanoseconds
+            _ = Tbl("Test", columns: autocol, cells: noNewLines,
+                    cellsMayHaveNewlines: true)
+            let t1 = DispatchTime.now().uptimeNanoseconds
+            _ = Tbl("Test", columns: autocol, cells: noNewLines,
+                    cellsMayHaveNewlines: false)
+            let t2 = DispatchTime.now().uptimeNanoseconds
+
+//            print("init true ", t1 - t0)
+//            print("init false", t2 - t1, "is",
+//                  Double(t1-t0)/Double(t2-t1), "times faster")
+
+            let txt = "regression detected: init with cellsMayHaveNewlines: true should be slower than init with cellsMayHaveNewlines: false"
+
+            XCTAssertLessThan(t2-t1, t1-t0, txt)
+        }
     }
     func test_README() {
         do {
