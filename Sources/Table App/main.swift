@@ -26,6 +26,6 @@ let cols = [
     Col(Txt("Hidden 6", align: .bottomCenter), width: .hidden,  columnDefaultAlignment: .topLeft),
 ]
 let table = Tbl("On narrow table this title wraps on multiple lines?", columns: cols, cells: data)
-var t:String = ""
-table.render(into: &t)
+var t:any TextOutputStream = ""
+table.render(to: &t)
 print(t)

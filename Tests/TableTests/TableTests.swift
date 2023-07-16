@@ -1,6 +1,62 @@
 import XCTest
 import Table
 
+final class TxtTests: XCTestCase {
+    func test_init() {
+        do {
+            let str = "Lorem ipsum."
+            let txt = Txt(str)
+            XCTAssertNil(txt.align)
+            XCTAssertEqual(txt.string, str)
+            XCTAssertEqual(txt.startIndex, str.startIndex)
+            XCTAssertEqual(txt.endIndex, str.endIndex)
+            XCTAssertNil(txt.wrapping)
+        }
+        do {
+            let str = "Lorem ipsum."
+            for alignment in Alignment.allCases {
+                for wrapping in Wrapping.allCases {
+                    let txt = Txt(str, align: alignment, wrapping: wrapping)
+                    XCTAssertEqual(txt.align, alignment)
+                    XCTAssertEqual(txt.string, str)
+                    XCTAssertEqual(txt.startIndex, str.startIndex)
+                    XCTAssertEqual(txt.endIndex, str.endIndex)
+                    XCTAssertEqual(txt.wrapping, wrapping)
+                }
+            }
+        }
+    }
+}
+final class ColTests: XCTestCase {
+    func test_init() {
+        do {
+            let str = "Column X"
+            let col = Col(str)
+            XCTAssertEqual(col.columnAlignment, .topLeft)
+            XCTAssertEqual(col.contentHint, .repetitive)
+            XCTAssertEqual(col.header, Txt(str))
+            XCTAssertEqual(col.width, .auto)
+            XCTAssertEqual(col.wrapping, .default)
+        }
+        do {
+            let str = "Column X"
+            for width in [Width.auto, .hidden, .value(42), .min(6), .max(3), .in(3...6), .range(5..<10)] {
+                for ca in Alignment.allCases {
+                    for wrapping in Wrapping.allCases {
+                        for ch in [ColumnContentHint.repetitive, .unique] {
+                            let col = Col(Txt(str), width: width, columnDefaultAlignment: ca, wrapping: wrapping, contentHint: ch)
+                            XCTAssertEqual(col.columnAlignment, ca)
+                            XCTAssertEqual(col.contentHint, ch)
+                            XCTAssertEqual(col.header, Txt(str))
+                            XCTAssertEqual(col.width, width)
+                            XCTAssertEqual(col.wrapping, wrapping)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 final class AlignmentTests: XCTestCase {
     func test_Default() {
         XCTAssertEqual(Alignment.default, Alignment.topLeft)
@@ -23,6 +79,9 @@ final class AlignmentTests: XCTestCase {
         }
     }
 }
+extension TextOutputStream {
+    var string:String { self as! String }
+}
 final class TableTests: XCTestCase {
     let pangram = "Quick brown fox jumps over the lazy dog"
     func test_noData() {
@@ -35,7 +94,7 @@ final class TableTests: XCTestCase {
         
         do {
             let table = Tbl("Title", columns: columns, cells: data, frameStyle: .rounded)
-            XCTAssertEqual(table.render(),
+            XCTAssertEqual(table.render().string,
                            """
                            ╭────────╮
                            │ Title  │
@@ -2881,6 +2940,166 @@ final class TableTests: XCTestCase {
             XCTAssertLessThan(t2-t1, t1-t0, txt)
         }
     }
+    func test_renderRange() {
+        var src:[[String]] = []
+        for i in 0..<3 {
+            var row:[String] = []
+            for j in 0..<3 {
+                row.append("r\(i)c\(j)")
+            }
+            src.append(row)
+        }
+        let columns = "ABC".map({ Col(String($0)) })
+        let tbl = Tbl("Title", columns: columns, strings: src, frameStyle: .squared)
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rowRanges: [0..<1], to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r0c0│r0c1│r0c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rows: 0..<2, to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r0c0│r0c1│r0c2│
+                           ├────┼────┼────┤
+                           │r1c0│r1c1│r1c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rows: 1..<2, to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r1c0│r1c1│r1c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rows: 2..<3, to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r2c0│r2c1│r2c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rows: 2..<2, to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            var s:TextOutputStream = ""
+            tbl.render(rowRanges: [0..<0, 1..<1, 2..<2], to: &s)
+            XCTAssertEqual(s as! String,
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           ├╌╌╌╌┼╌╌╌╌┼╌╌╌╌┤
+                           ├╌╌╌╌┼╌╌╌╌┼╌╌╌╌┤
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+        do {
+            XCTAssertEqual(tbl.render(rows: 0..<3),
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r0c0│r0c1│r0c2│
+                           ├────┼────┼────┤
+                           │r1c0│r1c1│r1c2│
+                           ├────┼────┼────┤
+                           │r2c0│r2c1│r2c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+            XCTAssertEqual(tbl.render(),
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r0c0│r0c1│r0c2│
+                           ├────┼────┼────┤
+                           │r1c0│r1c1│r1c2│
+                           ├────┼────┼────┤
+                           │r2c0│r2c1│r2c2│
+                           └────┴────┴────┘
+
+                           """
+            )
+        }
+        do {
+            XCTAssertEqual(tbl.render(rowRanges: [0..<1, 2..<3]),
+                           """
+                           ┌──────────────┐
+                           │    Title     │
+                           ├────┬────┬────┤
+                           │A   │B   │C   │
+                           ├────┼────┼────┤
+                           │r0c0│r0c1│r0c2│
+                           ├╌╌╌╌┼╌╌╌╌┼╌╌╌╌┤
+                           │r2c0│r2c1│r2c2│
+                           └────┴────┴────┘
+                           
+                           """
+            )
+        }
+    }
     func test_README() {
         do {
             let cells:[[Txt]] = [
@@ -2901,9 +3120,7 @@ final class TableTests: XCTestCase {
                             cells: cells,
                             frameStyle: .roundedPadded)
 
-            var t = ""
-            table.render(into: &t)
-            print(t)
+            print(table.render())
             // Produces ->
             //╭───────────────────────────╮
             //│        Table title        │
@@ -2922,7 +3139,7 @@ final class TableTests: XCTestCase {
             //│ 2 │       │       │       │
             //│ 3 │ x     │   x   │     x │
             //╰───┴───────┴───────┴───────╯
-            XCTAssertEqual(t,
+            XCTAssertEqual(table.render(),
                            """
                            ╭───────────────────────────╮
                            │        Table title        │
