@@ -137,7 +137,26 @@ public struct Tbl : Equatable, Codable {
                     { $0 + $1.width.value })
         return calculatedWidth
     }
-    public func render(into: inout String, leftPad:String = "", rightPad:String = "") {
+    /// Render table
+    /// - Parameters:
+    ///   - rowRanges: Range of table rows to render, default `nil` means all rows
+    ///   - leftPad: Pad left side of the table with `String`
+    ///   - rightPad: Pad right side of the table with `String`
+    ///   - output: An output stream to receive the rendering result.
+    public func render(rowRanges:[Range<Int>]? = nil,
+                       leftPad:String = "",
+                       rightPad:String = "",
+                       to output: inout TextOutputStream) {
+
+        var rnges:[Range<Int>] = []
+        for range in rowRanges ?? [(0..<data.count)]{
+            guard range.lowerBound >= 0,
+                  range.upperBound <= data.count else {
+                fatalError("range \(range) out of bounds")
+            }
+            rnges.append(range)
+        }
+
         let lPad = leftPad
             .filter({ $0.isNewline == false })
         let rPad = rightPad
@@ -156,24 +175,24 @@ public struct Tbl : Equatable, Codable {
 
         // Top frame
         if frameRenderingOptions.contains(.topFrame) {
-            into.append(lPad)
-            into.append(frameStyle.topLeftCorner(for: frameRenderingOptions))
+            output.write(lPad)
+            output.write(frameStyle.topLeftCorner(for: frameRenderingOptions))
             if hasTitle {
-                into.append(
+                output.write(
                     String(repeating: frameStyle.topHorizontalSeparator(for: frameRenderingOptions),
                            count: titleColumnWidth)
                 )
             }
             else if (hasHeaderLabels && hasVisibleColumns) || (hasVisibleColumns && hasData) {
-                into.append(
+                output.write(
                     actualColumns.map({
                         String(repeating: frameStyle.topHorizontalSeparator(for: frameRenderingOptions),
                                count: $0.width.value)
                     }).joined(separator: frameStyle.topHorizontalVerticalSeparator(for: frameRenderingOptions))
                 )
             }
-            into.append(frameStyle.topRightCorner(for: frameRenderingOptions))
-            into.append("\(rPad)\n")
+            output.write(frameStyle.topRightCorner(for: frameRenderingOptions))
+            output.write("\(rPad)\n")
         }
 
 
@@ -190,7 +209,7 @@ public struct Tbl : Equatable, Codable {
                                                    wrapping: title.wrapping ?? .word)
 
             for fragment in alignedTitle.lines {
-                into.append(
+                output.write(
                     lPad +
                     frameStyle.leftVerticalSeparator(for: frameRenderingOptions) +
                     fragment +
@@ -204,10 +223,10 @@ public struct Tbl : Equatable, Codable {
             
             if frameRenderingOptions.contains(.insideHorizontalFrame),
                (hasVisibleColumns && hasHeaderLabels) || hasData || hasTitle {
-                into.append(lPad)
-                into.append(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
+                output.write(lPad)
+                output.write(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
                 if hasVisibleColumns && (hasHeaderLabels || hasData) {
-                    into.append(
+                    output.write(
                         actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             return String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
                                           count: Swift.max(0, $0.width.value))
@@ -215,13 +234,13 @@ public struct Tbl : Equatable, Codable {
                     )
                 }
                 else {
-                    into.append(
+                    output.write(
                         String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
                                count: titleColumnWidth)
                     )
                 }
-                into.append(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
+                output.write(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
+                output.write("\(rPad)\n")
             }
         }
 
@@ -237,21 +256,21 @@ public struct Tbl : Equatable, Codable {
                 .dropFirst(0) // <= Convert Array to ArraySlice
                 .alignVertically
             for f in alignedColumnHeaders {
-                into.append(lPad)
-                into.append(frameStyle.leftVerticalSeparator(for: frameRenderingOptions))
-                into.append(f.joined(separator: frameStyle.insideVerticalSeparator(for: frameRenderingOptions)))
-                into.append(frameStyle.rightVerticalSeparator(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
+                output.write(lPad)
+                output.write(frameStyle.leftVerticalSeparator(for: frameRenderingOptions))
+                output.write(f.joined(separator: frameStyle.insideVerticalSeparator(for: frameRenderingOptions)))
+                output.write(frameStyle.rightVerticalSeparator(for: frameRenderingOptions))
+                output.write("\(rPad)\n")
             }
             
             
             
             // Divider, before data
             if frameRenderingOptions.contains(.insideHorizontalFrame) {
-                into.append(lPad)
-                into.append(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
+                output.write(lPad)
+                output.write(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
                 if hasHeaderLabels && hasVisibleColumns {
-                    into.append(
+                    output.write(
                         actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
                                    count: $0.width.value)
@@ -260,7 +279,7 @@ public struct Tbl : Equatable, Codable {
                 }
                 else if title != nil {
                     if hasVisibleColumns {
-                        into.append(
+                        output.write(
                             actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                                 String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
                                        count: $0.width.value)
@@ -268,138 +287,141 @@ public struct Tbl : Equatable, Codable {
                         )
                     }
                     else {
-                        into.append(
+                        output.write(
                             String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
                                    count: titleColumnWidth)
                         )
                     }
                 }
-                into.append(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
+                output.write(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
+                output.write("\(rPad)\n")
             }
         }
 
 
         // Data rows
-        var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
-        var cacheHits:Int = 0
-        var cacheMisses:Int = 0
-
-        let lastValidIndex = data.index(before: data.endIndex)
-        let actualVisibleColumns = actualColumns.filter({ $0.width.value > Width.hidden.value })
-        let actualVisibleColumnCount = actualVisibleColumns.count
-        let visibleColumnIndexes = actualColumns
-            .enumerated()
-            .filter({ $0.element.width.value > Width.hidden.value || $0.element.width == .auto })
-            .map({ $0.offset })
-            .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
-        // Main loop to render row/column data
-        /*
-         var cost1:UInt64 = 0
-         var cost2:UInt64 = 0
-         var cost3:UInt64 = 0
-         */
-        for (i,row) in data.enumerated() {
-            //let a0 = DispatchTime.now().uptimeNanoseconds
-            var columnized:ArraySlice<HorizontallyAligned> = []
-            let maxHeight:Int = visibleColumnIndexes
-                .filter { $0 < row.count }
-                .map {
-                    if actualColumns[$0].contentHint == .repetitive {
-
-                        // Combine width & alignment
-                        let u32:UInt32 = (UInt32(actualColumns[$0].width.value) << 16) +
-                        UInt32(row[$0].align?.rawValue ?? actualColumns[$0].columnAlignment.rawValue)
-
-                        if let fromCache = cache[u32]?[row[$0].string.hashValue] {
-                            columnized.append(fromCache)
-                            cacheHits += 1
-                            return fromCache.lines.count
+        for (ri, rnge) in zip(0..., rnges) {
+            var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
+            var cacheHits:Int = 0
+            var cacheMisses:Int = 0
+            
+            let lastValidIndex = rnge.upperBound - 1
+            let actualVisibleColumns = actualColumns.filter({ $0.width.value > Width.hidden.value })
+            let actualVisibleColumnCount = actualVisibleColumns.count
+            let visibleColumnIndexes = actualColumns
+                .enumerated()
+                .filter({ $0.element.width.value > Width.hidden.value || $0.element.width == .auto })
+                .map({ $0.offset })
+                .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
+            // Main loop to render row/column data
+            var i = rnge.lowerBound
+            for row in data[rnge] {
+                var columnized:ArraySlice<HorizontallyAligned> = []
+                let maxHeight:Int = visibleColumnIndexes
+                    .filter { $0 < row.count }
+                    .map {
+                        if actualColumns[$0].contentHint == .repetitive {
+                            
+                            // Combine width & alignment
+                            let u32:UInt32 = (UInt32(actualColumns[$0].width.value) << 16) +
+                            UInt32(row[$0].align?.rawValue ?? actualColumns[$0].columnAlignment.rawValue)
+                            
+                            if let fromCache = cache[u32]?[row[$0].string.hashValue] {
+                                columnized.append(fromCache)
+                                cacheHits += 1
+                                return fromCache.lines.count
+                            }
+                            else {
+                                let w = actualColumns[$0].width.value
+                                let a = row[$0].align ?? actualColumns[$0].columnAlignment
+                                let wr = row[$0].wrapping ?? actualColumns[$0].wrapping
+                                let splits = row[$0].string
+                                    .split(separator: "\n", omittingEmptySubsequences: false)
+                                    .map({ ele in
+                                        ele.isEmpty ? Txt(String(repeating: " ", count: w), align: a, wrapping: wr)
+                                        :
+                                        Txt(String(ele), align: a, wrapping: wr)
+                                    })
+                                var combined:[String] = []
+                                for split in splits {
+                                    combined.append(contentsOf: split.fragment(for: actualColumns[$0]).lines)
+                                }
+                                let fragmented = HorizontallyAligned(lines: combined,
+                                                                     alignment: a,
+                                                                     width: actualColumns[$0].width,
+                                                                     wrapping: actualColumns[$0].wrapping)
+                                // Write to cache
+                                cache[u32, default:[:]][row[$0].string.hashValue] = fragmented
+                                columnized.append(fragmented)
+                                cacheMisses += 1
+                                return fragmented.lines.count
+                            }
                         }
                         else {
-                            let w = actualColumns[$0].width.value
-                            let a = row[$0].align ?? actualColumns[$0].columnAlignment
-                            let wr = row[$0].wrapping ?? actualColumns[$0].wrapping
-                            let splits = row[$0].string
-                                .split(separator: "\n", omittingEmptySubsequences: false)
-                                .map({ ele in
-                                    ele.isEmpty ? Txt(String(repeating: " ", count: w), align: a, wrapping: wr)
-                                    :
-                                    Txt(String(ele), align: a, wrapping: wr)
-                                })
-                            var combined:[String] = []
-                            for split in splits {
-                                combined.append(contentsOf: split.fragment(for: actualColumns[$0]).lines)
-                            }
-                            let fragmented = HorizontallyAligned(lines: combined,
-                                                                 alignment: a,
-                                                                 width: actualColumns[$0].width,
-                                                                 wrapping: actualColumns[$0].wrapping)
-                            // Write to cache
-                            cache[u32, default:[:]][row[$0].string.hashValue] = fragmented
+                            let fragmented = row[$0].fragment(for: actualColumns[$0])
                             columnized.append(fragmented)
-                            cacheMisses += 1
                             return fragmented.lines.count
                         }
                     }
-                    else {
-                        let fragmented = row[$0].fragment(for: actualColumns[$0])
-                        columnized.append(fragmented)
-                        return fragmented.lines.count
-                    }
+                    .reduce(0, { Swift.max($0, $1) })
+                let missingColumnCount = Swift.max(0, actualVisibleColumnCount - columnized.count)
+                let currentCount = columnized.count
+                for k in 0..<missingColumnCount {
+                    let len = actualVisibleColumns[currentCount + k].width.value
+                    let emptyLineFragment = String(repeating: " ", count: len)
+                    columnized.append(
+                        HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
+                                            alignment: .default,
+                                            width: actualColumns[currentCount + k].width)
+                    )
                 }
-                .reduce(0, { Swift.max($0, $1) })
-            let missingColumnCount = Swift.max(0, actualVisibleColumnCount - columnized.count)
-            let currentCount = columnized.count
-            /*
-             //let a1 = DispatchTime.now().uptimeNanoseconds
-             //            print(row.map { $0.string },
-             //                  "missingColumnCount", missingColumnCount,
-             //                  actualColumns.map { $0.width.rawValue },
-             //                  columnized.map { $0.lines }, terminator: " -> ")
-             */
-            for k in 0..<missingColumnCount {
-                let len = actualVisibleColumns[currentCount + k].width.value
-                let emptyLineFragment = String(repeating: " ", count: len)
-                columnized.append(
-                    HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
-                                        alignment: .default,
-                                        width: actualColumns[currentCount + k].width)
-                )
+                
+                for columnData in columnized.prefix(actualColumns.count).alignVertically {
+                    output.write(l + columnData.joined(separator: insideVerticalSeparator) + r)
+                }
+                // Dividers between rows
+                if data.count > 0,
+                   hasVisibleColumns,
+                   i < lastValidIndex,
+                   frameRenderingOptions.contains(.insideHorizontalFrame) {
+                    output.write(lPad)
+                    output.write(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
+                    output.write(
+                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
+                            String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
+                                   count: $0.width.value)
+                        }).joined(separator: frameStyle.insideHorizontalVerticalSeparator(for: frameRenderingOptions))
+                    )
+                    output.write(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
+                    output.write("\(rPad)\n")
+                }
+                i += 1
             }
-
-            //let a2 = DispatchTime.now().uptimeNanoseconds
-            for columnData in columnized.prefix(actualColumns.count).alignVertically {
-                into.append(l + columnData.joined(separator: insideVerticalSeparator) + r)
-            }
-            if data.count > 0, hasVisibleColumns,i != lastValidIndex, frameRenderingOptions.contains(.insideHorizontalFrame) {
-                into.append(lPad)
-                into.append(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
-                into.append(
+            // Dividers between row ranges
+            if data.count > 0,
+               hasVisibleColumns,
+               ri < rnges.index(before: rnges.endIndex),
+               frameRenderingOptions.contains(.insideHorizontalFrame) {
+                output.write(lPad)
+                output.write(frameStyle.insideLeftVerticalSeparator(for: frameRenderingOptions))
+                output.write(
                     actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                        String(repeating: frameStyle.insideHorizontalSeparator(for: frameRenderingOptions),
+                        String(repeating: frameStyle.insideHorizontalRowRangeSeparator(for: frameRenderingOptions),
                                count: $0.width.value)
                     }).joined(separator: frameStyle.insideHorizontalVerticalSeparator(for: frameRenderingOptions))
                 )
-                into.append(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
-                into.append("\(rPad)\n")
+                output.write(frameStyle.insideRightVerticalSeparator(for: frameRenderingOptions))
+                output.write("\(rPad)\n")
             }
-            /*
-             let a3 = DispatchTime.now().uptimeNanoseconds
-             cost1 += (a1 - a0)
-             cost2 += (a2 - a1)
-             cost3 += (a3 - a2)
-             */
         }
-
 
         // Bottom frame
         if frameRenderingOptions.contains(.bottomFrame) {
-            into.append(lPad)
-            into.append(frameStyle.bottomLeftCorner(for: frameRenderingOptions))
+            output.write(lPad)
+            output.write(frameStyle.bottomLeftCorner(for: frameRenderingOptions))
             if hasVisibleColumns {
                 if data.count > 0 {
-                    into.append(
+                    output.write(
                         actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             String(repeating: frameStyle.bottomHorizontalSeparator(for: frameRenderingOptions),
                                    count: $0.width.value)
@@ -407,7 +429,7 @@ public struct Tbl : Equatable, Codable {
                     )
                 }
                 else {
-                    into.append(
+                    output.write(
                         actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
                             String(repeating: frameStyle.bottomHorizontalSeparator(for: frameRenderingOptions),
                                    count: $0.width.value)
@@ -416,25 +438,54 @@ public struct Tbl : Equatable, Codable {
                 }
             }
             else {
-                into.append(
+                output.write(
                     String(repeating: frameStyle.bottomHorizontalSeparator(for: frameRenderingOptions),
                            count: titleColumnWidth)
                 )
             }
-            into.append(frameStyle.bottomRightCorner(for: frameRenderingOptions))
-            into.append("\(rPad)\n")
+            output.write(frameStyle.bottomRightCorner(for: frameRenderingOptions))
+            output.write("\(rPad)\n")
         }
-        /*
-         print("missing column count cost", Double(cost1) / 1_000_000, "ms")
-         print("           maxHeight cost", Double(cost2) / 1_000_000, "ms")
-         print("              output cost", Double(cost3) / 1_000_000, "ms")
-         */
     }
-    public func render(leftPad:String = "", rightPad:String = "") -> String {
-        var result = ""
-        render(into: &result, leftPad: leftPad, rightPad: rightPad)
-        return result
+    /// Render table
+    /// - Parameters:
+    ///     - rowRanges: Collection of row ranges to render, default value of `nil` means all rows
+    ///     - leftPad: Pad left side of the table with `String`
+    ///     - rightPad: Pad right side of the table with `String`
+    /// - Returns: `String` containing rendered table
+    public func render(rowRanges:[Range<Int>]? = nil,
+                       leftPad:String = "", rightPad:String = "") -> String {
+        var result: any TextOutputStream = ""
+        render(rowRanges: rowRanges, leftPad: leftPad, rightPad: rightPad, to: &result)
+        return result as! String
     }
+    /// Render table
+    /// - Parameters:
+    ///     - range: Range of table rows to render, default `nil` means all rows
+    ///     - leftPad: Pad left side of the table with `String`
+    ///     - rightPad: Pad right side of the table with `String`
+    /// - Returns: `String` containing rendered table
+    public func render(rows range:Range<Int>, leftPad:String = "", rightPad:String = "") -> String {
+        var result: any TextOutputStream = ""
+        render(rowRanges: [range],
+               leftPad: leftPad, rightPad: rightPad,
+               to: &result)
+        return result as! String
+    }
+    /// Render table
+    /// - Parameters:
+    ///   - range: Range of table rows to render, default `nil` means all rows
+    ///   - leftPad: Pad left side of the table with `String`
+    ///   - rightPad: Pad right side of the table with `String`
+    ///   - output: An output stream to receive the rendering result.
+    /// - Returns: `String` containing rendered table
+    public func render(rows range:Range<Int>, leftPad:String = "", rightPad:String = "", to output:inout TextOutputStream) {
+        render(rowRanges: [range],
+               leftPad: leftPad, rightPad: rightPad,
+               to: &output)
+    }
+    /// Convert table data to CSV format
+    /// - Returns: `String` containing table data formatted as CSV
     public func csv(delimiter:String = ";", withColumnHeaders:Bool = true, includingHiddenColumns:Bool = false) -> String {
         var result = ""
         if withColumnHeaders {

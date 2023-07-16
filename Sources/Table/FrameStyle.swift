@@ -7,6 +7,7 @@ public struct FrameStyle : Equatable, Codable {
     public let rightVerticalSeparator:            String
     public let insideLeftVerticalSeparator:       String
     public let insideHorizontalSeparator:         String
+    public let insideHorizontalRowRangeSeparator: String
     public let insideRightVerticalSeparator:      String
     public let insideHorizontalVerticalSeparator: String
     public let insideVerticalSeparator:           String
@@ -23,6 +24,7 @@ public struct FrameStyle : Equatable, Codable {
         rightVerticalSeparator:            String,
         insideLeftVerticalSeparator:       String,
         insideHorizontalSeparator:         String,
+        insideHorizontalRowRangeSeparator: String,
         insideRightVerticalSeparator:      String,
         insideHorizontalVerticalSeparator: String,
         insideVerticalSeparator:           String,
@@ -40,6 +42,7 @@ public struct FrameStyle : Equatable, Codable {
             rightVerticalSeparator           ,
             insideLeftVerticalSeparator      ,
             insideHorizontalSeparator        ,
+            insideHorizontalRowRangeSeparator,
             insideRightVerticalSeparator     ,
             insideHorizontalVerticalSeparator,
             insideVerticalSeparator          ,
@@ -56,6 +59,7 @@ public struct FrameStyle : Equatable, Codable {
         self.rightVerticalSeparator            = rightVerticalSeparator
         self.insideLeftVerticalSeparator       = insideLeftVerticalSeparator
         self.insideHorizontalSeparator         = insideHorizontalSeparator
+        self.insideHorizontalRowRangeSeparator = insideHorizontalRowRangeSeparator
         self.insideRightVerticalSeparator      = insideRightVerticalSeparator
         self.insideHorizontalVerticalSeparator = insideHorizontalVerticalSeparator
         self.insideVerticalSeparator           = insideVerticalSeparator
@@ -74,6 +78,7 @@ public struct FrameStyle : Equatable, Codable {
         _ rightVerticalSeparator:            String,
         _ insideLeftVerticalSeparator:       String,
         _ insideHorizontalSeparator:         String,
+        _ insideHorizontalRowRangeSeparator: String,
         _ insideRightVerticalSeparator:      String,
         _ insideHorizontalVerticalSeparator: String,
         _ insideVerticalSeparator:           String,
@@ -93,6 +98,7 @@ public struct FrameStyle : Equatable, Codable {
 
             (topHorizontalSeparator, bottomHorizontalSeparator),
             (topHorizontalSeparator, insideHorizontalSeparator),
+            (insideHorizontalSeparator, insideHorizontalRowRangeSeparator),
 
             (leftVerticalSeparator, insideLeftVerticalSeparator),
 
@@ -104,7 +110,7 @@ public struct FrameStyle : Equatable, Codable {
         for (l,r) in pairs {
             precondition(l.count == r.count, "\(FrameStyle.self) \"\(l)\" and \"\(r)\" have different string lengths and would produce misaligned frame.")
         }
-        for mustBeSingleChar in [topHorizontalSeparator, insideHorizontalSeparator, bottomHorizontalSeparator] {
+        for mustBeSingleChar in [topHorizontalSeparator, insideHorizontalSeparator, insideHorizontalRowRangeSeparator, bottomHorizontalSeparator] {
             precondition(mustBeSingleChar.count == 1, "\(FrameStyle.self) \"\(mustBeSingleChar)\" length must be 1.")
         }
     }
@@ -131,6 +137,9 @@ public struct FrameStyle : Equatable, Codable {
     }
     public func insideHorizontalSeparator(for options:FrameRenderingOptions) -> String {
         (options.contains(.insideHorizontalFrame) || options.contains(.leftFrame) || options.contains(.rightFrame)) ? insideHorizontalSeparator : " "
+    }
+    public func insideHorizontalRowRangeSeparator(for options:FrameRenderingOptions) -> String {
+        (options.contains(.insideHorizontalFrame) || options.contains(.leftFrame) || options.contains(.rightFrame)) ? insideHorizontalRowRangeSeparator : " "
     }
     public func insideRightVerticalSeparator(for options:FrameRenderingOptions) -> String {
         options.contains(.rightFrame) ? insideRightVerticalSeparator : ""
@@ -166,6 +175,7 @@ extension FrameStyle {
             rightVerticalSeparator:               "|",
             insideLeftVerticalSeparator:          "+",
             insideHorizontalSeparator:            "-",
+            insideHorizontalRowRangeSeparator:    "~",
             insideRightVerticalSeparator:         "+",
             insideHorizontalVerticalSeparator:    "+",
             insideVerticalSeparator:              "|",
@@ -188,6 +198,7 @@ extension FrameStyle {
             rightVerticalSeparator:               " ",
             insideLeftVerticalSeparator:          " ",
             insideHorizontalSeparator:            " ",
+            insideHorizontalRowRangeSeparator:    " ",
             insideRightVerticalSeparator:         " ",
             insideHorizontalVerticalSeparator:    " ",
             insideVerticalSeparator:              " ",
@@ -207,6 +218,7 @@ extension FrameStyle {
             rightVerticalSeparator:               "║",
             insideLeftVerticalSeparator:          "╠",
             insideHorizontalSeparator:            "═",
+            insideHorizontalRowRangeSeparator:    "─",
             insideRightVerticalSeparator:         "╣",
             insideHorizontalVerticalSeparator:    "╬",
             insideVerticalSeparator:              "║",
@@ -226,6 +238,7 @@ extension FrameStyle {
             rightVerticalSeparator:               "│",
             insideLeftVerticalSeparator:          "├",
             insideHorizontalSeparator:            "─",
+            insideHorizontalRowRangeSeparator:    "╌",
             insideRightVerticalSeparator:         "┤",
             insideHorizontalVerticalSeparator:    "┼",
             insideVerticalSeparator:              "│",
@@ -245,6 +258,7 @@ extension FrameStyle {
             rightVerticalSeparator:               "│",
             insideLeftVerticalSeparator:          "├",
             insideHorizontalSeparator:            "─",
+            insideHorizontalRowRangeSeparator:    "╌",
             insideRightVerticalSeparator:         "┤",
             insideHorizontalVerticalSeparator:    "┼",
             insideVerticalSeparator:              "│",
@@ -264,6 +278,7 @@ extension FrameStyle {
             rightVerticalSeparator:               " │",
             insideLeftVerticalSeparator:          "├─",
             insideHorizontalSeparator:            "─",
+            insideHorizontalRowRangeSeparator:    "╌",
             insideRightVerticalSeparator:         "─┤",
             insideHorizontalVerticalSeparator:    "─┼─",
             insideVerticalSeparator:              " │ ",
