@@ -1,8 +1,16 @@
+/// Concrete type encapsulating table cell data
+///
+/// Associated alignment and wrapping will override the
+/// default alignment and wrapping set on the column level.
+
 public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
     public typealias StringLiteralType = String
 
+    /// Text to be rendered
     public let string:String
+    /// Text alignment (will override column default alignment)
     public let align:Alignment?
+    /// Text wrapping (will override column default wrapping)
     public let wrapping:Wrapping?
     public init(_ str:String, align: Alignment? = nil, wrapping:Wrapping? = nil) {
         self.string = str
@@ -14,6 +22,9 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
         self.align = nil
         self.wrapping = nil
     }
+
+    /// Generate horizontally aligned text fragments for specified width, alignment and wrapping
+
     private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
         precondition(width >= 0, "Negative widths are not allowed here.")
         let lines:[String]
@@ -66,9 +77,9 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
         return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
     }
     internal func fragment(for column:Col) -> HorizontallyAligned {
-        return self.fragment(fallback: self.align ?? column.columnAlignment,
+        return self.fragment(fallback: self.align ?? column.defaultAlignment,
                              width: column.width.value,
-                             wrapping: self.wrapping ?? column.wrapping)
+                             wrapping: self.wrapping ?? column.defaultWrapping)
     }
 }
 extension Txt : Collection {
