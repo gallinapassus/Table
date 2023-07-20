@@ -7,9 +7,18 @@ Simple table
 import Table
 
 let cells:[[Txt]] = [
-    ["123", Txt("x", align: .topLeft), Txt("x", align: .topCenter), Txt("x", align: .topRight)],
-    ["123", Txt("x", align: .middleLeft), Txt("x", align: .middleCenter), Txt("x", align: .middleRight)],
-    ["123", Txt("x", align: .bottomLeft), Txt("x", align: .bottomCenter), Txt("x", align: .bottomRight)],
+    ["123",
+     Txt("x", alignment: .topLeft),
+     Txt("x", alignment: .topCenter),
+     Txt("x", alignment: .topRight)],
+    ["123",
+     Txt("x", alignment: .middleLeft),
+     Txt("x", alignment: .middleCenter),
+     Txt("x", alignment: .middleRight)],
+    ["123",
+     Txt("x", alignment: .bottomLeft),
+     Txt("x", alignment: .bottomCenter),
+     Txt("x", alignment: .bottomRight)],
 ]
 let width:Width = 5
 
@@ -53,7 +62,7 @@ let table = Tbl("Summer Olympics") {
     
     Columns {
         Col("Year", width: .auto)
-        Col("Host", width: .in(5...25), wrapping: .word)
+        Col("Host", width: .in(5...25), defaultWrapping: .word)
         Col("Country")
     }
     
