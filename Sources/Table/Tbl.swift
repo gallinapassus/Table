@@ -293,13 +293,17 @@ public class Tbl : Decodable {
         // Title
         if let title = title {
             let splitted = title.string.split(separator: "\n", omittingEmptySubsequences: false)
-                .map({ Txt(String($0), align: title.align, wrapping: title.wrapping) })
+                .map({
+                    Txt(String($0),
+                        alignment: title.alignment,
+                        wrapping: title.wrapping)
+                })
             var combined:[HorizontallyAligned] = []
             for split in splitted {
-                let foo = split.fragment(for: Col(width: .value(titleColumnWidth), defaultAlignment: title.align ?? .middleCenter, defaultWrapping: title.wrapping ?? .word, contentHint: .unique))
+                let foo = split.fragment(for: Col(width: .value(titleColumnWidth), defaultAlignment: title.alignment ?? .middleCenter, defaultWrapping: title.wrapping ?? .word, contentHint: .unique))
                 combined.append(foo)
             }
-            let alignedTitle = HorizontallyAligned(lines: combined.flatMap({ $0.lines }), alignment: title.align ?? .middleCenter,
+            let alignedTitle = HorizontallyAligned(lines: combined.flatMap({ $0.lines }), alignment: title.alignment ?? .middleCenter,
                                                    wrapping: title.wrapping ?? .word)
 
             for fragment in alignedTitle.lines {
@@ -418,7 +422,7 @@ public class Tbl : Decodable {
                         if actualColumns[$0].contentHint == .repetitive {
                             // Combine width & alignment
                             let u32:UInt32 = (UInt32(actualColumns[ci].width.value) << 16) +
-                            UInt32(row[$0].align?.rawValue ?? actualColumns[ci].defaultAlignment.rawValue)
+                            UInt32(row[$0].alignment?.rawValue ?? actualColumns[ci].defaultAlignment.rawValue)
                             
                             if let fromCache = cache[u32]?[row[$0].string.hashValue] {
                                 columnized.append(fromCache)
@@ -427,14 +431,14 @@ public class Tbl : Decodable {
                             }
                             else {
                                 let w = actualColumns[$0].width.value
-                                let a = row[$0].align ?? actualColumns[ci].defaultAlignment
+                                let a = row[$0].alignment ?? actualColumns[ci].defaultAlignment
                                 let wr = row[$0].wrapping ?? actualColumns[ci].defaultWrapping
                                 let splits = row[$0].string
                                     .split(separator: "\n", omittingEmptySubsequences: false)
                                     .map({ ele in
-                                        ele.isEmpty ? Txt(String(repeating: " ", count: w), align: a, wrapping: wr)
+                                        ele.isEmpty ? Txt(String(repeating: " ", count: w), alignment: a, wrapping: wr)
                                         :
-                                        Txt(String(ele), align: a, wrapping: wr)
+                                        Txt(String(ele), alignment: a, wrapping: wr)
                                     })
                                 var combined:[String] = []
                                 for split in splits {

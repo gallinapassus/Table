@@ -104,10 +104,10 @@ extension Col {
 
     public init(_ string:String,
                 width:Width = .auto,
-                align:Alignment = .topLeft,
-                wrapping:Wrapping = .char,
+                defaultAlignment:Alignment = .topLeft,
+                defaultWrapping:Wrapping = .char,
                 contentHint:ColumnContentHint = .repetitive) {
-        self.init(Txt(string), width: width, defaultAlignment: align, defaultWrapping: wrapping, contentHint: contentHint)
+        self.init(Txt(string), width: width, defaultAlignment: defaultAlignment, defaultWrapping: defaultWrapping, contentHint: contentHint)
     }
 }
 public enum ColumnContentHint : Equatable, Codable {

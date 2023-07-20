@@ -6,7 +6,7 @@ final class TxtTests: XCTestCase {
         do {
             let str = "Lorem ipsum."
             let txt = Txt(str)
-            XCTAssertNil(txt.align)
+            XCTAssertNil(txt.alignment)
             XCTAssertEqual(txt.string, str)
             XCTAssertEqual(txt.startIndex, str.startIndex)
             XCTAssertEqual(txt.endIndex, str.endIndex)
@@ -16,8 +16,10 @@ final class TxtTests: XCTestCase {
             let str = "Lorem ipsum."
             for alignment in Alignment.allCases {
                 for wrapping in Wrapping.allCases {
-                    let txt = Txt(str, align: alignment, wrapping: wrapping)
-                    XCTAssertEqual(txt.align, alignment)
+                    let txt = Txt(str,
+                                  alignment: alignment,
+                                  wrapping: wrapping)
+                    XCTAssertEqual(txt.alignment, alignment)
                     XCTAssertEqual(txt.string, str)
                     XCTAssertEqual(txt.startIndex, str.startIndex)
                     XCTAssertEqual(txt.endIndex, str.endIndex)
@@ -266,9 +268,9 @@ final class TableTests: XCTestCase {
         do {
             let src:[[Txt]] = []
             let columns = [
-                Col("Hash", width: .min(1), align: .bottomLeft, wrapping: .word, contentHint: .unique),
-                Col("Value", width: .auto, align: .bottomRight, wrapping: .word, contentHint: .unique),
-                Col("Unit", width: .auto, align: .bottomLeft, wrapping: .word, contentHint: .unique),
+                Col("Hash", width: .min(1), defaultAlignment: .bottomLeft, defaultWrapping: .word, contentHint: .unique),
+                Col("Value", width: .auto, defaultAlignment: .bottomRight, defaultWrapping: .word, contentHint: .unique),
+                Col("Unit", width: .auto, defaultAlignment: .bottomLeft, defaultWrapping: .word, contentHint: .unique),
             ]
             
             let table = Tbl("title", columns: columns, cells: src)
@@ -1989,7 +1991,7 @@ final class TableTests: XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Left aligned
-            let table = Tbl(Txt("Title", align: .topLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title", alignment: .topLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2005,7 +2007,7 @@ final class TableTests: XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Right aligned
-            let table = Tbl(Txt("Title", align: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2021,7 +2023,7 @@ final class TableTests: XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Left aligned
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2038,7 +2040,7 @@ final class TableTests: XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Right aligned
-            let table = Tbl(Txt("Title wider than column width", align: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title wider than column width", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2149,7 +2151,7 @@ final class TableTests: XCTestCase {
             ]
             XCTAssertEqual(Alignment.allCases.count, expected.count)
             for (i,alignment) in Alignment.allCases.enumerated() {
-                let columns = [Col("123", width: 1), Col(Txt("#", align: alignment), width: 3)]
+                let columns = [Col("123", width: 1), Col(Txt("#", alignment: alignment), width: 3)]
                 let table = Tbl(columns: columns, cells: [[]])
                 XCTAssertEqual(table.render(), expected[i])
             }
@@ -2642,7 +2644,7 @@ final class TableTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
 
@@ -2682,7 +2684,7 @@ final class TableTests: XCTestCase {
                 [Txt("Automatic\ncolumn\nwidth with proper\nnewline handling"), Txt("Quick brown fox")]
             ]
             let columns = [
-                Col(Txt("Auto column", align: .bottomCenter),
+                Col(Txt("Auto column", alignment: .bottomCenter),
                     defaultAlignment: .topLeft, defaultWrapping: .cut),
                 Col("Fixed column", width: .value(10),
                     defaultAlignment: .middleCenter, defaultWrapping: .word),
@@ -2716,7 +2718,7 @@ final class TableTests: XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps over the lazy dog")
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -2736,7 +2738,7 @@ final class TableTests: XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\nover the lazy dog")
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -2757,7 +2759,7 @@ final class TableTests: XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -2779,7 +2781,7 @@ final class TableTests: XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16, defaultAlignment: .topRight)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -2801,8 +2803,8 @@ final class TableTests: XCTestCase {
             // Newline handling
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
-            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter)
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter)
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -2828,8 +2830,8 @@ final class TableTests: XCTestCase {
             // Newline handling
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
-            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .word)
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .word)
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -2855,8 +2857,8 @@ final class TableTests: XCTestCase {
             // Newline handling
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
-            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
-            let table = Tbl(Txt("Title wider than column width", align: .middleLeft),
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -2881,8 +2883,8 @@ final class TableTests: XCTestCase {
             // Newline handling
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
-            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
-            let table = Tbl(Txt("Title obeys\nnewlines as well", align: .middleLeft, wrapping: .word),
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -2907,8 +2909,8 @@ final class TableTests: XCTestCase {
             // Newline handling
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
-            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", align: .middleCenter, wrapping: .cut)
-            let table = Tbl(Txt("Title obeys\nnewlines as well", align: .middleLeft, wrapping: .word),
+            let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
+            let table = Tbl(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
                             columns: [Col(width: .auto)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3295,7 +3297,7 @@ final class TableTests: XCTestCase {
             for line in stride(from: 0, to: randomBytes.count, by: step) {
                 cells.append(Array(randomBytes[line..<Swift.min(randomBytes.count, line + step)]))
             }
-            let table = Tbl(Txt("Hexdump", align: .bottomLeft), cells: cells)
+            let table = Tbl(Txt("Hexdump", alignment: .bottomLeft), cells: cells)
             // Set formatter to NumberFormatter, with completely unexpected
             // numbering style. Automatic line numbering implementation assumes
             // that the required column width for the very last row number is
@@ -3325,7 +3327,7 @@ final class TableTests: XCTestCase {
                 // By default line numbers are aligned to bottom right
                 // Let's override it
                 return Txt((i*i).description,
-                           align: .topLeft) // <- override is here
+                           alignment: .topLeft) // <- override is here
             }
             XCTAssertEqual(table.render(rows: [0..<3, 23..<cells.count]),
                            """
@@ -3356,12 +3358,21 @@ final class TableTests: XCTestCase {
     func test_README() {
         do {
             let cells:[[Txt]] = [
-                ["123", Txt("x", align: .topLeft), Txt("x", align: .topCenter), Txt("x", align: .topRight)],
-                ["123", Txt("x", align: .middleLeft), Txt("x", align: .middleCenter), Txt("x", align: .middleRight)],
-                ["123", Txt("x", align: .bottomLeft), Txt("x", align: .bottomCenter), Txt("x", align: .bottomRight)],
+                ["123",
+                 Txt("x", alignment: .topLeft),
+                 Txt("x", alignment: .topCenter),
+                 Txt("x", alignment: .topRight)],
+                ["123",
+                 Txt("x", alignment: .middleLeft),
+                 Txt("x", alignment: .middleCenter),
+                 Txt("x", alignment: .middleRight)],
+                ["123",
+                 Txt("x", alignment: .bottomLeft),
+                 Txt("x", alignment: .bottomCenter),
+                 Txt("x", alignment: .bottomRight)],
             ]
             let width:Width = 5
-
+            
             let cols = [
                 Col("#", width: 1, defaultAlignment: .topLeft),
                 Col("Col 1", width: width, defaultAlignment: .bottomCenter),
@@ -3371,7 +3382,7 @@ final class TableTests: XCTestCase {
             let table = Tbl("Table title",
                             columns: cols,
                             cells: cells)
-
+            
             print(table.render(style: .roundedPadded))
             // Produces ->
             //╭───────────────────────────╮
@@ -3419,7 +3430,7 @@ final class TableTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3430,17 +3441,17 @@ final class TableTests: XCTestCase {
                 }
             }
             print(table.render())
-            // ╭──────────────────────╮
-            // │   Summer Olympics    │
-            // ├────┬─────────┬───────┤
-            // │Year│Host     │Country│
-            // ├────┼─────────┼───────┤
-            // │1952│Helsinki │Finland│
-            // ├────┼─────────┼───────┤
-            // │1956│Stockholm│Sweden │
-            // ├────┼─────────┼───────┤
-            // │1960│Rome     │Italy  │
-            // ╰────┴─────────┴───────╯
+            //╭──────────────────────╮
+            //│   Summer Olympics    │
+            //├────┬─────────┬───────┤
+            //│Year│Host     │Country│
+            //├────┼─────────┼───────┤
+            //│1952│Helsinki │Finland│
+            //├────┼─────────┼───────┤
+            //│1956│Stockholm│Sweden │
+            //├────┼─────────┼───────┤
+            //│1960│Rome     │Italy  │
+            //╰────┴─────────┴───────╯
             XCTAssertEqual(table.render(style: .rounded),
                            """
                            ╭──────────────────────╮
@@ -3565,7 +3576,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3582,7 +3593,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3599,7 +3610,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3618,7 +3629,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3635,7 +3646,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
@@ -3652,7 +3663,7 @@ final class DSLTests: XCTestCase {
 
                 Columns {
                     Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), wrapping: .word)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
                 
