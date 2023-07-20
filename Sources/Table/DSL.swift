@@ -67,40 +67,11 @@ public enum RowCellBuilder {
 }
 @resultBuilder
 public enum TblBuilder {
-    public static func buildBlock(_ frameStyle: FrameStyle,
-                                  _ frameRenderingOptions: FrameRenderingOptions,
-                                  _ columnDefinitions: Columns,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (frameStyle, frameRenderingOptions, columnDefinitions.data, data.rows)
-    }
-    public static func buildBlock(_ frameRenderingOptions: FrameRenderingOptions,
-                                  _ columnDefinitions: Columns,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (.default, frameRenderingOptions, columnDefinitions.data, data.rows)
-    }
-    public static func buildBlock(_ frameStyle: FrameStyle,
-                                  _ columnDefinitions: Columns,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (frameStyle, .all, columnDefinitions.data, data.rows)
-    }
     public static func buildBlock(_ columnDefinitions: Columns,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (.default, .all, columnDefinitions.data, data.rows)
+                                  _ data: Rows) -> ([Col], [[Txt]]) {
+        (columnDefinitions.data, data.rows)
     }
-    public static func buildBlock(_ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (.default, .all, [], data.rows)
-    }
-    public static func buildBlock(_ frameStyle: FrameStyle,
-                                  _ frameRenderingOptions: FrameRenderingOptions,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (frameStyle, frameRenderingOptions, [], data.rows)
-    }
-    public static func buildBlock(_ frameStyle: FrameStyle,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (frameStyle, .all, [], data.rows)
-    }
-    public static func buildBlock(_ frameRenderingOptions: FrameRenderingOptions,
-                                  _ data: Rows) -> (FrameStyle, FrameRenderingOptions, [Col], [[Txt]]) {
-        (.default, frameRenderingOptions, [], data.rows)
+    public static func buildBlock(_ data: Rows) -> ([Col], [[Txt]]) {
+        ([], data.rows)
     }
 }

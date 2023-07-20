@@ -1,3 +1,11 @@
+/// Table frame style
+///
+/// Defines the individual table frame building blocks.
+/// Provides simple validation of elements to produce
+/// coherent table frames.
+///
+/// Custom styles can be created as extensions.
+
 public struct FrameStyle : Equatable, Codable {
     public let topLeftCorner:                     String
     public let topHorizontalSeparator:            String
@@ -114,53 +122,53 @@ public struct FrameStyle : Equatable, Codable {
             precondition(mustBeSingleChar.count == 1, "\(FrameStyle.self) \"\(mustBeSingleChar)\" length must be 1.")
         }
     }
-    public func topLeftCorner(for options:FrameRenderingOptions) -> String {
+    public func topLeftCorner(for options:FramingOptions) -> String {
         options.contains([.leftFrame, .topFrame]) ? topLeftCorner : ""
     }
-    public func topHorizontalSeparator(for options:FrameRenderingOptions) -> String {
+    public func topHorizontalSeparator(for options:FramingOptions) -> String {
         (options.contains(.topFrame) || options.contains(.inside)) ? topHorizontalSeparator : " "
     }
-    public func topHorizontalVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func topHorizontalVerticalSeparator(for options:FramingOptions) -> String {
         options.contains([.topFrame, .inside]) || options.contains(.inside) ? topHorizontalVerticalSeparator : ""
     }
-    public func topRightCorner(for options:FrameRenderingOptions) -> String {
+    public func topRightCorner(for options:FramingOptions) -> String {
         options.contains([.rightFrame, .topFrame]) ? topRightCorner : ""
     }
-    public func leftVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func leftVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.leftFrame) ? leftVerticalSeparator : ""
     }
-    public func rightVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func rightVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.rightFrame) ? rightVerticalSeparator : ""
     }
-    public func insideLeftVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideLeftVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.leftFrame) ? insideLeftVerticalSeparator : ""
     }
-    public func insideHorizontalSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideHorizontalSeparator(for options:FramingOptions) -> String {
         (options.contains(.insideHorizontalFrame) || options.contains(.leftFrame) || options.contains(.rightFrame)) ? insideHorizontalSeparator : " "
     }
-    public func insideHorizontalRowRangeSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideHorizontalRowRangeSeparator(for options:FramingOptions) -> String {
         (options.contains(.insideHorizontalFrame) || options.contains(.leftFrame) || options.contains(.rightFrame)) ? insideHorizontalRowRangeSeparator : " "
     }
-    public func insideRightVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideRightVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.rightFrame) ? insideRightVerticalSeparator : ""
     }
-    public func insideHorizontalVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideHorizontalVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.insideHorizontalFrame) && options.contains(.insideVerticalFrame) ?
             insideHorizontalVerticalSeparator : ""
     }
-    public func insideVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func insideVerticalSeparator(for options:FramingOptions) -> String {
         options.contains(.insideVerticalFrame) ? insideVerticalSeparator : ""
     }
-    public func bottomLeftCorner(for options:FrameRenderingOptions) -> String {
+    public func bottomLeftCorner(for options:FramingOptions) -> String {
         options.contains([.leftFrame, .bottomFrame]) ? bottomLeftCorner : ""
     }
-    public func bottomHorizontalSeparator(for options:FrameRenderingOptions) -> String {
+    public func bottomHorizontalSeparator(for options:FramingOptions) -> String {
         options.contains(.bottomFrame) ? bottomHorizontalSeparator : " "
     }
-    public func bottomHorizontalVerticalSeparator(for options:FrameRenderingOptions) -> String {
+    public func bottomHorizontalVerticalSeparator(for options:FramingOptions) -> String {
         options.contains([.bottomFrame, .insideVerticalFrame]) ? bottomHorizontalVerticalSeparator : ""
     }
-    public func bottomRightCorner(for options:FrameRenderingOptions) -> String {
+    public func bottomRightCorner(for options:FramingOptions) -> String {
         options.contains([.rightFrame, .bottomFrame]) ? bottomRightCorner : ""
     }
 }

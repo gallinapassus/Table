@@ -53,7 +53,7 @@ extension String {
 }
 extension String {
 
-    internal func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
+    internal func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
         guard self.count < width else {
             return String(self.prefix(width))
         }
@@ -74,7 +74,7 @@ extension String {
 extension Substring {
 
     @inline(__always)
-    internal func render(to width:Int, alignment:Alignment = .default, padding with:Character = " ") -> String {
+    internal func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
         String(self).render(to: width, alignment: alignment, padding: with)
     }
 }

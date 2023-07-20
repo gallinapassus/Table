@@ -14,19 +14,17 @@ let cells:[[Txt]] = [
 let width:Width = 5
 
 let cols = [
-    Col("#", width: 1, alignment: .topLeft),
-    Col("Col 1", width: width, alignment: .bottomCenter),
-    Col("Col 2", width: width, alignment: .bottomCenter),
-    Col("Col 3", width: width, alignment: .bottomCenter),
+    Col("#", width: 1, defaultAlignment: .topLeft),
+    Col("Col 1", width: width, defaultAlignment: .bottomCenter),
+    Col("Col 2", width: width, defaultAlignment: .bottomCenter),
+    Col("Col 3", width: width, defaultAlignment: .bottomCenter),
 ]
 let table = Tbl("Table title",
                 columns: cols,
-                cells: cells,
-                frameStyle: .roundedPadded)
+                cells: cells)
 
-var t = ""
-table.render(into: &t)
-print(t)
+print(table.render(style: .roundedPadded))
+// Produces ->
 //╭───────────────────────────╮
 //│        Table title        │
 //├───┬───────┬───────┬───────┤
@@ -52,9 +50,6 @@ Another simple table with DSL (domain specific language).
 import Table
 
 let table = Tbl("Summer Olympics") {
-                
-    FrameStyle.rounded
-    FrameRenderingOptions.all
     
     Columns {
         Col("Year", width: .auto)

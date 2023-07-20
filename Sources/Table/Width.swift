@@ -1,5 +1,8 @@
-public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable {
+/// Concrete type for expressing static and dynamic widths
 
+public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable {
+    // NOTE: This is propably the weirdest
+    // implementation possible -> should be re-worked
     private static let allowedRange = 0...Int(Int16.max)
 
     public var value: Int {
