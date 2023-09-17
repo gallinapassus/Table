@@ -14,7 +14,6 @@ extension Wrapping : CustomStringConvertible {
         case .char: return "char"
         case .cut: return "cut"
         case .word: return "word"
-//        case .word2: return "word2"
         }
     }
 }

@@ -75,3 +75,13 @@ public enum TblBuilder {
         ([], data.rows)
     }
 }
+@resultBuilder
+public enum Tbl2Builder {
+    public static func buildBlock(_ columnDefinitions: Columns,
+                                  _ cells: Rows) -> ([Col], [[Txt]]) {
+        (columnDefinitions.data, cells.rows)
+    }
+    public static func buildBlock(_ cells: Rows) -> ([Col], [[Txt]]) {
+        ([], cells.rows)
+    }
+}

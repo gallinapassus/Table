@@ -78,7 +78,6 @@ extension String {
             }
             else if trimNewline == false, c == "\n" {
                 if strArrStorage != nil {
-                    //strArrStorage!.append(/*strStorage*/String(tmp.reversed()))
                     if reverse {
                         strArrStorage!.append(String(tmp.reversed()))
                         tmp = ""
@@ -87,7 +86,6 @@ extension String {
                         strArrStorage!.append(strStorage)
                         strStorage = ""
                     }
-//                    strStorage = ""
                 }
                 else {
                     if reverse {
@@ -104,36 +102,8 @@ extension String {
             tmp.reversed().forEach({strStorage.append($0)})
         }
     }
-
-    internal func fragment(where character: (Character) -> Bool) -> [Substring] {
-        var splits:[Substring] = []
-        var i = startIndex
-        var cursor = i
-        while i != endIndex {
-            if character(self[i]) {
-                splits.append(self[cursor...i])
-                cursor = index(after: i)
-            }
-            i = index(after: i)
-        }
-        if i != cursor {
-            splits.append(self[cursor...])
-        }
-        return splits
-    }
-    internal func words(to width:Int) -> [Substring] {
-
-        let wds:[Substring]
-            wds = self
-                .split(separator: " ", maxSplits: self.count, omittingEmptySubsequences: true)
-                .flatMap({ $0.count > width ? $0.split(to: width) : [$0] })
-        return wds.isEmpty ? [Substring("")] : wds
-    }
-    internal func compressedWords(_ width:Int) -> [Substring] {
-        words(to: width).compress(to: width)
-    }
     func maxFragmentWidth(separator: Character) -> Int {
-        split(separator: "\n", omittingEmptySubsequences: true)
+        split(separator: separator, omittingEmptySubsequences: true)
             .reduce(0, { Swift.max($0, $1.count) })
     }
     /// Trim string
@@ -215,7 +185,7 @@ extension String {
             }
             self.formIndex(after: &cursor)
         }
-        h.append(/*String(t.reversed())*/t)
+        h.append(t)
 
         return h
     }
@@ -296,7 +266,10 @@ extension String {
         }
         h.append(t)
         hh!.append(h)
-        hh!.append(contentsOf: tt!.reversed())
+        guard let tt = tt else {
+            return hh!
+        }
+        hh!.append(contentsOf: tt.count > 1 ? tt.reversed() : tt)
 
         return hh!
     }
@@ -617,18 +590,7 @@ extension Txt {
 
         var lines:[String] = []
         switch wrapping ?? defaultWrapping {
-//        case .word:
-//            lines = string
-//                .compressedWords(width).map({ $0.description })
-//                .map({ $0.render(to: width, alignment: alignment ?? defaultAlignment) })
-
         case .word:
-            // Transform "Quick brown fox jumped over the lazy dog."
-            // to width(14), alignment(right)
-            //  ["   Quick brown",
-            //   "    fox jumped",
-            //   " over the lazy"
-            //   "          dog."]
             let fragments:[String] = string.trimAndFrag(.all)
 
             for frag in fragments {
@@ -679,7 +641,6 @@ extension Txt {
                 }
             }
         }
-        //print("\(d.0) \(d.1) \(d.2) │     └ return → \(lines)")
         return lines
     }
     internal func halign(for column:FixedCol) -> [String] {
@@ -695,32 +656,6 @@ extension Txt {
             defaultWrapping: defaultWrapping,
             width: width
         ).valign(alignment ?? defaultAlignment, height: height)
-    }
-    /// Pre-format cell text and calculate the minimum- and maximum widths
-    /// for the given `Wrapping` style.
-    public func preFormat(for wrapping:Wrapping) -> (preformat:Txt, minWidth:Int, maxWidth:Int) {
-
-
-        switch wrapping {
-        case .word:
-            let trimmed:String = string.trim(.all)
-            let singleSpaced = trimmed//.trimmingCharacters(in: CharacterSet(charactersIn: " "))
-                .split(separator: " ", omittingEmptySubsequences: true)
-            guard singleSpaced.isEmpty == false else {
-                // empty string after cleanup
-                return ("", 0, 0)
-            }
-            let lo = singleSpaced.reduce(Int.max, { Swift.min($0, $1.count) })
-            let hi = singleSpaced.reduce(lo, { Swift.max($0, $1.count) })
-            return (Txt(singleSpaced.joined(separator: " "),
-                        alignment: alignment,
-                        wrapping: wrapping),
-                    lo,
-                    hi)
-        case .char, .cut:
-            let trimmed:String = string.trim([.leadingWhiteSpaces, .trailingWhiteSpaces])
-            return (Txt(trimmed, alignment: alignment, wrapping: wrapping), count, count)
-        }
     }
 }
 // MARK: Keep
@@ -785,16 +720,13 @@ extension Array where Element == Txt {
         return alignedRow
     }
 }
-import Foundation
+//import Foundation
 extension Wrapping {
     public func nlSplitted(_ cell:Txt, compressingMultipleConsecutiveNewlinesIntoOne c:Bool = false) -> [Txt] {
         switch self {
         case .word:
             return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
                 .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
-//        case .word2:
-//            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
-//                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
         case .char:
             return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
                 .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })

@@ -957,7 +957,7 @@ public final class Tbl2 {
     ///
     public var cellsMayHaveNewlines:Bool = true
     
-    public var debugMask:DebugTopicSet = [.cache]
+    public var debugMask:DebugTopicSet = []
     
     /// Initializes table
     ///
@@ -981,6 +981,13 @@ public final class Tbl2 {
 
         dbg(.info, debugMask, prefix: "\(type(of: self))", "\(columns.count) columns")
         dbg(.info, debugMask, prefix: "\(type(of: self))", "\(cells.reduce(0, { $0 + $1.count })) cells")
+    }
+    // DSL
+    public convenience init(
+        _ title:Txt?,
+        @TblBuilder _ makeTable: () -> ([Col], [[Txt]])) {
+            let (columns, cells) = makeTable()
+            self.init(title, columns: columns, cells: cells)
     }
     private func titleCellWidth(style:FrameStyle,
                                 options:FramingOptions,
@@ -1032,207 +1039,6 @@ public final class Tbl2 {
                to: &result)
         return result
     }
-    private func preFormat(columns cols:[Col],
-                           data:[[Txt]]? = nil,
-                           ranges:[Range<Int>],
-                           lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
-        cols.enumerated().forEach({
-            let a = "\($0.element.defaultAlignment, aligned: Alignment.self)"
-            let w = "\($0.element.defaultWrapping, aligned: Wrapping.self)"
-            let l = "\($0.element.dynamicWidth, aligned: Width.self)"
-            dbg(.debug, debugMask, prefix: "\(type(of: self))", "\($0.offset): \(a), \(w), \(l), header = \($0.element.header)")
-        })
-        dbg(.debug, debugMask, prefix: "\(type(of: self))", "rows (cell data) \(cells.isEmpty ? "no data" : "\(cells.count) rows")")
-        cells.forEach({ dbg(.debug, debugMask, prefix: "\(type(of: self))", "  \($0.map({ $0.string }))") })
-
-        let cells = data ?? self.cells
-        var prefmttedRange:[[[[Txt]]]] = []
-        var rowElementCountHistogram:[Int:Int] = [:]
-        var dict:[Int:Col] = Dictionary<Int,Col>(uniqueKeysWithValues: cols.enumerated().map({ $0 }))
-        var columnFixedWidth:[Int:Int] = [:]
-        let defCol = Col(width: .auto, defaultAlignment: .topLeft, defaultWrapping: .char)
-        var minRowElementCount:Int = Int.max
-        var maxRowElementCount:Int = Int.min
-
-        for range in ranges {
-            var prefmtted:[[[Txt]]] = []
-            for (ri, row) in cells[range].enumerated() {
-                dbg(.debug, debugMask, prefix: "\(type(of: self))", "ROW \(ri): \(row)")
-                minRowElementCount = Swift.min(minRowElementCount, row.count)
-                maxRowElementCount = Swift.max(maxRowElementCount, row.count)
-                rowElementCountHistogram[row.count, default: 0] += 1
-                if dict.count < maxRowElementCount {
-                    // We have more data cells on the row than
-                    // what we have defined Cols.
-                    // => Add missing Cols with default settings
-                    (dict.count..<maxRowElementCount).forEach { dict[$0] = defCol }
-                }
-                var fmrow:[[Txt]] = []
-                for (ci,unformattedcell) in row.enumerated() {
-                    //print("  COL \(ci) \(dict[ci]!.dynamicWidth):")
-                    guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
-                        columnFixedWidth[ci] = 0
-                        fmrow.append([])
-                        dbg(.debug, debugMask, prefix: "\(type(of: self))", "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
-                        continue
-                    }
-                    var lo:Int = {
-                        switch dict[ci]!.dynamicWidth {
-                        case .min(let v): return v
-                        case .range(let r): return r.lowerBound
-                        case .in(let r): return r.lowerBound
-                        default: return 0
-                        }
-                    }()
-                    var hi = 0
-                    // Are we expecting cell data to contain newlines
-                    if cellsMayHaveNewlines {
-                        // yes, cell data may contain newlines
-                        // now, split the cell at newlines
-                        // and find out the lower and upper range
-                        // of these row cell fragments
-                        
-                        let nlSplitted:[Txt] = (unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
-                            .nlSplitted(
-                                unformattedcell,
-                                compressingMultipleConsecutiveNewlinesIntoOne: false
-                            )
-                        let preformatted:[Txt] = nlSplitted.map({
-                            let (t,l,h) = $0.preFormat(for: $0.wrapping ?? dict[ci]!.defaultWrapping)
-                            lo = Swift.min(lo, l)
-                            hi = Swift.max(hi, h)
-                            dbg(.debug, debugMask, prefix: "\(type(of: self))", "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth) FRAG: '\($0.string)' → \(l)..<\(h) \(lo)..<\(hi)")
-                            return t
-                        })
-                        fmrow.append(preformatted)
-                    }
-                    else {
-                        // no, cell data does not contain newlines
-                        // quickly find out the lower and upper range
-                        // for this row cell
-                        let (formatted,l,h) = unformattedcell
-                            .preFormat(for: unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
-                        lo = Swift.min(lo, l)
-                        hi = Swift.max(hi, h)
-                        fmrow.append([formatted])
-                    }
-                    switch dict[ci]!.dynamicWidth {
-                    case .min(let min):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(min, hi))
-                    case .max(let max):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.min(max, hi))
-                    case .in(let closedRange):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))
-                    case .range( let range):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(Swift.min(range.upperBound - 1, hi), range.lowerBound))
-                    case .auto:
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(0, hi))
-                    case .fixed(let v):
-                        columnFixedWidth[ci] = v
-                    case .collapsed:
-                        columnFixedWidth[ci] = 0
-                    case .hidden:
-                        continue
-                    }
-                }
-                columnFixedWidth.sorted(by: { $0.key < $1.key }).enumerated().forEach({
-                    dbg(.debug, debugMask, prefix: "\(type(of: self))", "    C\($0.offset)\($0.element)")
-                })
-                if let lngen = lnGen {
-                    let ln = lngen(ri + range.lowerBound)
-                    let nlSplitted = (ln.wrapping ?? .char).nlSplitted(ln)
-                    fmrow.insert(nlSplitted, at: 0)
-                }
-                prefmtted.append(fmrow)
-            }
-            prefmttedRange.append(prefmtted)
-            if maxRowElementCount <= 0 {
-                // There was no data!
-                // Return FixedCols for all Cols which are not .hidden
-                let cellHeadersAsCellData = cols
-                    .filter({ $0.dynamicWidth != .hidden })
-                    .map({ $0.header ?? Txt("") })
-                print("recursion")
-                let hcols = cols
-                    .filter({ $0.dynamicWidth != .hidden })
-                    .map({
-                        let c = Col(
-                            $0.header,
-                            width: .auto, //$0.dynamicWidth == .hidden ? .hidden : .auto,
-                            defaultAlignment: $0.header?.alignment ?? $0.defaultAlignment,
-                            defaultWrapping: $0.header?.wrapping ?? $0.defaultWrapping,
-                            contentHint: $0.contentHint
-                        )
-                        return c
-                    })
-                return preFormat(columns: hcols,
-                                 data: [cellHeadersAsCellData],
-                                 ranges: [0..<1],
-                                 lnGen: nil)
-            }
-        }
-        
-        var fixedColumns:[FixedCol] = columnFixedWidth
-            .sorted(by: { $0.key < $1.key })
-            .map({
-                FixedCol(
-                    dict[$0.key]!,
-                    width: $0.value,
-                    ref: $0.key,
-                    hidden: dict[$0.key]!.dynamicWidth == .hidden
-                )
-            })
-        
-        // Insert additional line number column (at index 0)
-        // if lineNumberGenerator function is defined.
-        //
-        // This implementation is a compromise between 'line
-        // numbers will always fit vertically on a single
-        // line' and 'don't waste time in generating all line
-        // numbers in advance just to know their widths'.
-        //
-        // Required column width is calculated with the
-        // assumption that last line number is the one requiring
-        // the longest column width. This assumption can of course
-        // be wrong in some cases and will result to a column
-        // width which is too narrow. In those cases, line number
-        // doesn't fit on a single line, but will be fragmented
-        // over multiple lines (vertically).
-        if let lnGen = lineNumberGenerator {
-            let lastLineNumber = lnGen(cells.count)
-            let fragments = lastLineNumber
-                .split(separator: "\n",
-                       maxSplits: lastLineNumber.string.count,
-                       omittingEmptySubsequences: false)
-            var requiredWidth:Int = 0
-            fragments.forEach({
-                requiredWidth = Swift.max(requiredWidth, $0.count)
-            })
-            
-            let autoLNcolumn = FixedCol(
-                ColumnBase(
-                    defaultAlignment: .bottomRight,
-                    defaultWrapping: .cut,
-                    contentHint: .unique
-                ),
-                width: requiredWidth,
-                ref: -1,
-                hidden: false
-            )
-            fixedColumns.insert(autoLNcolumn, at: 0)
-        }
-        return (prefmttedRange, fixedColumns)
-    }
     /// Convert table data to CSV format
     /// - Returns: `String` containing table data formatted as CSV
     public func csv(delimiter:String = ";", withColumnHeaders:Bool = true, includingHiddenColumns:Bool = false) -> String {
@@ -1257,9 +1063,6 @@ public final class Tbl2 {
         for row in cells {
             var rowElements:[String] = []
             for (i,col) in row.enumerated() {
-//                guard columns.indices.contains(i) else {
-//                    break
-//                }
                 guard c.indices.contains(i),
                       (c[i].dynamicWidth == .hidden && includingHiddenColumns == false) == false else {
                     continue

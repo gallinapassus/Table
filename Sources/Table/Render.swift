@@ -14,7 +14,7 @@ extension Array where Element == [Txt] {
         let ivsLen = style.insideVerticalSeparator(for: options).count
         if visibleColumns.allSatisfy({ $0.dynamicWidth == .collapsed }) ||
             visibleColumns.allSatisfy({ $0.width == 0 }) {
-            return /*0*/Swift.max(0, visibleColumns.count - 1) * ivsLen
+            return Swift.max(0, visibleColumns.count - 1) * ivsLen
         }
         let w:Int = visibleColumns
             .reduce(0, { $0 + $1.width }) + ((Swift.max(0, visibleColumns.count - 1)) * ivsLen)
@@ -363,24 +363,13 @@ extension Array where Element == [Txt] {
             out.write(leftPad)
             out.write(style.bottomLeftCorner(for: options))
             if hasVisibleColumns {
-                if hasData {
-                    out.write(
-                        visibleColumns
-                            .map({
-                                String(repeating: style.bottomHorizontalSeparator(for: options),
-                                       count: $0.width)
-                            }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
-                    )
-                }
-                else {
-                    out.write(
-                        visibleColumns
-                            .map({
-                                String(repeating: style.bottomHorizontalSeparator(for: options),
-                                       count: $0.width)
-                            }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
-                    )
-                }
+                out.write(
+                    visibleColumns
+                        .map({
+                            String(repeating: style.bottomHorizontalSeparator(for: options),
+                                   count: $0.width)
+                        }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
+                )
             }
             else {
                 out.write(
@@ -478,7 +467,7 @@ fileprivate func preFormatx(title:Txt?,
                     defaultWrapping: $0.header?.wrapping ?? $0.defaultWrapping,
                     contentHint: $0.contentHint
                 )
-                return FixedCol(c, width: /*fixed ?? h.count*/hw, ref: 0, hidden: false)
+                return FixedCol(c, width: hw, ref: 0, hidden: false)
             })
         return ([], hcols)
     }
