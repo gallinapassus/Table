@@ -44,7 +44,7 @@ public class Tbl : Decodable {
     /// correct widths.
     ///
     public var cellsMayHaveNewlines:Bool = true
-
+    
     /// Initializes table
     ///
     /// - Parameters:
@@ -52,169 +52,88 @@ public class Tbl : Decodable {
     ///     - columns: Table column definitions
     ///     - cells: Table cell data
     ///
-
+    
     public init(_ title:Txt? = nil,
                 columns: [Col] = [],
                 cells:[[Txt]]) {
         precondition(columns.count <= UInt16.max, "Maximum column count is limited to \(UInt16.max).")
         self.data = cells
         self.title = title
-        if columns.isEmpty {
-            // Let's treat empty column set as "automatic columns"
-            let maxColCount = cells.reduce(0, { Swift.max($0, $1.count) })
-            if maxColCount == 0 {
-                // Actually, there is no data either, no columns then
-                self.columns = []
-            }
-            else {
-                let c = Col(width: .auto,
-                            defaultAlignment: .topLeft,
-                            contentHint: .repetitive)
-                self.columns = Array(repeating: c, count: maxColCount)
-            }
-        }
-        else {
-            self.columns = columns
-        }
+        self.columns = columns
     }
-    /// Calculate actual column widths for dynamic columns
-    ///
-    /// All width types except `.value()` are dynamic.
-    ///
-    /// - Note: Fastest table rendering is achieved when all columns have
-    /// fixed values. If columns contain even a single dynamic width column,
-    /// a full scan of data cells is needed to calculate the actual column widths.
-
-    private func calculateAutowidths(for columns:[Col],
-                                     from data: [[Txt]],
-                                     newlines:Bool) -> [Col] {
-        // Find out column indexes which must be calculated
-        let recalc:[Int] = columns.enumerated().compactMap({ (i,c) in
-            switch c.width {
-            case .value: return nil // fixed, no need to calculate
-            default: return i       // dynamic, columns[i] must be calculated
-            }
-        })
-
-        guard recalc.isEmpty == false else { return columns }
-
-        var tmp = columns
-        for i in recalc {
-            // Minimum width for this cell
-            var lo = columns.reduce(0, {
-                switch $1.width {
-                case .auto: return $0
-                case .min(let m): return $0 + m
-                case .max(let m): return $0 + m
-                case .range(let r): return $0 + r.lowerBound
-                case .in(let r): return $0 + r.lowerBound
-                case .value(let v): return $0 + v
-                case .hidden: return $0
-                }
-            })
-            // Calculate the optimal column widths for dynamic
-            // width columns from cell data. A single pass through
-            // cell data is needed.
-            var hi = 0
-            for row in data {
-
-                // Optimization: continue, if current row has
-                // fewer cells than what the current recalc index is.
-                guard row.count > i else { continue }
-
-                // Are we expecting cell data to contain newlines
-                if newlines {
-                    // yes, cell data may contain newlines
-                    // now, split the column cell at newlines
-                    // and find out the lower and upper range
-                    // of these row cell fragments
-                    row[i]
-                        .split(separator: "\n", omittingEmptySubsequences: false)
-                        .forEach({
-                            lo = Swift.min(lo, $0.count)
-                            hi = Swift.max(hi, $0.count)
-                        })
-                }
-                else {
-                    // no, cell data does not contain newlines
-                    // quickly find out the lower and upper range
-                    // for this row cell
-                    lo = Swift.min(lo, row[i].count)
-                    hi = Swift.max(hi, row[i].count)
-                }
-            }
-            //print("[\(i)] min ... max = \(lo) ... \(hi)")
-
-            // Set the actual column width, based on the
-            // given column width definitions and calculations
-            // from cell data
-            switch tmp[i].width {
-            case .min(let min):
-                tmp[i].width = .value(Swift.max(min, lo))
-            case .max(let max):
-                tmp[i].width = .value(Swift.min(max, hi))
-            case .in(let closedRange):
-                tmp[i].width = .value(Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))
-            case .range( let range):
-                tmp[i].width = .value(Swift.max(Swift.min(range.upperBound - 1, hi), range.lowerBound))
-            case .auto:
-                tmp[i].width = .value(Swift.max(0, hi))
-            case .value: break
-            case .hidden: break
-            }
+    private func renderColumnRow(_ cols:[FixedCol]) -> [[String]] {
+        let vc = cols.filter({ $0.isVisible })
+        var ha:[HorizontallyAligned] = []
+        var horizontallyAligned:[[String]] = []
+        var lc = 0
+        for fc in vc {
+            let l = (fc.header ?? Txt("")).halign(for: fc)
+            horizontallyAligned.append(l)
+            lc = Swift.max(lc, l.count)
+            let h = HorizontallyAligned(
+                lines: l,
+                alignment: fc.header?.alignment ?? fc.defaultAlignment,
+                width: fc.width
+            )
+            ha.append(h)
         }
-
-        // Insert additional line number column (at index 0)
-        // if lineNumberGenerator function is defined.
-        //
-        // This implementation is a compromise between 'line
-        // numbers will always fit vertically on a single
-        // line' and 'don't waste time in generating all line
-        // numbers in advance just to know their widths'.
-        //
-        // Required column width is calculated with the
-        // assumption that last line number is the one requiring
-        // the longest column width. This assumption can of course
-        // be wrong in some cases and will result to a column
-        // width which is too narrow. In those cases, line number
-        // doesn't fit on a single line, but will be fragmented
-        // over multiple lines (vertically).
-        if let lnGen = lineNumberGenerator {
-            let lastLineNumber = lnGen(data.count)
-            let fragments = lastLineNumber
-                .split(separator: "\n",
-                       maxSplits: lastLineNumber.string.count,
-                       omittingEmptySubsequences: false)
-            var requiredWidth:Int = 0
-            fragments.forEach({
-                requiredWidth = Swift.max(requiredWidth, $0.count)
-            })
-            let autoLNcolumn = Col(width: .value(requiredWidth),
-                                   defaultAlignment: .bottomRight,
-                                   defaultWrapping: .cut,
-                                   contentHint: .unique)
-            tmp.insert(autoLNcolumn, at: 0)
-        }
-
-        return tmp
+        return ha[...].alignVertically(height: lc)
     }
 
     /// Calculate title column width and actual column widths (for dynamic width columns)
+    private func calculateTitleAndColumnWidths(frameStyle:FrameStyle, framingOptions:FramingOptions) -> (fixedColumns:[FixedCol], titleWidth: Int) {
+        
+        let (fixedCols, minRec, maxRec, histogram) = columns.collectTableInfo(
+            using: data,
+            cellDataContainsNewlines: cellsMayHaveNewlines,
+            lineNumberGenerator: lineNumberGenerator
+        )
+        let verticalDividerCount = Swift.max(0, fixedCols.filter({$0.isHidden == false && $0.width > 0 }).count - 1)
+        let sepLen = frameStyle.insideVerticalSeparator(for: framingOptions).count
+        print("minRowElementCount", minRec, "maxRowElementCount", maxRec)
+        print("rowElementCountHistogram", histogram)
+        print("verticalDividerCount", verticalDividerCount, "sepLen", sepLen)
+        let calculatedTitleWidth = fixedCols
+            .reduce(verticalDividerCount * sepLen, { $0 + $1.width })
 
-    private func calculateTitleAndColumnWidths(frameStyle:FrameStyle,
-                                               framingOptions:FramingOptions) -> ([Col],Int) {
-
-        let actualColumnWidths = calculateAutowidths(
-            for: columns,
-            from: data,
-            newlines: cellsMayHaveNewlines)
-        let visibleColumnCount = actualColumnWidths.filter({ $0.width.value > Width.hidden.value }).count - 1
-        let calculatedWidth = actualColumnWidths.filter({ $0.width.value > Width.hidden.value })
-            .reduce(Swift.max(0, visibleColumnCount) * frameStyle.insideVerticalSeparator(for: framingOptions).count,
-                    { $0 + $1.width.value })
-        return (actualColumnWidths, calculatedWidth)
+        // In general the entire table width is a sum of
+        // visible column widths.
+        
+        guard data.isEmpty == false, maxRec > 0, calculatedTitleWidth > 0 else {
+            // Not a single data cell exist => there won't
+            // be any data rows to display, hence we'll
+            // ignore the column space requirements and
+            // return the required title width entirely
+            // based on the title itself.
+            guard title != nil else {
+                return (fixedCols, 0)
+            }
+            return (fixedCols, titleMaxLen)
+        }
+        // At least one data cell exits => return a title
+        // width which is based on how much space is
+        // required by columns
+        return (fixedCols, calculatedTitleWidth)
     }
-
+    private var titleMaxLen:Int {
+        guard let title = title else {
+            return 0
+        }
+        return title
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .reduce(0, { Swift.max($0, $1.count) })
+    }
+    private func titleWidth(for frameStyle:FrameStyle, options:FramingOptions, fixedCols:[FixedCol]) -> Int {
+        let visible = fixedCols.filter({ $0.isHidden == false })
+        let visibleVerticalDividerCount = Swift.max(0, visible.count - 1)
+        let separatorLen = frameStyle.insideVerticalSeparator(for: options).count
+        let calculatedTitleWidth = fixedCols
+            .reduce(
+                visibleVerticalDividerCount * separatorLen,
+                { $0 + $1.width }
+            )
+        return calculatedTitleWidth
+    }
     /// Render table
     /// - Parameters:
     ///   - style: Frame style
@@ -230,10 +149,93 @@ public class Tbl : Decodable {
                        rightPad:String = "",
                        to output: inout TextOutputStream) {
 
-        let hasData = !data.isEmpty
+        
+        // Expensive: O(n)
+        // Sweeps over all data cells once.
+        // n = total number of elements in 2d array
+        // Example: [[],[1],[2,3]] => n = 3
+        let info = columns.collectTableInfo(
+            using: data,
+            cellDataContainsNewlines: cellsMayHaveNewlines,
+            lineNumberGenerator: lineNumberGenerator
+        )
+//        print("fixed-columns  :", info.columns.map({ ($0.header ?? "nil", $0.width) }))
+//        for a in renderColumnRow(info.columns) {
+//            print(a.joined(separator: " "))
+//        }
+        let hasTitle = title != nil
+        let fixedColumns = info.columns
+        //let minRowElementCount = info.minRowElementCount
+        let maxRowElementCount = info.maxRowElementCount
+        //let rowElementCountHistogram = info.rowElementCountHistogram
+        let hasData = data.isEmpty == false && maxRowElementCount > 0
+        let hasSomeColumnHeaders = fixedColumns
+            .filter({ $0.isHidden == false && $0.header != nil })
+            .isEmpty == false && fixedColumns.isEmpty == false
+        let visibleColumns = fixedColumns
+            .filter({ $0.isHidden == false })
+        //let hasSomeVisibleColumns = visibleColumns.isEmpty == false
+        let hasVisibleColumns = visibleColumns.isEmpty == false//!fixedColumns.allSatisfy({ $0.isHidden })
+        
+        let titleWidth:Int
+        // In general the entire table width is a sum of
+        // visible column widths.
+        //let tableWidthFromColumns = visibleColumns.reduce(0, { $0 + $1.width })
+        if hasData {
+            // At least one data cell exits => return a title
+            // width which is based on how much space is
+            // required by columns
+            titleWidth = self.titleWidth(
+                for: style,
+                options: options,
+                fixedCols: visibleColumns
+            )
+        }
+        else {
+            // If there is no data - we should show columns to
+            // their respective widths (using column header itself
+            // as it would be the cell data).
+            
+            let fakeCells:[[Txt]] = [
+                visibleColumns
+                    .filter({ $0.isHidden == false })
+                    .map({ $0.header ?? Txt("") })
+            ]
+            let fake = columns.collectTableInfo(
+                using: fakeCells,
+                lineNumberGenerator: lineNumberGenerator)
+            let fakeVisibleColumns = fake
+                .columns
+                .filter({ $0.isHidden == false })
+            let len = fakeVisibleColumns
+                .reduce(0, { $0 + $1.width == 0 ? $1.header?.string.count ?? 0 : $1.width })
+            let b = Swift.max(0, fakeVisibleColumns.count - 1)
+            let c = style.insideVerticalSeparator(for: options).count
+            
+            if fakeVisibleColumns.isEmpty == false {
+                titleWidth = len + (b * c)
+            }
+            else {
+                titleWidth = titleMaxLen
+            }
+        }
+
+//        print("========================================")
+//        print("hasData:", hasData)
+//        print("hasTitle:", hasTitle, "'\(title?.string ?? "nil")'")
+//        print("columns:")
+//        visibleColumns
+//            .forEach({ print(" ", "'\($0.header?.string ?? "nil")'", "width:", $0.width, "ref:", $0.ref) })
+//
+//        print("hasVisibleColumns:", hasVisibleColumns, visibleColumns.count)
+//        print("hasSomeColumnHeaders:", hasSomeColumnHeaders)
+//        print("titleColumnWidth:", titleWidth)
+//        print("lngen:", lineNumberGenerator as Any)
+//        print("========================================")
+
         var rnges:[Range<Int>] = []
         // Validate row ranges
-        for range in ranges ?? [(0..<data.count)]{
+        for range in ranges ?? [(0..<data.count)] {
             guard range.lowerBound >= 0,
                   range.upperBound <= data.count else {
                 fatalError("range \(range) out of bounds")
@@ -258,30 +260,28 @@ public class Tbl : Decodable {
         let l = "\(lPad)\(leftVerticalSeparator)"
         let r = "\(rightVerticalSeparator)\(rPad)\n"
         let insideVerticalSeparator = style.insideVerticalSeparator(for: options)
-        let (actualColumns,titleColumnWidth) = calculateTitleAndColumnWidths(
-            frameStyle: style, framingOptions: options)
-        let hasVisibleColumns = !actualColumns.allSatisfy({ $0.width == .hidden }) && actualColumns.reduce(0, { $0 + $1.width.value}) >= 0
-        let hasHeaderLabels = !actualColumns.allSatisfy({ $0.header == nil })
-        let hasTitle = title != nil
-
+        //print(fixedColumns.map({ ($0.header?.string, $0.width) }))
+        
+        let lngen = lineNumberGenerator ?? { i in Txt(i.description) }
 
         // Output the table
 
-        // Top frame
+        
+        // MARK: Top frame
         if options.contains(.topFrame) {
             output.write(lPad)
             output.write(style.topLeftCorner(for: options))
             if hasTitle {
                 output.write(
                     String(repeating: style.topHorizontalSeparator(for: options),
-                           count: titleColumnWidth)
+                           count: titleWidth)
                 )
             }
-            else if (hasHeaderLabels && hasVisibleColumns) || (hasVisibleColumns && hasData) {
+            else if (hasVisibleColumns) {
                 output.write(
-                    actualColumns.map({
+                    visibleColumns.map({
                         String(repeating: style.topHorizontalSeparator(for: options),
-                               count: $0.width.value)
+                               count: $0.width)
                     }).joined(separator: style.topHorizontalVerticalSeparator(for: options))
                 )
             }
@@ -290,23 +290,25 @@ public class Tbl : Decodable {
         }
 
 
-        // Title
+        // MARK: Title
         if let title = title {
-            let splitted = title.string.split(separator: "\n", omittingEmptySubsequences: false)
-                .map({
-                    Txt(String($0),
-                        alignment: title.alignment,
-                        wrapping: title.wrapping)
-                })
-            var combined:[HorizontallyAligned] = []
-            for split in splitted {
-                let foo = split.fragment(for: Col(width: .value(titleColumnWidth), defaultAlignment: title.alignment ?? .middleCenter, defaultWrapping: title.wrapping ?? .word, contentHint: .unique))
-                combined.append(foo)
-            }
-            let alignedTitle = HorizontallyAligned(lines: combined.flatMap({ $0.lines }), alignment: title.alignment ?? .middleCenter,
-                                                   wrapping: title.wrapping ?? .word)
+            // title obeys newlines as well
+            let splitted = title.string
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .map {
+                    Txt(String($0), alignment: title.alignment, wrapping: title.wrapping)
+                }
+            let base = ColumnBase(
+                defaultAlignment: title.alignment ?? .middleCenter,
+                defaultWrapping: title.wrapping ?? .word,
+                contentHint: .unique
+            )
 
-            for fragment in alignedTitle.lines {
+            let col = FixedCol(base, width: titleWidth, ref: -1, hidden: false)
+            // get title fragments
+            let titleFragments:[String] = splitted.flatMap { $0.fragment(for: col).lines }
+            // output title
+            for fragment in titleFragments {
                 output.write(
                     lPad +
                     style.leftVerticalSeparator(for: options) +
@@ -318,23 +320,24 @@ public class Tbl : Decodable {
 
             // Divider between title and column headers -or-
             // divider between title and data
-            
+
             if options.contains(.insideHorizontalFrame),
-               (hasVisibleColumns && hasHeaderLabels) || hasData || hasTitle {
+               (hasVisibleColumns && hasSomeColumnHeaders) || hasData || hasTitle {
                 output.write(lPad)
                 output.write(style.insideLeftVerticalSeparator(for: options))
-                if hasVisibleColumns && (hasHeaderLabels || hasData) {
+                if hasVisibleColumns && (hasSomeColumnHeaders || hasData) {
                     output.write(
-                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
+                        fixedColumns
+                            .map({
                             return String(repeating: style.insideHorizontalSeparator(for: options),
-                                          count: Swift.max(0, $0.width.value))
+                                          count: Swift.max(0, $0.width))
                         }).joined(separator: style.topHorizontalVerticalSeparator(for: options))
                     )
                 }
                 else {
                     output.write(
                         String(repeating: style.insideHorizontalSeparator(for: options),
-                               count: titleColumnWidth)
+                               count: titleWidth)
                     )
                 }
                 output.write(style.insideRightVerticalSeparator(for: options))
@@ -343,50 +346,52 @@ public class Tbl : Decodable {
         }
 
 
-        // Column headers
-        if hasHeaderLabels, hasVisibleColumns {
-            let alignedColumnHeaders = actualColumns
-                .filter({ $0.width.value > Width.hidden.value })
+        // MARK: Column headers
+        if hasSomeColumnHeaders, hasVisibleColumns {
+            let alignedColumnHeaders = fixedColumns
                 .compactMap({ column in
                     return (column.header ?? Txt("")).fragment(for: column)
                 })
                 .dropFirst(0) // <= Convert Array to ArraySlice
-                .alignVertically
+                .alignVertically(height: 0)
             for f in alignedColumnHeaders {
                 output.write(lPad)
+
                 output.write(style.leftVerticalSeparator(for: options))
                 output.write(f.joined(separator: style.insideVerticalSeparator(for: options)))
                 output.write(style.rightVerticalSeparator(for: options))
                 output.write("\(rPad)\n")
             }
-            
-            
-            
+
+
             // Divider, before data
             if options.contains(.insideHorizontalFrame) {
                 output.write(lPad)
+
                 output.write(style.insideLeftVerticalSeparator(for: options))
-                if hasHeaderLabels && hasVisibleColumns {
+                if hasSomeColumnHeaders && hasVisibleColumns {
                     output.write(
-                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                            String(repeating: style.insideHorizontalSeparator(for: options),
-                                   count: $0.width.value)
-                        }).joined(separator: style.insideHorizontalVerticalSeparator(for: options))
+                        fixedColumns
+                            .map({
+                                String(repeating: style.insideHorizontalSeparator(for: options),
+                                       count: $0.width)
+                            }).joined(separator: style.insideHorizontalVerticalSeparator(for: options))
                     )
                 }
                 else if title != nil {
                     if hasVisibleColumns {
                         output.write(
-                            actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                                String(repeating: style.insideHorizontalSeparator(for: options),
-                                       count: $0.width.value)
-                            }).joined(separator: style.topHorizontalVerticalSeparator(for: options))
+                            fixedColumns
+                                .map({
+                                    String(repeating: style.insideHorizontalSeparator(for: options),
+                                           count: $0.width)
+                                }).joined(separator: style.topHorizontalVerticalSeparator(for: options))
                         )
                     }
                     else {
                         output.write(
                             String(repeating: style.insideHorizontalSeparator(for: options),
-                                   count: titleColumnWidth)
+                                   count: titleWidth)
                         )
                     }
                 }
@@ -396,121 +401,276 @@ public class Tbl : Decodable {
         }
 
 
-        // Data rows
+        // Helper function to get newline splitted fragments
+        func getNewlineSplittedFragments(for visibleColumnIndex:Int, row:[Txt]) -> [String] {
+
+            let columnIndex = visibleColumnIndex + (lineNumberGenerator == nil ? 0 : 1)
+            let columnWidth:Int = fixedColumns[visibleColumnIndex].width
+            let alignment = visibleColumnIndex < row.count ? (row[visibleColumnIndex].alignment ?? fixedColumns[columnIndex].defaultAlignment) : fixedColumns[columnIndex].defaultAlignment
+            let wrapping = visibleColumnIndex < row.count ? (row[visibleColumnIndex].wrapping ?? fixedColumns[columnIndex].defaultWrapping) : fixedColumns[columnIndex].defaultWrapping
+
+            let splits = (visibleColumnIndex < row.count ? row[visibleColumnIndex].string : "")
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .map({ ele in
+                    let str = String(repeating: " ", count: columnWidth)
+                    guard ele.isEmpty else {
+                        return Txt(String(ele), alignment: alignment, wrapping: wrapping)
+                    }
+                    return Txt(str, alignment: alignment, wrapping: wrapping)
+                })
+
+            let combined:[String] = splits.flatMap({ $0.fragment(for: fixedColumns[columnIndex]).lines })
+            return combined
+        }
+
+
+        // MARK: Data rows
         for (ri, rnge) in zip(0..., rnges) {
-            var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
-            var cacheHits:Int = 0
-            var cacheMisses:Int = 0
-            
+//            var cache:[UInt32:[Int:HorizontallyAligned]] = [:]
+//            var cacheHits:Int = 0
+//            var cacheMisses:Int = 0
+
             let lastValidIndex = rnge.upperBound - 1
-            let actualVisibleColumns = actualColumns.filter({ $0.width.value > Width.hidden.value })
-            let actualVisibleColumnCount = actualVisibleColumns.count
-            let visibleColumnIndexes = actualColumns
-                .enumerated()
-                .filter({ $0.element.width.value > Width.hidden.value || $0.element.width == .auto })
-                .map({ $0.offset })
-                .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
+//            let actualVisibleColumns = fixedColumns/*.filter({ $0.dynamicWidth.isVisible })*/
+//            let actualVisibleColumnCount = fixedColumns.count
+//            let visibleColumnIndexes = fixedColumns.map({ $0.ref })
+//            let visibleColumnIndexes = fixedColumns
+//                .enumerated()
+//                .map({ $0.offset })
+//                .prefix(Swift.min(actualVisibleColumnCount, Int(UInt16.max)))
+            /*
+            let (avcc, vci, avc) = calcVisibleColumns(for: actualColumns, from: data, newlines: cellsMayHaveNewlines)
+            print("XXX:", actualVisibleColumnCount, "==", avcc,
+                  visibleColumnIndexes, "==", vci,
+                  actualVisibleColumns == avc)*/
             // Main loop to render row/column data
-            var i = rnge.lowerBound
-            for (rri, row) in zip((rnge.lowerBound)..., data[rnge]) {
+            for (rowRangeIndex, row) in zip(rnge.lowerBound..., data[rnge]) {
+
+                guard row.isEmpty == false else { continue }
+//                guard row.count <= (fixedColumns.first?.ref ?? row.count) else {
+//                    fatalError("\(row.count) < \(fixedColumns.first?.ref) ?? \(row.count)")//continue
+//                }
+                var mxHeight = 0
+                var clmnzed:[HorizontallyAligned] = []
+                for v in fixedColumns {
+                    let cell = v.ref < 0 ? lngen(rowRangeIndex) : (v.ref < row.count ? row[v.ref] : Txt(""))
+                    let alignment = v.ref < 0 ? cell.alignment ?? v.defaultAlignment : cell.alignment ?? v.defaultAlignment
+                                        
+                    let splits = cell
+                        .split(separator: "\n", omittingEmptySubsequences: false)
+                        .map({ ele in
+                            let str = String(repeating: " ", count: v.width)
+                            guard ele.isEmpty else {
+                                return Txt(String(ele),
+                                           alignment: cell.alignment ?? v.defaultAlignment,
+                                           wrapping: cell.wrapping ?? v.defaultWrapping)
+                            }
+                            return Txt(str,
+                                       alignment: cell.alignment ?? v.defaultAlignment,
+                                       wrapping: cell.wrapping ?? v.defaultWrapping)
+                        })
+                    
+                    let combined:[String] = splits
+                        .flatMap {
+                            $0.fragment(for: v).lines
+                        }
+                    let ha = HorizontallyAligned(
+                        lines: combined,
+                        alignment: alignment,
+                        width: v.width,
+                        wrapping: v.defaultWrapping
+                    )
+                    clmnzed.append(ha)
+                    mxHeight = Swift.max(mxHeight, ha.lines.count)
+                }
+                // Generate empty cells for missing column data.
+                let missingColumnCount = Swift.max(0, fixedColumns.count - clmnzed.count)
+                let currentCount = clmnzed.count - (lineNumberGenerator == nil ? 0 : 1)
+                for k in 0..<missingColumnCount {
+                    let len:Int = fixedColumns[currentCount + k].width
+                    let emptyLineFragment = String(repeating: " ", count: len)
+                    clmnzed.append(
+                        HorizontallyAligned(
+                            lines: Array(repeating: emptyLineFragment, count: mxHeight),
+                            alignment: .topLeft,
+                            width: fixedColumns[currentCount + k].width
+                        )
+                    )
+                }
+
+                for columnData in clmnzed.prefix(fixedColumns.count).alignVertically(height: mxHeight) {
+                    output.write(l + columnData.joined(separator: insideVerticalSeparator) + r)
+                }
+//                var horizontallyAlignedCells:[[String]] = []
+//                var requiredRowHeight = 0
+                // Sweep 1
+                //print("ACTUAL COLUMNS:", actualColumns)
+                //print("ACTUAL VISIBLE COLUMNS:", actualVisibleColumns)
+                /*
+                for columnIndex in visibleColumnIndexes {
+                    let cell = columnIndex < row.count ? row[columnIndex] : Txt("")
+                    let defwrp = fixedColumns[columnIndex].defaultWrapping
+                    let defalign = fixedColumns[columnIndex].defaultAlignment
+                    let lines:[String] = cell
+                        .getHAlignedCell(defaultWrapping: defwrp,
+                                         defaultAlignment: defalign,
+                                         width: fixedColumns[columnIndex].width)
+                    //lines.forEach({ print("XYZ  : '\($0)'") })
+                    requiredRowHeight = Swift.max(requiredRowHeight, lines.count)
+                    horizontallyAlignedCells.append(lines)
+                }*/
+                //print("REQRH: \(requiredRowHeight)")
+                // Sweep 2
+                /*
+                var horizontallyAndVerticallyAlignedCells:[[String]] = []
+                for (i,cell) in zip(visibleColumnIndexes, horizontallyAlignedCells) {
+                    let padder = String(repeating: ".", count: fixedColumns[i].width)
+                    let padAmount = requiredRowHeight - cell.count
+                    switch fixedColumns[i].defaultAlignment {
+                    case .topLeft, .topRight, .topCenter:
+                        horizontallyAndVerticallyAlignedCells
+                            .append(Array(repeating: padder, count: padAmount) + cell)
+                    case .bottomLeft, .bottomRight, .bottomCenter:
+                        horizontallyAndVerticallyAlignedCells
+                            .append(cell + Array(repeating: padder, count: padAmount))
+                    case .middleLeft, .middleRight, .middleCenter:
+                        break
+                    }                    
+                }*/
+//                print("H&V:")
+//                horizontallyAndVerticallyAlignedCells
+//                    .transposed()
+//                    .forEach({ print("H&V:\t'\($0)'") })
+
+                // Storage for columnized cell data
                 var columnized:ArraySlice<HorizontallyAligned> = []
-                let offset = lineNumberGenerator == nil ? 0 : 1
+
+                // Column index offset
+                // lineNumberGenerator in use => offset = 1
+                // lineNumberGenerator not in use => offset = 0
+                //let offset = lineNumberGenerator == nil ? 0 : 1
+
+                // Calculate required number of "terminal" rows
+                // for this table row
+                /*
                 let maxHeight:Int = visibleColumnIndexes
                     .filter { $0 < row.count }
                     .map {
-                        let ci = $0 + offset
-                        if actualColumns[$0].contentHint == .repetitive {
-                            // Combine width & alignment
-                            let u32:UInt32 = (UInt32(actualColumns[ci].width.value) << 16) +
-                            UInt32(row[$0].alignment?.rawValue ?? actualColumns[ci].defaultAlignment.rawValue)
+                        let columnIndex = $0 + offset
+                        if fixedColumns[$0].contentHint == .repetitive {
+                            // Data in this column "may" be repetitive
+                            // Let's cache the values
                             
+                            // We have to take width and alignment into
+                            // account as differences in them will result
+                            // different output (even if the cell string
+                            // would be the same).
+                            
+                            // Combine width & alignment
+                            let u32:UInt32 = (UInt32(fixedColumns[columnIndex].width) << 16) +
+                            UInt32(row[$0].alignment?.rawValue ?? fixedColumns[columnIndex].defaultAlignment.rawValue)
+
+                            // Try to get value from the cache
                             if let fromCache = cache[u32]?[row[$0].string.hashValue] {
+                                // We've got it
                                 columnized.append(fromCache)
-                                cacheHits += 1
+                                cacheHits += 1 // internal stats
+                                // return line count
                                 return fromCache.lines.count
                             }
                             else {
-                                let w = actualColumns[$0].width.value
-                                let a = row[$0].alignment ?? actualColumns[ci].defaultAlignment
-                                let wr = row[$0].wrapping ?? actualColumns[ci].defaultWrapping
-                                let splits = row[$0].string
-                                    .split(separator: "\n", omittingEmptySubsequences: false)
-                                    .map({ ele in
-                                        ele.isEmpty ? Txt(String(repeating: " ", count: w), alignment: a, wrapping: wr)
-                                        :
-                                        Txt(String(ele), alignment: a, wrapping: wr)
-                                    })
-                                var combined:[String] = []
-                                for split in splits {
-                                    combined.append(contentsOf: split.fragment(for: actualColumns[ci]).lines)
-                                }
-                                let fragmented = HorizontallyAligned(lines: combined,
-                                                                     alignment: a,
-                                                                     width: actualColumns[ci].width,
-                                                                     wrapping: actualColumns[$0].defaultWrapping)
+                                // Not found from cache
+
+                                // Generate the new cell (obeying newlines)
+                                let fragments = getNewlineSplittedFragments(for: $0, row: row)
+                                let alignment = row[$0].alignment ?? fixedColumns[columnIndex].defaultAlignment
+                                let ha = HorizontallyAligned(
+                                    lines: fragments,
+                                    alignment: alignment,
+                                    width: fixedColumns[columnIndex].width,
+                                    wrapping: fixedColumns[$0].defaultWrapping
+                                )
+                                columnized.append(ha)
+
                                 // Write to cache
-                                cache[u32, default:[:]][row[$0].string.hashValue] = fragmented
-                                columnized.append(fragmented)
+                                cache[u32, default:[:]][row[$0].string.hashValue] = ha
                                 cacheMisses += 1
-                                return fragmented.lines.count
+                                return fragments.count
                             }
                         }
                         else {
-                            let fragmented = row[$0].fragment(for: actualColumns[ci])
-                            columnized.append(fragmented)
-                            return fragmented.lines.count
+                            // Cells in this column are "hinted" to be unique
+                            // => don't use cache
+                            let fragments = getNewlineSplittedFragments(for: $0, row: row)
+                            let a = row[$0].alignment ?? fixedColumns[columnIndex].defaultAlignment
+                            let ha = HorizontallyAligned(lines: fragments,
+                                                         alignment: a,
+                                                         width: fixedColumns[columnIndex].width,
+                                                         wrapping: fixedColumns[$0].defaultWrapping)
+                            columnized.append(ha)
+                            return fragments.count
                         }
                     }
                     .reduce(0, { Swift.max($0, $1) })
+                 */
+
+                // Generate custom line numbers?
                 if lineNumberGenerator != nil {
                     let fragments:Txt
                     if let lnGen = lineNumberGenerator {
-                        fragments = lnGen(rri)
+                        fragments = lnGen(rowRangeIndex)
                     }
                     else {
-                        fragments = Txt(rri.description)
+                        fragments = Txt(rowRangeIndex.description)
                     }
                     columnized.insert(
-                        HorizontallyAligned(lines: fragments.fragment(for: actualColumns[0]).lines,
+                        HorizontallyAligned(lines: fragments.fragment(for: fixedColumns[0]).lines,
                                             alignment: .bottomRight,
-                                            width: actualColumns[0].width,
+                                            width: fixedColumns[0].width,
                                             wrapping: .char), at: 0)
                 }
+
+
+                // Generate empty cells for missing column data.
+                /*
                 let missingColumnCount = Swift.max(0, actualVisibleColumnCount - columnized.count)
-                let currentCount = columnized.count - (lineNumberGenerator == nil ? 0 : 1)
+                let currentCount = columnized.count - offset
                 for k in 0..<missingColumnCount {
-                    let len = actualVisibleColumns[currentCount + k].width.value
+                    let len:Int = actualVisibleColumns[currentCount + k]!.width
                     let emptyLineFragment = String(repeating: " ", count: len)
                     columnized.append(
                         HorizontallyAligned(lines: Array(repeating: emptyLineFragment, count: maxHeight),
                                             alignment: .topLeft,
-                                            width: actualColumns[currentCount + k].width)
+                                            width: fixedColumns[currentCount + k]!.width)
                     )
-                }
+                }*/
+
 
                 // Output row, line-by-line
-                for columnData in columnized.prefix(actualColumns.count).alignVertically {
+                /*
+                for columnData in columnized.prefix(fixedColumns.count).alignVertically(height: maxHeight) {
                     output.write(l + columnData.joined(separator: insideVerticalSeparator) + r)
                 }
-                // Dividers between rows
+                 */
+
+                // MARK: Dividers between rows
                 if data.count > 0,
                    hasVisibleColumns,
-                   i < lastValidIndex,
+                   rowRangeIndex < lastValidIndex,
                    options.contains(.insideHorizontalFrame) {
                     output.write(lPad)
                     output.write(style.insideLeftVerticalSeparator(for: options))
                     output.write(
-                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
+                        fixedColumns.map({
                             String(repeating: style.insideHorizontalSeparator(for: options),
-                                   count: $0.width.value)
+                                   count: $0.width)
                         }).joined(separator: style.insideHorizontalVerticalSeparator(for: options))
                     )
                     output.write(style.insideRightVerticalSeparator(for: options))
                     output.write("\(rPad)\n")
                 }
-                i += 1
             }
-            // Dividers between row ranges
+            // MARK: Dividers between row ranges
             if data.count > 0,
                hasVisibleColumns,
                ri < rnges.index(before: rnges.endIndex),
@@ -518,10 +678,11 @@ public class Tbl : Decodable {
                 output.write(lPad)
                 output.write(style.insideLeftVerticalSeparator(for: options))
                 output.write(
-                    actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                        String(repeating: style.insideHorizontalRowRangeSeparator(for: options),
-                               count: $0.width.value)
-                    }).joined(separator: style.insideHorizontalVerticalSeparator(for: options))
+                    fixedColumns
+                        .map({
+                            String(repeating: style.insideHorizontalRowRangeSeparator(for: options),
+                                   count: $0.width)
+                        }).joined(separator: style.insideHorizontalVerticalSeparator(for: options))
                 )
                 output.write(style.insideRightVerticalSeparator(for: options))
                 output.write("\(rPad)\n")
@@ -529,32 +690,34 @@ public class Tbl : Decodable {
         }
 
 
-        // Bottom frame
+        // MARK: Bottom frame
         if options.contains(.bottomFrame) {
             output.write(lPad)
             output.write(style.bottomLeftCorner(for: options))
             if hasVisibleColumns {
                 if data.count > 0 {
                     output.write(
-                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                            String(repeating: style.bottomHorizontalSeparator(for: options),
-                                   count: $0.width.value)
-                        }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
+                        visibleColumns
+                            .map({
+                                String(repeating: style.bottomHorizontalSeparator(for: options),
+                                       count: $0.width)
+                            }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
                     )
                 }
                 else {
                     output.write(
-                        actualColumns.filter({ $0.width.value > Width.hidden.value }).map({
-                            String(repeating: style.bottomHorizontalSeparator(for: options),
-                                   count: $0.width.value)
-                        }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
+                        visibleColumns
+                            .map({
+                                String(repeating: style.bottomHorizontalSeparator(for: options),
+                                       count: $0.width)
+                            }).joined(separator: style.bottomHorizontalVerticalSeparator(for: options))
                     )
                 }
             }
             else {
                 output.write(
                     String(repeating: style.bottomHorizontalSeparator(for: options),
-                           count: titleColumnWidth)
+                           count: titleWidth)
                 )
             }
             output.write(style.bottomRightCorner(for: options))
@@ -636,7 +799,7 @@ public class Tbl : Decodable {
                         return true
                     }
                     else {
-                        return $0.width != .hidden
+                        return $0.dynamicWidth != .hidden
                     }
                 })
                 .map({ $0.header?.string ?? ""})
@@ -650,7 +813,7 @@ public class Tbl : Decodable {
                 guard columns.indices.contains(i) else {
                     break
                 }
-                guard (columns[i].width == .hidden && includingHiddenColumns == false) == false else {
+                guard (columns[i].dynamicWidth == .hidden && includingHiddenColumns == false) == false else {
                     continue
                 }
                 rowElements.append(col.string)
@@ -716,6 +879,396 @@ extension Tbl : Encodable {
         try container.encode(data, forKey: .data)
         try container.encode(columns, forKey: .columns)
         try container.encode(title, forKey: .title)
+    }
+
+}
+// MARK: -
+import DebugKit
+
+internal let maxColumnCount:Int = Int(UInt16.max)
+/// Default line number generator
+///
+/// Generates default line numbers (base-10). Default
+/// line number generator generates line numbers starting
+/// from 1.
+///
+/// - Note: lineNumberGenerator function is called for
+/// each line (on given ranges) with two arguments, first
+/// argument is the line number and second argument is
+/// the column width.
+public let defaultLnGen:(Int) -> Txt = { n in
+    return n == -1 ? Txt("#", alignment: .bottomCenter) : Txt((1 + n).description)
+}
+extension DebugTopic {
+    // Topics
+    public static let info = DebugTopic(level: 0, "info")
+    public static let warning = DebugTopic(level: 1, "warning")
+    public static let error = DebugTopic(level: 2, "error")
+    public static let telemetry = DebugTopic(level: 3, "telemetry")
+    public static let cache = DebugTopic(level: 4, "cache")
+    public static let debug = DebugTopic(level: 5, "debug")
+    // A allTopics "mask" including all topics
+    public static let allTopics:DebugTopicSet = [
+        .info, .warning, .error, .telemetry, .cache, .debug
+    ]
+}
+// MARK: -
+public final class Tbl2 {
+    /// Table cell data
+    public let cells:[[Txt]]
+    /// Table column definitions.
+    public let columns:[Col]
+    /// Table title
+    public let title:Txt?
+    
+    /// Customizable line number generator
+    ///
+    /// If this function is defined, `Tbl` will automatically insert an additional
+    /// column (to position 0). Column will not have a header and it has a
+    /// `defaultColumnAlignment` set to bottom right (which can be
+    /// overridden by the returned `Txt` if needed).
+    ///
+    /// This function will be called once for each row  selected for rendering.
+
+    private let lineNumberGenerator:((Int)->Txt)?
+
+    /// Variable `cellsMayHaveNewlines` affects table rendering speed and
+    /// correctness.
+    ///
+    /// Default value is `true`
+    ///
+    /// **Rendering speed & correctness**
+    ///
+    /// Setting `cellsMayHaveNewlines` to `false` for cell data which doesn't contain
+    /// newlines will result to fastest rendering speed and table columns will render with
+    /// correct widths.
+    ///
+    /// Setting `cellsMayHaveNewlines` to `true` for cell data which doesn't contain
+    /// newlines will result to slightly slower rendering speed. Table columns will render with
+    /// correct widths.
+    ///
+    /// Setting `cellsMayHaveNewlines` to `false` for cell data which does contain
+    /// newlines will result to fast rendering speed but table columns may render with
+    /// incorrect widths.
+    ///
+    /// Setting `cellsMayHaveNewlines` to `true` for cell data which does contain
+    /// newlines will result to slowest overall rendering speed. Table columns will render with
+    /// correct widths.
+    ///
+    public var cellsMayHaveNewlines:Bool = true
+    
+    public var debugMask:DebugTopicSet = [.cache]
+    
+    /// Initializes table
+    ///
+    /// - Parameters:
+    ///     - title: Table title
+    ///     - columns: Table column definitions
+    ///     - cells: Table cell data
+    ///
+    
+    public init(_ title:Txt? = nil,
+                columns: [Col] = [],
+                cells:[[Txt]],
+                lineNumberGenerator:((Int)->Txt)? = nil) {
+        
+        precondition(columns.count <= maxColumnCount, "Maximum column count is limited to \(maxColumnCount).")
+
+        self.cells = cells
+        self.title = title
+        self.columns = columns
+        self.lineNumberGenerator = lineNumberGenerator
+
+        dbg(.info, debugMask, prefix: "\(type(of: self))", "\(columns.count) columns")
+        dbg(.info, debugMask, prefix: "\(type(of: self))", "\(cells.reduce(0, { $0 + $1.count })) cells")
+    }
+    private func titleCellWidth(style:FrameStyle,
+                                options:FramingOptions,
+                                for columns:[FixedCol]) -> Int {
+        let ivsLen = style.insideVerticalSeparator(for: options).count
+        let titleCellWidth = columns.reduce(0, { $0 + $1.width }) + ((columns.count - 1) * ivsLen)
+        dbg(.debug, debugMask, prefix: "\(type(of: self))", "\(#function) returning \(titleCellWidth)")
+        return titleCellWidth
+    }
+    public func render(style:FrameStyle = .default,
+                      options:FramingOptions = .all,
+                      rows ranges:[Range<Int>]? = nil,
+                      leftPad:String = "",
+                      rightPad:String = "",
+                      to out: inout String) {
+
+        cells.renx(
+            title: title,
+            columns: columns,
+            style: style,
+            options: options,
+            rows: ranges,
+            leftPad: leftPad,
+            rightPad: rightPad,
+            to: &out,
+            debugMask: debugMask,
+            lineNumberGenerator: lineNumberGenerator)
+    }
+    /// Render table
+    /// - Parameters:
+    ///   - style: Frame style
+    ///   - options: Framing options
+    ///   - rows: Collection of row ranges to render, default value of `nil` means all rows
+    ///   - leftPad: Pad left side of the table with `String`
+    ///   - rightPad: Pad right side of the table with `String`
+    /// - Returns: `String` containing rendered table
+
+    public func render(style:FrameStyle = .default,
+                       options:FramingOptions = .all,
+                       rows ranges:[Range<Int>]? = nil,
+                       leftPad:String = "",
+                       rightPad:String = "") -> String {
+        var result: String = ""
+        render(style: style,
+               options: options,
+               rows: ranges,
+               leftPad: leftPad,
+               rightPad: rightPad,
+               to: &result)
+        return result
+    }
+    private func preFormat(columns cols:[Col],
+                           data:[[Txt]]? = nil,
+                           ranges:[Range<Int>],
+                           lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
+        cols.enumerated().forEach({
+            let a = "\($0.element.defaultAlignment, aligned: Alignment.self)"
+            let w = "\($0.element.defaultWrapping, aligned: Wrapping.self)"
+            let l = "\($0.element.dynamicWidth, aligned: Width.self)"
+            dbg(.debug, debugMask, prefix: "\(type(of: self))", "\($0.offset): \(a), \(w), \(l), header = \($0.element.header)")
+        })
+        dbg(.debug, debugMask, prefix: "\(type(of: self))", "rows (cell data) \(cells.isEmpty ? "no data" : "\(cells.count) rows")")
+        cells.forEach({ dbg(.debug, debugMask, prefix: "\(type(of: self))", "  \($0.map({ $0.string }))") })
+
+        let cells = data ?? self.cells
+        var prefmttedRange:[[[[Txt]]]] = []
+        var rowElementCountHistogram:[Int:Int] = [:]
+        var dict:[Int:Col] = Dictionary<Int,Col>(uniqueKeysWithValues: cols.enumerated().map({ $0 }))
+        var columnFixedWidth:[Int:Int] = [:]
+        let defCol = Col(width: .auto, defaultAlignment: .topLeft, defaultWrapping: .char)
+        var minRowElementCount:Int = Int.max
+        var maxRowElementCount:Int = Int.min
+
+        for range in ranges {
+            var prefmtted:[[[Txt]]] = []
+            for (ri, row) in cells[range].enumerated() {
+                dbg(.debug, debugMask, prefix: "\(type(of: self))", "ROW \(ri): \(row)")
+                minRowElementCount = Swift.min(minRowElementCount, row.count)
+                maxRowElementCount = Swift.max(maxRowElementCount, row.count)
+                rowElementCountHistogram[row.count, default: 0] += 1
+                if dict.count < maxRowElementCount {
+                    // We have more data cells on the row than
+                    // what we have defined Cols.
+                    // => Add missing Cols with default settings
+                    (dict.count..<maxRowElementCount).forEach { dict[$0] = defCol }
+                }
+                var fmrow:[[Txt]] = []
+                for (ci,unformattedcell) in row.enumerated() {
+                    //print("  COL \(ci) \(dict[ci]!.dynamicWidth):")
+                    guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
+                        columnFixedWidth[ci] = 0
+                        fmrow.append([])
+                        dbg(.debug, debugMask, prefix: "\(type(of: self))", "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
+                        continue
+                    }
+                    var lo:Int = {
+                        switch dict[ci]!.dynamicWidth {
+                        case .min(let v): return v
+                        case .range(let r): return r.lowerBound
+                        case .in(let r): return r.lowerBound
+                        default: return 0
+                        }
+                    }()
+                    var hi = 0
+                    // Are we expecting cell data to contain newlines
+                    if cellsMayHaveNewlines {
+                        // yes, cell data may contain newlines
+                        // now, split the cell at newlines
+                        // and find out the lower and upper range
+                        // of these row cell fragments
+                        
+                        let nlSplitted:[Txt] = (unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
+                            .nlSplitted(
+                                unformattedcell,
+                                compressingMultipleConsecutiveNewlinesIntoOne: false
+                            )
+                        let preformatted:[Txt] = nlSplitted.map({
+                            let (t,l,h) = $0.preFormat(for: $0.wrapping ?? dict[ci]!.defaultWrapping)
+                            lo = Swift.min(lo, l)
+                            hi = Swift.max(hi, h)
+                            dbg(.debug, debugMask, prefix: "\(type(of: self))", "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth) FRAG: '\($0.string)' → \(l)..<\(h) \(lo)..<\(hi)")
+                            return t
+                        })
+                        fmrow.append(preformatted)
+                    }
+                    else {
+                        // no, cell data does not contain newlines
+                        // quickly find out the lower and upper range
+                        // for this row cell
+                        let (formatted,l,h) = unformattedcell
+                            .preFormat(for: unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
+                        lo = Swift.min(lo, l)
+                        hi = Swift.max(hi, h)
+                        fmrow.append([formatted])
+                    }
+                    switch dict[ci]!.dynamicWidth {
+                    case .min(let min):
+                        columnFixedWidth[ci] = Swift
+                            .max(columnFixedWidth[ci, default: 0],
+                                 Swift.max(min, hi))
+                    case .max(let max):
+                        columnFixedWidth[ci] = Swift
+                            .max(columnFixedWidth[ci, default: 0],
+                                 Swift.min(max, hi))
+                    case .in(let closedRange):
+                        columnFixedWidth[ci] = Swift
+                            .max(columnFixedWidth[ci, default: 0],
+                                 Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))
+                    case .range( let range):
+                        columnFixedWidth[ci] = Swift
+                            .max(columnFixedWidth[ci, default: 0],
+                                 Swift.max(Swift.min(range.upperBound - 1, hi), range.lowerBound))
+                    case .auto:
+                        columnFixedWidth[ci] = Swift
+                            .max(columnFixedWidth[ci, default: 0],
+                                 Swift.max(0, hi))
+                    case .fixed(let v):
+                        columnFixedWidth[ci] = v
+                    case .collapsed:
+                        columnFixedWidth[ci] = 0
+                    case .hidden:
+                        continue
+                    }
+                }
+                columnFixedWidth.sorted(by: { $0.key < $1.key }).enumerated().forEach({
+                    dbg(.debug, debugMask, prefix: "\(type(of: self))", "    C\($0.offset)\($0.element)")
+                })
+                if let lngen = lnGen {
+                    let ln = lngen(ri + range.lowerBound)
+                    let nlSplitted = (ln.wrapping ?? .char).nlSplitted(ln)
+                    fmrow.insert(nlSplitted, at: 0)
+                }
+                prefmtted.append(fmrow)
+            }
+            prefmttedRange.append(prefmtted)
+            if maxRowElementCount <= 0 {
+                // There was no data!
+                // Return FixedCols for all Cols which are not .hidden
+                let cellHeadersAsCellData = cols
+                    .filter({ $0.dynamicWidth != .hidden })
+                    .map({ $0.header ?? Txt("") })
+                print("recursion")
+                let hcols = cols
+                    .filter({ $0.dynamicWidth != .hidden })
+                    .map({
+                        let c = Col(
+                            $0.header,
+                            width: .auto, //$0.dynamicWidth == .hidden ? .hidden : .auto,
+                            defaultAlignment: $0.header?.alignment ?? $0.defaultAlignment,
+                            defaultWrapping: $0.header?.wrapping ?? $0.defaultWrapping,
+                            contentHint: $0.contentHint
+                        )
+                        return c
+                    })
+                return preFormat(columns: hcols,
+                                 data: [cellHeadersAsCellData],
+                                 ranges: [0..<1],
+                                 lnGen: nil)
+            }
+        }
+        
+        var fixedColumns:[FixedCol] = columnFixedWidth
+            .sorted(by: { $0.key < $1.key })
+            .map({
+                FixedCol(
+                    dict[$0.key]!,
+                    width: $0.value,
+                    ref: $0.key,
+                    hidden: dict[$0.key]!.dynamicWidth == .hidden
+                )
+            })
+        
+        // Insert additional line number column (at index 0)
+        // if lineNumberGenerator function is defined.
+        //
+        // This implementation is a compromise between 'line
+        // numbers will always fit vertically on a single
+        // line' and 'don't waste time in generating all line
+        // numbers in advance just to know their widths'.
+        //
+        // Required column width is calculated with the
+        // assumption that last line number is the one requiring
+        // the longest column width. This assumption can of course
+        // be wrong in some cases and will result to a column
+        // width which is too narrow. In those cases, line number
+        // doesn't fit on a single line, but will be fragmented
+        // over multiple lines (vertically).
+        if let lnGen = lineNumberGenerator {
+            let lastLineNumber = lnGen(cells.count)
+            let fragments = lastLineNumber
+                .split(separator: "\n",
+                       maxSplits: lastLineNumber.string.count,
+                       omittingEmptySubsequences: false)
+            var requiredWidth:Int = 0
+            fragments.forEach({
+                requiredWidth = Swift.max(requiredWidth, $0.count)
+            })
+            
+            let autoLNcolumn = FixedCol(
+                ColumnBase(
+                    defaultAlignment: .bottomRight,
+                    defaultWrapping: .cut,
+                    contentHint: .unique
+                ),
+                width: requiredWidth,
+                ref: -1,
+                hidden: false
+            )
+            fixedColumns.insert(autoLNcolumn, at: 0)
+        }
+        return (prefmttedRange, fixedColumns)
+    }
+    /// Convert table data to CSV format
+    /// - Returns: `String` containing table data formatted as CSV
+    public func csv(delimiter:String = ";", withColumnHeaders:Bool = true, includingHiddenColumns:Bool = false) -> String {
+        let maxRowCellCount = cells.reduce(0, { Swift.max($0, $1.count) })
+        var result = ""
+        let c:[Col] = columns + Array(repeating: Col(""), count: Swift.max(0, maxRowCellCount - columns.count))
+        if withColumnHeaders {
+            let headers = c
+                .filter({
+                    if includingHiddenColumns {
+                        return true
+                    }
+                    else {
+                        return $0.dynamicWidth != .hidden
+                    }
+                })
+                .map({ $0.header?.string ?? ""})
+                .joined(separator: delimiter)
+            print(headers + (headers.isEmpty ? "" : delimiter), to: &result)
+        }
+        
+        for row in cells {
+            var rowElements:[String] = []
+            for (i,col) in row.enumerated() {
+//                guard columns.indices.contains(i) else {
+//                    break
+//                }
+                guard c.indices.contains(i),
+                      (c[i].dynamicWidth == .hidden && includingHiddenColumns == false) == false else {
+                    continue
+                }
+                rowElements.append(col.string)
+            }
+            print(rowElements.joined(separator: delimiter) + String(repeating: delimiter, count: Swift.max(0, c.count - row.count)) + delimiter, to: &result)
+        }
+        return result
     }
 
 }

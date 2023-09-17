@@ -12,14 +12,18 @@ let package = Package(
         .executable(name: "tableapp",
                     targets: ["Table App"])
     ],
+    dependencies: [
+        .package(path: "../Combinations"),
+        .package(path: "../DebugKit"),
+    ],
     targets: [
         .target(
             name: "Table",
-            dependencies: []),
+            dependencies: ["DebugKit"]),
         .target(name: "Table App",
                 dependencies: ["Table"]),
         .testTarget(
             name: "TableTests",
-            dependencies: ["Table"]),
+            dependencies: ["Table", "Combinations"]),
     ]
 )
