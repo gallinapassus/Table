@@ -1346,15 +1346,15 @@ final class TableTests : XCTestCase {
                            +---------+
                            |RawDefini|
                            |tion("def|
-                           |",       |
-                           |width: 5,|
+                           |", width:|
+                           |5,       |
                            |symbol:  |
                            |$dir!,   |
                            |fieldNumb|
                            |er: 253, |
                            |value:   |
-                           |[1,      |
-                           |2, 3])   |
+                           |[1, 2,   |
+                           |3])      |
                            +---------+
 
                            """)
@@ -3272,29 +3272,40 @@ final class TableTests : XCTestCase {
         ╰────┴─────────┴───────╯
 
         """
-
         do {
-            let table = Tbl("Summer Olympics") {
-
-                Columns {
-                    Col("Year", width: .auto)
-                    Col("Host", width: .in(5...25), defaultWrapping: .word)
-                    Col("Country")
-                }
-
-                Rows {
-                    ["1952", "Helsinki", "Finland"]
-                    ["1956", "Stockholm", "Sweden"]
-                    ["1960", "Rome", "Italy"]
-                }
-            }
+            let col = Col(
+                "Year",
+                width: .auto,
+                trimming: [.inlineConsecutiveNewlines, .trailingNewlines]
+            )
+            print(col.trimming)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let encoded = try encoder.encode(col)
+            print(String(bytes: encoded, encoding: .utf8)!)
+            let decoder = JSONDecoder()
+            let decoded = try decoder.decode(Col.self, from: encoded)
+            XCTAssertEqual(col, decoded)
+        }
+        do {
+            let cols = [
+                Col("Year", width: .auto, trimming: [.inlineConsecutiveNewlines, .trailingNewlines]),
+                Col("Host", width: .in(5...25), defaultWrapping: .word),
+                Col("Country"),
+            ]
+            let cells:[[Txt]] = [
+                ["1952", "Helsinki", "Finland"],
+                ["1956", "Stockholm", "Sweden"],
+                ["1960", "Rome", "Italy"],
+            ]
+            let table = Tbl2("Summer Olympics", columns: cols, cells: cells)
             XCTAssertEqual(table.render(style: .rounded), expected)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let encoded = try encoder.encode(table)
             //print(String(bytes: encoded, encoding: .utf8)!)
             let decoder = JSONDecoder()
-            let decoded = try decoder.decode(Tbl.self, from: encoded)
+            let decoded = try decoder.decode(Tbl2.self, from: encoded)
             XCTAssertEqual(table, decoded)
             XCTAssertEqual(decoded.render(style: .rounded), expected)
         }
@@ -3312,9 +3323,9 @@ final class TableTests : XCTestCase {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             let decoder = JSONDecoder()
-            
+
             let cells:[[Txt]] = [
-                [Txt("Abc"), Txt("What?")],
+                [Txt("Abc"), Txt("What?", alignment: .topRight, wrapping: .char)],
                 [Txt("Automatic\ncolumn\nwidth with proper\nnewline handling"), Txt("Quick brown fox")]
             ]
             let columns = [
@@ -3323,18 +3334,20 @@ final class TableTests : XCTestCase {
                 Col("Fixed column", width: .fixed(10),
                     defaultAlignment: .middleCenter, defaultWrapping: .word),
             ]
-            let table = Tbl(Txt("Title\n-*-\nwith newlines"),
-                            columns: columns,
-                            cells: cells)
+            let table:Tbl2 = Tbl2(
+                Txt("Title\n-*-\nwith newlines"),
+                columns: columns,
+                cells: cells
+            )
             //print(table.render())
-            
+
             let encoded = try encoder.encode(table)
-            
+
             /*if let utf8 = String(data: encoded, encoding: .utf8) {
-             print(utf8)
-             }*/
-            
-            let decoded = try decoder.decode(Tbl.self, from: encoded)
+                print(utf8)
+            }*/
+
+            let decoded = try decoder.decode(Tbl2.self, from: encoded)
             //print(type(of: decoded))
             //print(decoded.render())
             
@@ -3479,8 +3492,8 @@ final class TableTests : XCTestCase {
                            |  Quick brown   |
                            |   fox jumps    |
                            |                |
-                           |      over      |
-                           |  the lazy dog  |
+                           | over the lazy  |
+                           |      dog       |
                            |                |
                            |                |
                            +----------------+
@@ -4714,7 +4727,7 @@ final class TablePerformanceTests : XCTestCase {
                         let re = [/*" ", "  ", "   ",*/ "\n", "\n\n"].randomElement()!
                         cell.append(re)
                     }
-                    row.append(Txt(cell.joined(), wrapping: .word2))
+                    row.append(Txt(cell.joined(), wrapping: .word))
                 }
                 res.append(row)
             }
@@ -4725,7 +4738,7 @@ final class TablePerformanceTests : XCTestCase {
         let cc = 6
         let step = 2
         let g = gibberish(rowCount: 2, columnCount: cc)
-        for wrap in [Wrapping.word2] {
+        for wrap in [Wrapping.word] {
             let columns = stride(from: 12, to: 12 + (step * cc), by: step)
                 .map({
                     Col(width: .fixed($0), defaultWrapping: wrap, contentHint: .unique)
@@ -5211,7 +5224,7 @@ internal class Playground : XCTestCase {
         let columns = [
             Col(Txt("#", alignment: .bottomCenter), width: .auto),
             Col(
-                Txt("This will be interesting", alignment: .bottomRight, wrapping: .word2),
+                Txt("This will be interesting", alignment: .bottomRight, wrapping: .word),
                 width: 20,
                 defaultAlignment: .topRight,
                 defaultWrapping: .char,
@@ -5219,10 +5232,10 @@ internal class Playground : XCTestCase {
                 contentHint: .unique),
             Col(Txt("Col 1", wrapping: .char), width: 1,
                 defaultAlignment: .bottomRight,
-                defaultWrapping: .word2,
+                defaultWrapping: .word,
                 trimming: .all,
                 contentHint: .unique),
-            Col(Txt("Col 3", alignment: .topCenter, wrapping: .word2), width: 3,
+            Col(Txt("Col 3", alignment: .topCenter, wrapping: .word), width: 3,
                 defaultAlignment: .topLeft,
                 defaultWrapping: .char,
                 trimming: [.leadingWhiteSpaces, .trailingWhiteSpaces],

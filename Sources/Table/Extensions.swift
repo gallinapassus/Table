@@ -617,12 +617,12 @@ extension Txt {
 
         var lines:[String] = []
         switch wrapping ?? defaultWrapping {
-        case .word:
-            lines = string
-                .compressedWords(width).map({ $0.description })
-                .map({ $0.render(to: width, alignment: alignment ?? defaultAlignment) })
+//        case .word:
+//            lines = string
+//                .compressedWords(width).map({ $0.description })
+//                .map({ $0.render(to: width, alignment: alignment ?? defaultAlignment) })
 
-        case .word2:
+        case .word:
             // Transform "Quick brown fox jumped over the lazy dog."
             // to width(14), alignment(right)
             //  ["   Quick brown",
@@ -633,7 +633,7 @@ extension Txt {
 
             for frag in fragments {
                 let words = frag.split(separator: " ", omittingEmptySubsequences: true)
-                lines = words.packWordsTo(width: width, alignment: defaultAlignment)
+                lines = words.packWordsTo(width: width, alignment: alignment ?? defaultAlignment)
             }
 
         case .char:
@@ -702,7 +702,7 @@ extension Txt {
 
 
         switch wrapping {
-        case .word, .word2:
+        case .word:
             let trimmed:String = string.trim(.all)
             let singleSpaced = trimmed//.trimmingCharacters(in: CharacterSet(charactersIn: " "))
                 .split(separator: " ", omittingEmptySubsequences: true)
@@ -792,9 +792,9 @@ extension Wrapping {
         case .word:
             return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
                 .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
-        case .word2:
-            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
-                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
+//        case .word2:
+//            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
+//                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
         case .char:
             return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
                 .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })

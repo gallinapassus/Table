@@ -114,7 +114,7 @@
  self.init(Txt(string), width: width, defaultAlignment: defaultAlignment, defaultWrapping: defaultWrapping, contentHint: contentHint)
  }
  }*/
-public enum ColumnContentHint : Equatable, Codable {
+public enum ColumnContentHint : String, Equatable, Codable, CaseIterable {
     /// Content cells are known to be unique
     case unique
     /// Content cells are known to be repetitive (not completely unique)
@@ -188,7 +188,7 @@ internal struct ColumnBase : Equatable, Codable {
         self.dynamicWidth = dynamicWidth
     }
 }
-public struct Col : Equatable, Codable {
+public struct Col : Equatable/*, Codable*/ {
     private let _base:ColumnBase
     public var dynamicWidth:Width { _base.dynamicWidth }
     public var header:Txt? { _base.header }
@@ -208,6 +208,37 @@ public struct Col : Equatable, Codable {
                                 defaultWrapping: defaultWrapping,
                                 trimming: trimming,
                                 contentHint: contentHint)
+    }
+}
+extension Col : Codable {
+    enum CodingKeys : CodingKey {
+        case header, width, defaultAlignment, defaultWrapping, trimming, contentHint
+    }
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(header, forKey: .header)
+        try container.encode(dynamicWidth, forKey: .width)
+        try container.encode(defaultAlignment, forKey: .defaultAlignment)
+        try container.encode(defaultWrapping, forKey: .defaultWrapping)
+        try container.encode(trimming, forKey: .trimming)
+        try container.encode(contentHint, forKey: .contentHint)
+    }
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let header = try container.decode(Txt.self, forKey: .header)
+        let dynamicWidth = try container.decode(Width.self, forKey: .width)
+        let defaultAlignment = try container.decode(Alignment.self, forKey: .defaultAlignment)
+        let defaultWrapping = try container.decode(Wrapping.self, forKey: .defaultWrapping)
+        let trimming = try container.decode(TrimmingOptions.self, forKey: .trimming)
+        let contentHint = try container.decode(ColumnContentHint.self, forKey: .contentHint)
+        self.init(
+            header,
+            width: dynamicWidth,
+            defaultAlignment: defaultAlignment,
+            defaultWrapping: defaultWrapping,
+            trimming: trimming,
+            contentHint: contentHint
+        )
     }
 }
 extension Col : ExpressibleByStringLiteral {
@@ -263,7 +294,7 @@ extension Col {
                 defaultWrapping:Wrapping = .char,
                 trimming:TrimmingOptions = [],
                 contentHint:ColumnContentHint = .repetitive) {
-        self.init(Txt(string), width: width, defaultAlignment: defaultAlignment, defaultWrapping: defaultWrapping, contentHint: contentHint)
+        self.init(Txt(string), width: width, defaultAlignment: defaultAlignment, defaultWrapping: defaultWrapping, trimming: trimming, contentHint: contentHint)
     }
 }
 internal struct FixedCol {

@@ -115,7 +115,7 @@ extension Array where Element == [Txt] {
             // get title fragments
             let titleFragments:[[String]] = splitted.map {
                 $0.halign(defaultAlignment: title.alignment ?? .bottomCenter,
-                          defaultWrapping: title.wrapping ?? .word2,
+                          defaultWrapping: title.wrapping ?? .word,
                           width: titleWidth)
             }
             dbg(.info, debugMask, prefix: "title", "w=\(titleWidth) \(splitted.description) -> \(titleFragments)")
@@ -268,7 +268,9 @@ extension Array where Element == [Txt] {
                 }
                 dbg(.debug, debugMask, "row is now \(row)")
 
-                guard row.count == fixedColumns.count else { fatalError("inconsitent") }
+                guard row.count == fixedColumns.count else {
+                    fatalError("internal inconsistency error")
+                }
                 // Process the single row column by column
                 for (ci,col) in row.enumerated() {
                     let fixedColumn = fixedColumns[ci]
@@ -600,27 +602,6 @@ fileprivate func preFormatx(title:Txt?,
             prefmtted.append(fmrow)
         }
         prefmttedRange.append(prefmtted)
-        if cells.isEmpty {
-            // There was no data!
-            // Return FixedCols for all Cols which are not .hidden
-//            let cellHeadersAsCellData = cols
-//                .filter({ $0.dynamicWidth != .hidden })
-//                .map({ $0.header ?? Txt("") })
-            print("recursion(\(maxRowElementCount)) \(#line)")
-            let hcols = cols
-                .filter({ $0.dynamicWidth != .hidden })
-                .map({
-                    let c = Col(
-                        $0.header,
-                        width: .fixed($0.header?.count ?? 1),
-                        defaultAlignment: $0.header?.alignment ?? $0.defaultAlignment,
-                        defaultWrapping: $0.header?.wrapping ?? $0.defaultWrapping,
-                        contentHint: $0.contentHint
-                    )
-                    return FixedCol(c, width: $0.header?.count ?? 1, ref: 0, hidden: false)
-                })
-            return ([], hcols.isEmpty ? [FixedCol(Col(""), width: 1, ref: 0, hidden: false)] : hcols)
-        }
     }
 
     let fixedColumns:[FixedCol] = columnFixedWidth

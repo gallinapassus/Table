@@ -38,12 +38,13 @@
         precondition(width >= 0, "Negative widths are not allowed here.")
         let lines:[String]
         switch wrapping {
-        case .word2:
-            let foo = wordsx(string, to: width)
-            lines = foo.map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         case .word:
-            let foo = string.compressedWords(width)
-            lines = foo.map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+//            let lines =
+            lines = wordsx(string, to: width)
+                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
+//        case .word:
+//            let foo = string.compressedWords(width)
+//            lines = foo.map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         case .char:
             lines = Substring(string).split(to: width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
@@ -73,9 +74,6 @@
                     lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
                 }
             default:
-//                guard width > Width.auto.value else {
-//                    fatalError("Negative widths are not allowed here.")
-//                }
                 if string.count > width {
                     let head = width / 2
                     let tail = width - 1 - head
@@ -110,21 +108,16 @@ extension Txt : Collection {
     public typealias Index = String.Index
 }
 public func wordsx(_ str:String, to width:Int) -> [Substring] {
-    //print(#function, "processing '\(str)'")
     guard width > 0 else {
         return []
     }
-    
-    guard str.isContiguousUTF8 else {
-        fatalError()
-    }
-    
+
     var cursor = str.startIndex
     var lo = str.startIndex
     var lr:[Range<String.Index>] = []
     var subs:[Substring] = []
     var c = 0
-    
+
     let consumeWhitespace = {
         while cursor < str.endIndex, str[cursor] == Character(" ") {
             cursor = str.index(after: cursor)
@@ -143,7 +136,6 @@ public func wordsx(_ str:String, to width:Int) -> [Substring] {
         let (d,t) = tot()
         if t <= width {
             if d > 0 {
-                //print("fits, append '\(str[lo..<cursor])' to stack")
                 lr.append(lo..<cursor)
             }
         }
@@ -273,23 +265,8 @@ public func wordsx(_ str:String, to width:Int) -> [Substring] {
 }
 extension Txt : CustomStringConvertible {
     public var description: String {
-        let a = alignment == nil ? "nil" : ".\(alignment!)"
-        let w = wrapping == nil ? "nil" : ".\(wrapping!)"
-        return "\(type(of: self))(\"\(string.replacingOccurrences(of: "\n", with: "\\n"))\", \(a), \(w))"
+        let a = alignment?.description ?? "nil"
+        let w = wrapping?.description ?? "nil"
+        return "\(type(of: self))(\"\(string.replacingOccurrences(of: "\n", with: "\\n"))\", alignment: \(a), wrapping: \(w))"
     }
 }
-/*
-extension Txt {
-    func format(for width:Int,
-                defaultAlignment:Alignment,
-                defaultWrapping:Wrapping) -> [String] {
-
-        let haligned = halign(
-            defaultAlignment: defaultAlignment,
-            defaultWrapping: defaultWrapping,
-            width: width
-        )
-        return haligned
-    }
-}
-*/
