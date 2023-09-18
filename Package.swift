@@ -14,7 +14,8 @@ let package = Package(
     ],
     dependencies: [
         //.package(path: "../Combinations"),
-        .package(path: "../DebugKit"),
+        .package(url: "https://github.com/gallinapassus/DebugKit.git",
+                 from: "0.0.4"),
     ],
     targets: [
         .target(
