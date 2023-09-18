@@ -1,7 +1,7 @@
 import XCTest
 @testable
 import Table
-import Combinations
+//import Combinations
 import DebugKit
 
 extension FrameStyle {

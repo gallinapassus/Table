@@ -13,7 +13,7 @@ let package = Package(
                     targets: ["Table App"])
     ],
     dependencies: [
-        .package(path: "../Combinations"),
+        //.package(path: "../Combinations"),
         .package(path: "../DebugKit"),
     ],
     targets: [
@@ -24,6 +24,6 @@ let package = Package(
                 dependencies: ["Table"]),
         .testTarget(
             name: "TableTests",
-            dependencies: ["Table", "Combinations"]),
+            dependencies: ["Table"/*, "Combinations"*/]),
     ]
 )
