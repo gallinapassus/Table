@@ -139,10 +139,3 @@ public func wordsx(_ str:String, to width:Int) -> [Substring] {
     //print("joined: \(joined)")
     return joined
 }
-extension Txt : CustomStringConvertible {
-    public var description: String {
-        let a = alignment?.description ?? "nil"
-        let w = wrapping?.description ?? "nil"
-        return "\(type(of: self))(\"\(string.replacingOccurrences(of: "\n", with: "\\n"))\", alignment: \(a), wrapping: \(w))"
-    }
-}

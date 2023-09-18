@@ -115,7 +115,7 @@ final class TableTests : XCTestCase {
             Col("Col 3", width: 3, defaultAlignment: .topLeft),
         ]
         do {
-            let table = Tbl2(nil, columns: columns, cells: [])
+            let table = Tbl(nil, columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┬┅┅┬┅┅┅┐
@@ -130,7 +130,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2(nil, columns: [], cells: [])
+            let table = Tbl(nil, columns: [], cells: [])
             XCTAssertEqual(table.render(),
                            """
                            ++
@@ -140,7 +140,7 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let table = Tbl2(cells: []) // no data, no frames
+            let table = Tbl(cells: []) // no data, no frames
             XCTAssertEqual(table.render(options: .none),
                            """
                            
@@ -148,7 +148,7 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let table = Tbl2("Title", cells: [])
+            let table = Tbl("Title", cells: [])
             XCTAssertEqual(table.render(style: .roundedPadded),
                            """
                            ╭───────╮
@@ -159,7 +159,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", cells: [])
+            let table = Tbl("Title", cells: [])
             XCTAssertEqual(table.render(style: .rounded),
                            """
                            ╭─────╮
@@ -170,7 +170,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2(cells: [])
+            let table = Tbl(cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┐
@@ -180,7 +180,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(0)), count: 0)
-            let table = Tbl2(columns: columns, cells: [])
+            let table = Tbl(columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┐
@@ -190,7 +190,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(0)), count: 1)
-            let table = Tbl2(columns: columns, cells: [])
+            let table = Tbl(columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┐
@@ -202,7 +202,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(0)), count: 2)
-            let table = Tbl2(columns: columns, cells: [])
+            let table = Tbl(columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┬┐
@@ -214,7 +214,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(0)), count: 2)
-            let table = Tbl2(columns: columns + [Col(width: .hidden)] + columns, cells: [])
+            let table = Tbl(columns: columns + [Col(width: .hidden)] + columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┬┬┬┐
@@ -226,7 +226,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(10)), count: 1)
-            let table = Tbl2(columns: columns, cells: [])
+            let table = Tbl(columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┅┅┅┅┅┅┅┅┅┅┐
@@ -239,7 +239,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col("", width: .fixed(10)), count: 1)
-            let table = Tbl2(columns: columns, cells: [])
+            let table = Tbl(columns: columns, cells: [])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┅┅┅┅┅┅┅┅┅┅┐
@@ -252,7 +252,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let columns = Array(repeating: Col(width: .fixed(10)), count: 1)
-            let table = Tbl2(columns: columns, cells: [[]])
+            let table = Tbl(columns: columns, cells: [[]])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┅┅┅┅┅┅┅┅┅┅┐
@@ -275,36 +275,11 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let columns = Array(repeating: Col(width: .fixed(10)), count: 1)
-            let table = Tbl2(columns: columns, cells: [[""]])
-            XCTAssertEqual(table.render(style: .debug),
-                            """
-                            ┌┅┅┅┅┅┅┅┅┅┅┐
-                            ┆          ┊
-                            └┉┉┉┉┉┉┉┉┉┉┘
-                            
-                            """
-            )
-        }
-        do {
             let columns = Array(repeating: Col("", width: .fixed(10)), count: 1)
             let table = Tbl(columns: columns, cells: [[""]])
             XCTAssertEqual(table.render(style: .debug),
                             """
                             ┌┅┅┅┅┅┅┅┅┅┅┐
-                            ├┄┄┄┄┄┄┄┄┄┄┤
-                            ┆          ┊
-                            └┉┉┉┉┉┉┉┉┉┉┘
-                            
-                            """
-            )
-        }
-        do {
-            let columns = Array(repeating: Col("", width: .fixed(10)), count: 1)
-            let table = Tbl2(columns: columns, cells: [[""]])
-            XCTAssertEqual(table.render(style: .debug),
-                            """
-                            ┌┅┅┅┅┅┅┅┅┅┅┐
                             ┆          ┊
                             ├┄┄┄┄┄┄┄┄┄┄┤
                             ┆          ┊
@@ -314,7 +289,7 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let table = Tbl2("Title", columns: ["#", "#", "#", "#"], cells: [])
+            let table = Tbl("Title", columns: ["#", "#", "#", "#"], cells: [])
             XCTAssertEqual(table
                 .render(style: .debug),
                            """
@@ -328,7 +303,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", columns: ["#", "", "#"], cells: [])
+            let table = Tbl("Title", columns: ["#", "", "#"], cells: [])
             XCTAssertEqual(table
                 .render(style: .debug),
                            """
@@ -343,7 +318,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", columns: ["#", "", "#"], cells: [])
+            let table = Tbl("Title", columns: ["#", "", "#"], cells: [])
             XCTAssertEqual(table
                 .render(style: .debug),
                            """
@@ -365,7 +340,7 @@ final class TableTests : XCTestCase {
                 Col("Unit", width: .auto, defaultAlignment: .bottomLeft, defaultWrapping: .word, contentHint: .unique),
             ]
             
-            let table = Tbl2("title", columns: columns, cells: src)
+            let table = Tbl("title", columns: columns, cells: src)
             XCTAssertEqual(table
                 .render(style: .debug, options: .all),
                            """
@@ -387,7 +362,7 @@ final class TableTests : XCTestCase {
                 Col("Unit", width: .auto, defaultAlignment: .bottomLeft, defaultWrapping: .word, contentHint: .unique),
             ]
             
-            let table = Tbl2("title", columns: columns, cells: src)
+            let table = Tbl("title", columns: columns, cells: src)
             XCTAssertEqual(table
                 .render(style: .debug, options: .all),
                            """
@@ -409,7 +384,7 @@ final class TableTests : XCTestCase {
             Col(Txt("Col 3"), width: 3, defaultAlignment: .topLeft),
         ]
         do {
-            let table = Tbl2("Title", columns: columns, cells: [[]])
+            let table = Tbl("Title", columns: columns, cells: [[]])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┅┅┅┐
@@ -427,7 +402,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2(nil, columns: columns, cells: [[]])
+            let table = Tbl(nil, columns: columns, cells: [[]])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┬┅┅┬┅┅┅┐
@@ -443,7 +418,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2(nil, columns: [], cells: [[]])
+            let table = Tbl(nil, columns: [], cells: [[]])
             XCTAssertEqual(table.render(),
                            """
                            ++
@@ -453,7 +428,7 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let table = Tbl2(columns: [], cells: [[]])
+            let table = Tbl(columns: [], cells: [[]])
             XCTAssertEqual(table.render(options: .none),
                            """
                            
@@ -461,7 +436,7 @@ final class TableTests : XCTestCase {
             )
         }
         do {
-            let table = Tbl2("Title", columns: [], cells: [[]])
+            let table = Tbl("Title", columns: [], cells: [[]])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┐
@@ -472,7 +447,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", cells: [])
+            let table = Tbl("Title", cells: [])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┐
@@ -494,7 +469,7 @@ final class TableTests : XCTestCase {
             let cells:[[Txt]] = [
                 ["ab", "cd", "e", "fgh"],
             ]
-            let table = Tbl2("Title", columns: [Col("#", width: 1)], cells: cells)
+            let table = Tbl("Title", columns: [Col("#", width: 1)], cells: cells)
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┅┅┅┅┅┐
@@ -634,7 +609,7 @@ final class TableTests : XCTestCase {
                     defaultWrapping: .char,
                     contentHint: .unique
                 )
-                let table = Tbl2(Txt("\(w)"), columns: [col], cells: cells)
+                let table = Tbl(Txt("\(w)"), columns: [col], cells: cells)
                 XCTAssertEqual(table.render(style: .debug), e, "\(i) FAILED")
             }
         }
@@ -645,7 +620,7 @@ final class TableTests : XCTestCase {
                 defaultWrapping: .char,
                 contentHint: .unique
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["1"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["1"]]).render(style: .debug),
                            """
                            ┌┅┅┐
                            ┆Ti┊
@@ -659,7 +634,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["12"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["12"]]).render(style: .debug),
                            """
                            ┌┅┅┐
                            ┆Ti┊
@@ -673,7 +648,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["123"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["123"]]).render(style: .debug),
                            """
                            ┌┅┅┅┐
                            ┆Tit┊
@@ -686,7 +661,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["1234"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["1234"]]).render(style: .debug),
                            """
                            ┌┅┅┅┐
                            ┆Tit┊
@@ -708,7 +683,7 @@ final class TableTests : XCTestCase {
                 defaultWrapping: .char,
                 contentHint: .unique
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["1"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["1"]]).render(style: .debug),
                            """
                            ┌┅┅┐
                            ┆Ti┊
@@ -722,7 +697,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["12"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["12"]]).render(style: .debug),
                            """
                            ┌┅┅┐
                            ┆Ti┊
@@ -736,7 +711,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["123"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["123"]]).render(style: .debug),
                            """
                            ┌┅┅┅┐
                            ┆Tit┊
@@ -749,7 +724,7 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-            XCTAssertEqual(Tbl2("Title", columns: [col], cells: [["1234"]]).render(style: .debug),
+            XCTAssertEqual(Tbl("Title", columns: [col], cells: [["1234"]]).render(style: .debug),
                            """
                            ┌┅┅┅┐
                            ┆Tit┊
@@ -767,7 +742,7 @@ final class TableTests : XCTestCase {
     }
     func test_CollapsedColumns() {
         do {
-            let table = Tbl2(columns: [Col("Collapsed", width: .collapsed)], cells: [])
+            let table = Tbl(columns: [Col("Collapsed", width: .collapsed)], cells: [])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┐
@@ -778,7 +753,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title",
+            let table = Tbl("Title",
                             columns: [Col("#", width: .collapsed), Col("Collapsed", width: .collapsed), Col("Collapsed", width: .collapsed)],
                             cells: [])
             XCTAssertEqual(table.render(style: .debug),
@@ -795,7 +770,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", columns: [Col("Collapsed", width: .collapsed)], cells: [[]])
+            let table = Tbl("Title", columns: [Col("Collapsed", width: .collapsed)], cells: [[]])
             XCTAssertEqual(table.render(style: .debug),
                            """
                            ┌┐
@@ -809,7 +784,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title",
+            let table = Tbl("Title",
                              columns: [Col("Same as collapsed", width: .fixed(0))],
                              cells: [["cell"]])
             XCTAssertEqual(table.render(style: .rounded),
@@ -826,7 +801,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let cols = Array(repeating: Col("Collapsed", width: .fixed(0)), count: 3)
-            let table = Tbl2("Title", columns: cols, cells: [["cell"]])
+            let table = Tbl("Title", columns: cols, cells: [["cell"]])
             XCTAssertEqual(table.render(style: .rounded),
                            """
                            ╭──╮
@@ -843,7 +818,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let cols = Array(repeating: Col("Collapsed", width: .fixed(0)), count: 3)
-            let table = Tbl2("Title", columns: cols, cells: [["cell"], ["a", "b", "c", "d"]])
+            let table = Tbl("Title", columns: cols, cells: [["cell"], ["a", "b", "c", "d"]])
             XCTAssertEqual(table.render(style: .rounded),
                            """
                            ╭────╮
@@ -867,7 +842,7 @@ final class TableTests : XCTestCase {
             Col(Txt("Col 3"), width: 3, defaultAlignment: .topLeft),
         ]
         do {
-            let table = Tbl2("Title", columns: columns, cells: [[""]])
+            let table = Tbl("Title", columns: columns, cells: [[""]])
             XCTAssertEqual(table.render(style: .rounded).string,
                            """
                            ╭────────╮
@@ -885,7 +860,7 @@ final class TableTests : XCTestCase {
                            """)
         }
         do {
-            let table = Tbl2("Title", columns: columns, cells: [["#"]])
+            let table = Tbl("Title", columns: columns, cells: [["#"]])
             XCTAssertEqual(table.render(style: .rounded).string,
                            """
                            ╭────────╮
@@ -905,7 +880,7 @@ final class TableTests : XCTestCase {
     }
     func test_autoColumns() {
         do {
-            let table = Tbl2("Title", columns: [], cells: [])
+            let table = Tbl("Title", columns: [], cells: [])
             XCTAssertEqual(table.render(),
                            """
                            +-----+
@@ -917,7 +892,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let data:[[Txt]] = [["#"]]
-            let table = Tbl2("Title", cells: data)
+            let table = Tbl("Title", cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-+
@@ -934,7 +909,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let data:[[Txt]] = [["Quick brown fox..."]]
-            let table = Tbl2("Title", cells: data)
+            let table = Tbl("Title", cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------------+
@@ -947,7 +922,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let data:[[Txt]] = [["Quick brown fox..."]]
-            let table = Tbl2(cells: data)
+            let table = Tbl(cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------------+
@@ -958,7 +933,7 @@ final class TableTests : XCTestCase {
         }
         do {
             let data:[[Txt]] = [["Quick brown fox", "jumps over the lazy dog"]]
-            let table = Tbl2(cells: data)
+            let table = Tbl(cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---------------+-----------------------+
@@ -981,7 +956,7 @@ final class TableTests : XCTestCase {
                 Col(Txt("Hidden"), width: .hidden, defaultAlignment: .bottomLeft, defaultWrapping: .char, contentHint: .unique),
                 Col(Txt(""), width: .hidden, defaultAlignment: .bottomLeft, defaultWrapping: .char, contentHint: .unique),
                 ]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1018,7 +993,7 @@ final class TableTests : XCTestCase {
                 Col(Txt("Hidden"), width: .hidden, defaultAlignment: .bottomLeft, defaultWrapping: .char, contentHint: .unique),
                 Col(Txt(""), width: .auto, defaultAlignment: .bottomLeft, defaultWrapping: .char, contentHint: .unique),
                 ]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-------------+
@@ -1048,7 +1023,7 @@ final class TableTests : XCTestCase {
             let columns = [Col("Col1", width: 4),
                            Col("Col2", width: 4, defaultAlignment: .topRight),
                            Col("Col3", width: 4)]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +----+----+----+
@@ -1068,7 +1043,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#"]]
             let columns = [Col("Col1", width: 4)]
-            let table = Tbl2("Ttle", columns: columns, cells: data)
+            let table = Tbl("Ttle", columns: columns, cells: data)
             XCTAssertEqual(table.render(leftPad: "[L]", rightPad: "[R]"),
                            """
                            [L]+----+[R]
@@ -1086,7 +1061,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
             let columns = [Col("Col1", width: 4), Col("Col2", width: 4, defaultAlignment: .topRight)]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +----+----+---+
@@ -1105,7 +1080,7 @@ final class TableTests : XCTestCase {
             // data elements in the column).
             let data:[[Txt]] = [["#", "##", "######"]]
             let columns = [Col("Col1"), Col("Col2"), Col("Col3")]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-----------+
@@ -1126,7 +1101,7 @@ final class TableTests : XCTestCase {
         do {
             let columns = Alignment.allCases.map({ Col(Txt("\($0)"), width: 3, defaultAlignment: $0) })
             let data:[[Txt]] = [Array(repeating: Txt("#"), count: columns.count)]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---+---+---+---+---+---+---+---+---+
@@ -1145,7 +1120,7 @@ final class TableTests : XCTestCase {
         do {
             let columns = Alignment.allCases.map({ Col(Txt("\($0)"),width: 3, defaultAlignment: $0) })
             let data:[[Txt]] = [["123"] + Array(repeating: Txt("#"), count: columns.count)]
-            let table = Tbl2(columns: [Col(width: 1)] + columns, cells: data)
+            let table = Tbl(columns: [Col(width: 1)] + columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-+---+---+---+---+---+---+---+---+---+
@@ -1166,7 +1141,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from column's definition
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .char)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .char)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1181,7 +1156,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from Txt
             let data = [[Txt(pangram, wrapping: .char)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .cut)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .cut)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1196,7 +1171,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping defined at column level, overidden by Txt
             let data = [[Txt(pangram, wrapping: .char)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1213,7 +1188,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from column's definition
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .cut)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .cut)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1225,7 +1200,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from Txt
             let data = [[Txt(pangram, wrapping: .cut)]]
-            let table = Tbl2(columns: [Col(width: 12)], cells: data)
+            let table = Tbl(columns: [Col(width: 12)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1237,7 +1212,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping defined at column level, overidden by Txt
             let data = [[Txt(pangram, wrapping: .cut)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1249,7 +1224,7 @@ final class TableTests : XCTestCase {
         do {
             // Special case - column dynamicWidth = 1
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 1, defaultWrapping: .cut)], cells: data)
+            let table = Tbl(columns: [Col(width: 1, defaultWrapping: .cut)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-+
@@ -1261,7 +1236,7 @@ final class TableTests : XCTestCase {
         do {
             // Special case - column dynamicWidth = 2
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 2, defaultWrapping: .cut)], cells: data)
+            let table = Tbl(columns: [Col(width: 2, defaultWrapping: .cut)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +--+
@@ -1273,7 +1248,7 @@ final class TableTests : XCTestCase {
         do {
             // Special case - column dynamicWidth = 3
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 3, defaultWrapping: .cut)], cells: data)
+            let table = Tbl(columns: [Col(width: 3, defaultWrapping: .cut)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---+
@@ -1287,7 +1262,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from column's definition
             let data = [[Txt(pangram)]]
-            let table = Tbl2(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
+            let table = Tbl(columns: [Col(width: 12, defaultWrapping: .word)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -1302,7 +1277,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from Txt
             let data = [[Txt(pangram, wrapping: .word)]]
-            let table = Tbl2(columns: [Col(width: 16)], cells: data)
+            let table = Tbl(columns: [Col(width: 16)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -1320,7 +1295,7 @@ final class TableTests : XCTestCase {
             //     - Words which are too long to fit are "forcibly" wrapped at
             //       character boundary (as below: "jumpe" "d")
             let data = [[Txt(pangram, wrapping: .word)]]
-            let table = Tbl2(columns: [Col(width: 5, defaultWrapping: .char)], cells: data)
+            let table = Tbl(columns: [Col(width: 5, defaultWrapping: .char)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-----+
@@ -1340,7 +1315,7 @@ final class TableTests : XCTestCase {
         do {
             // Wrpping taken from Txt
             let data = [[Txt("RawDefinition(\"def\", width: 5, symbol: $dir!, fieldNumber: 253, value: [1, 2, 3])", wrapping: .word)]]
-            let table = Tbl2(columns: [Col(width: 9, defaultAlignment: .topLeft)], cells: data)
+            let table = Tbl(columns: [Col(width: 9, defaultAlignment: .topLeft)], cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---------+
@@ -1419,7 +1394,7 @@ final class TableTests : XCTestCase {
             ]
             XCTAssertEqual(styles.count, expected.count)
             for (i,style) in styles.enumerated() {
-                let table = Tbl2("*", cells: [["1", "2"],["3", "4"]])
+                let table = Tbl("*", cells: [["1", "2"],["3", "4"]])
                 XCTAssertEqual(table.render(style: style), expected[i])
             }
         }
@@ -1976,7 +1951,7 @@ final class TableTests : XCTestCase {
             ]
             XCTAssertEqual(combinations.count, expected.count)
             for (i, opt) in combinations.enumerated() {
-                let table = Tbl2("*", columns: [Col("A"),Col("B")], cells: [["1", "2"],["3", "4"]])
+                let table = Tbl("*", columns: [Col("A"),Col("B")], cells: [["1", "2"],["3", "4"]])
                 // Next line: correct answer generator ;-)
                 // print("[ // \(opt.optionsInEffect)\n" + table.render().split(separator: "\n").map({ "\"\($0)\"" }).joined(separator: ",\n") + "\n],")
                 XCTAssertEqual(
@@ -2549,7 +2524,7 @@ final class TableTests : XCTestCase {
                     ["1", "hidden", "2", "zero width", "3"],
                     ["4", "hidden", "5", "zero width", "end", "f"]
                 ]
-                let table = Tbl2("Title", columns: columns, cells: cells)
+                let table = Tbl("Title", columns: columns, cells: cells)
                 // Next line: correct answer generator ;-)
                 //print("[ // \(opt.optionsInEffect)\n" + table.render().split(separator: "\n").map({ "\"\($0)\"" }).joined(separator: ",\n") + "\n],")
                 XCTAssertEqual(
@@ -2565,7 +2540,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Title narrower than column content
-            let table = Tbl2("Title", columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl("Title", columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2581,7 +2556,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Title wider than column content
-            let table = Tbl2("English-language pangram — a sentence that contains all of the letters of the English alphabet.", columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl("English-language pangram — a sentence that contains all of the letters of the English alphabet.", columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2603,7 +2578,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Left aligned
-            let table = Tbl2(Txt("Title", alignment: .topLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title", alignment: .topLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2619,7 +2594,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Right aligned
-            let table = Tbl2(Txt("Title", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2635,7 +2610,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Left aligned
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2652,7 +2627,7 @@ final class TableTests : XCTestCase {
         do {
             // Default is "middleCenter" with "word" wrapping
             // Right aligned
-            let table = Tbl2(Txt("Title wider than column width", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
+            let table = Tbl(Txt("Title wider than column width", alignment: .bottomRight), columns: [Col(width: 16)], cells: [[Txt(pangram)]])
             XCTAssertEqual(table.render(),
                            """
                            +----------------+
@@ -2764,7 +2739,7 @@ final class TableTests : XCTestCase {
             XCTAssertEqual(Alignment.allCases.count, expected.count)
             for (i,alignment) in Alignment.allCases.enumerated() {
                 let columns = [Col("123", width: 1), Col(Txt("#", alignment: alignment), width: 3)]
-                let table = Tbl2(columns: columns, cells: [])
+                let table = Tbl(columns: columns, cells: [])
                 XCTAssertEqual(table.render(), expected[i])
             }
         }
@@ -2778,7 +2753,7 @@ final class TableTests : XCTestCase {
                 ["*", "**", "******"]
             ]
             let columns = [Col("Col1"), Col("Col2", width: .hidden), Col("Col3")]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +--------+
@@ -2802,7 +2777,7 @@ final class TableTests : XCTestCase {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
             let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3")]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(style: .squared),
                            """
                            ┌──────┐
@@ -2821,7 +2796,7 @@ final class TableTests : XCTestCase {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
             let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
-            let table = Tbl2("Title", columns: columns, cells: data)
+            let table = Tbl("Title", columns: columns, cells: data)
             XCTAssertEqual(table.render(style: .squared),
                            """
                            ┌─────┐
@@ -2835,7 +2810,7 @@ final class TableTests : XCTestCase {
             // Columns can be hidden with Width.hidden
             let data:[[Txt]] = [["#", "##", "######"],["*", "**", "******"]]
             let columns = [Col("Col1", width: .hidden), Col("Col2", width: .hidden), Col("Col3", width: .hidden)]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(style: .squared),
                            """
                            ┌┐
@@ -2874,7 +2849,7 @@ final class TableTests : XCTestCase {
             
             """,
             ]
-            let table = Tbl2("*",
+            let table = Tbl("*",
                             columns: [Col("A"),Col("Hidden", width: .hidden),
                                       Col("C")],
                             cells: [["1", "2", "3"],["4", "5"]])
@@ -2919,7 +2894,7 @@ final class TableTests : XCTestCase {
             
             """,
             ]
-            let table = Tbl2("*", columns: [], cells: [["1", "2", "3"],["4", "5"]])
+            let table = Tbl("*", columns: [], cells: [["1", "2", "3"],["4", "5"]])
             var i = 0
             for withHeaders in [true, false] {
                 for includeHidden in [true, false] {
@@ -2946,7 +2921,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "#########"], ["###", "##", "#"]]
             let columns = [Col("Col1", width: .min(4)), Col("Col2", width: .min(3)), Col("Col3", width: .min(2))]
-            let table = Tbl2("title",columns: columns, cells: data)
+            let table = Tbl("title",columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------------+
@@ -2966,7 +2941,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "#####\n####"], ["###", "##", "#"]]
             let columns = [Col("Col1", width: .min(4)), Col("Col2", width: .min(3)), Col("Col3", width: .min(2))]
-            let table = Tbl2("title",columns: columns, cells: data)
+            let table = Tbl("title",columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +--------------+
@@ -2987,7 +2962,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
             let columns = [Col(width: .min(4)), Col(width: .min(3)), Col(width: .min(2))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +----+---+---+
@@ -3000,7 +2975,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
             let columns = [Col(width: .min(4)), Col(width: .min(3)), Col(width: .min(2))]
-            let table = Tbl2("With title longer than columns", columns: columns, cells: data)
+            let table = Tbl("With title longer than columns", columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +------------+
@@ -3019,7 +2994,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
             let columns = [Col("Col1", width: .max(4)), Col("Col2", width: .max(3)), Col("Col3", width: .max(2))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-+--+--+
@@ -3038,7 +3013,7 @@ final class TableTests : XCTestCase {
         do {
             let data:[[Txt]] = [["#", "##", "###"]]
             let columns = [Col(width: .max(4)), Col(width: .max(3)), Col(width: .max(2))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +-+--+--+
@@ -3059,7 +3034,7 @@ final class TableTests : XCTestCase {
                            Col("Col4", width: .in(4...4)), // == 4
                            Col("Col5", width: .range(5..<6)), // == 5
             ]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(style: .rounded),
                            """
                            ╭┬┬┬────┬─────╮
@@ -3077,7 +3052,7 @@ final class TableTests : XCTestCase {
             let columns = [Col("Col1", width: .range(3..<5)),
                            Col("Col2", width: .in(2...3)),
                            Col("Col3", width: .in(1...3))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---+--+---+
@@ -3096,7 +3071,7 @@ final class TableTests : XCTestCase {
                            Col(width: .range(3..<5)),
                            Col(width: .in(2...3)),
                            Col(width: .range(1..<3))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(),
                            """
                            +---+---+---+--+
@@ -3117,7 +3092,7 @@ final class TableTests : XCTestCase {
                            Col(width: .in(2...3), defaultAlignment: .bottomCenter),
                            Col(width: Width(range: 2...2), defaultAlignment: .bottomRight),
                            Col(width: .range(1..<3))]
-            let table = Tbl2(columns: columns, cells: data)
+            let table = Tbl(columns: columns, cells: data)
             XCTAssertEqual(table.render(style: .roundedPadded),
                            """
                            ╭─────┬─────┬─────┬────┬────╮
@@ -3146,7 +3121,7 @@ final class TableTests : XCTestCase {
                 Col("C"),
                 Col("D"),
             ]
-            let t = Tbl2("Table Title",
+            let t = Tbl("Table Title",
                         columns: cols,
                         cells: cells)
             XCTAssertEqual(t.render(),
@@ -3180,7 +3155,7 @@ final class TableTests : XCTestCase {
                 Col("C"),
                 Col("D"),
             ]
-            let t = Tbl2("Table Title",
+            let t = Tbl("Table Title",
                         columns: cols,
                         cells: cells)
             XCTAssertEqual(t.render(),
@@ -3230,7 +3205,7 @@ final class TableTests : XCTestCase {
                 Col("Y"),
                 Col("W"),
             ]
-            let t = Tbl2("Table Title",
+            let t = Tbl("Table Title",
                         columns: cols,
                         cells: cells)
             XCTAssertEqual(t.render(),
@@ -3298,14 +3273,14 @@ final class TableTests : XCTestCase {
                 ["1956", "Stockholm", "Sweden"],
                 ["1960", "Rome", "Italy"],
             ]
-            let table = Tbl2("Summer Olympics", columns: cols, cells: cells)
+            let table = Tbl("Summer Olympics", columns: cols, cells: cells)
             XCTAssertEqual(table.render(style: .rounded), expected)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let encoded = try encoder.encode(table)
             //print(String(bytes: encoded, encoding: .utf8)!)
             let decoder = JSONDecoder()
-            let decoded = try decoder.decode(Tbl2.self, from: encoded)
+            let decoded = try decoder.decode(Tbl.self, from: encoded)
             XCTAssertEqual(table, decoded)
             XCTAssertEqual(decoded.render(style: .rounded), expected)
         }
@@ -3334,7 +3309,7 @@ final class TableTests : XCTestCase {
                 Col("Fixed column", width: .fixed(10),
                     defaultAlignment: .middleCenter, defaultWrapping: .word),
             ]
-            let table:Tbl2 = Tbl2(
+            let table:Tbl = Tbl(
                 Txt("Title\n-*-\nwith newlines"),
                 columns: columns,
                 cells: cells
@@ -3347,7 +3322,7 @@ final class TableTests : XCTestCase {
                 print(utf8)
             }*/
 
-            let decoded = try decoder.decode(Tbl2.self, from: encoded)
+            let decoded = try decoder.decode(Tbl.self, from: encoded)
             //print(type(of: decoded))
             //print(decoded.render())
             
@@ -3365,7 +3340,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps over the lazy dog")
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -3385,7 +3360,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\nover the lazy dog")
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -3406,7 +3381,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft), columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
                            """
@@ -3428,7 +3403,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("Quick brown\nfox jumps\n\nover the lazy dog")
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft),
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16, defaultAlignment: .topRight)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3451,7 +3426,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter)
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft),
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3478,7 +3453,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .word)
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft),
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3505,7 +3480,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
-            let table = Tbl2(Txt("Title wider than column width", alignment: .middleLeft),
+            let table = Tbl(Txt("Title wider than column width", alignment: .middleLeft),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3531,7 +3506,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
-            let table = Tbl2(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
+            let table = Tbl(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
                             columns: [Col(width: 16)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3557,7 +3532,7 @@ final class TableTests : XCTestCase {
             // Txt elements are first splitted into separate elements at each newline.
             // After separation, wrapping is applied individually on each separated element.
             let textWithNewline = Txt("\n\nQuick brown\nfox jumps\n\nover the lazy dog\n\n", alignment: .middleCenter, wrapping: .cut)
-            let table = Tbl2(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
+            let table = Tbl(Txt("Title obeys\nnewlines as well", alignment: .middleLeft, wrapping: .word),
                             columns: [Col(width: .auto)],
                             cells: [[textWithNewline]])
             XCTAssertEqual(table.render(),
@@ -3669,7 +3644,7 @@ final class TableTests : XCTestCase {
             src.append(row)
         }
         let columns = [Col("AB"),"C","D"]
-        let tbl = Tbl2("Title", columns: columns, cells: src)
+        let tbl = Tbl("Title", columns: columns, cells: src)
         do {
             var s:String = ""
             tbl.render(style: .squared, rows: [0..<1], to: &s)
@@ -3836,7 +3811,7 @@ final class TableTests : XCTestCase {
         do {
             // Automatic line numbers are visible when Tbl is
             // initialized with 'withAutomaticLineNumberingStartingFrom'
-            let table = Tbl2(Txt("Testing automatic line numbers for \(cells.count) rows"),
+            let table = Tbl(Txt("Testing automatic line numbers for \(cells.count) rows"),
                              cells: cells, lineNumberGenerator: { i in
                 return Txt((i+1).description)
             })
@@ -3867,7 +3842,7 @@ final class TableTests : XCTestCase {
             // Automatic line numbers are visible when Tbl is
             // initialized with 'withAutomaticLineNumberingStartingFrom'
             // Let's offset our line numbers by 99
-            let table = Tbl2(Txt("Testing automatic line numbers for \(cells.count) rows"),
+            let table = Tbl(Txt("Testing automatic line numbers for \(cells.count) rows"),
                              cells: cells, lineNumberGenerator: { i in
                 return Txt((i+99).description)
             })
@@ -3904,7 +3879,7 @@ final class TableTests : XCTestCase {
                 f.numberStyle = .ordinal
                 return Txt(f.string(for: i+99) ?? "?")
             }
-            let table = Tbl2(Txt("Testing automatic line numbers for \(cells.count) rows"),
+            let table = Tbl(Txt("Testing automatic line numbers for \(cells.count) rows"),
                             cells: cells, lineNumberGenerator: lineNumberGenerator)
             // Set formatter to NumberFormatter, with bit weird numbering style
             XCTAssertEqual(table.render(rows: [0..<2, 24..<cells.count]),
@@ -3946,7 +3921,7 @@ final class TableTests : XCTestCase {
             let lineNumberGenerator = { i in
                 return Txt(String(format: "0x%08x:", i * step))
             }
-            let table = Tbl2(Txt("Hexdump", alignment: .bottomLeft),
+            let table = Tbl(Txt("Hexdump", alignment: .bottomLeft),
                              cells: cells,
                              lineNumberGenerator: lineNumberGenerator)
             // Set formatter to NumberFormatter, with completely unexpected
@@ -3976,7 +3951,7 @@ final class TableTests : XCTestCase {
                 return Txt((Int(i)*i).description,
                            alignment: .topLeft) // <- override is here
             }
-            let table = Tbl2(Txt("Override line number column alignment"),
+            let table = Tbl(Txt("Override line number column alignment"),
                              cells: cells,
                              lineNumberGenerator: lineNumberGenerator)
             XCTAssertEqual(table.render(rows: [0..<3, 23..<cells.count]),
@@ -4003,6 +3978,56 @@ final class TableTests : XCTestCase {
             )
         }
     }
+    func test_lineNumbersWithNewLines() {
+        let columns = [
+            Col(Txt("#", alignment: .bottomCenter), width: .auto),
+            Col(
+                Txt("Pangram", alignment: .bottomRight, wrapping: .cut),
+                width: 16,
+                defaultAlignment: .topRight,
+                defaultWrapping: .word,
+                trimming: [],
+                contentHint: .unique),
+        ]
+        let cells:[[Txt]] = [
+            [Txt(pangram)],
+            [Txt(String(pangram.reversed()))],
+            [Txt(pangram, wrapping: .cut), "extra"],
+        ]
+        let myLnGen:(Int) -> Txt = { i in
+            return Txt(String(format: "Line\n%d", i + 1), alignment: i % 2 == 0 ? .bottomLeft : .bottomRight)
+        }
+        let tbl = Tbl(
+            Txt("Well known pangrams from around the world"),
+            columns: columns,
+            cells: cells,
+            lineNumberGenerator: myLnGen
+        )
+        tbl.debugMask = []//[.telemetry, .info, .debug]
+        let rendered = tbl.render(style: .debug)//, rows: [0..<3, 1..<cells.count]))
+        let expected =
+                """
+                ┌┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┐
+                ┆ Well known pangrams from  ┊
+                ┆     around the world      ┊
+                ├┄┄┄┄┬┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┄┄┄┤
+                ┆ #  ╎         Pangram╎     ┊
+                ├┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┤
+                ┆    ╎ The quick brown╎     ┊
+                ┆Line╎  fox jumps over╎     ┊
+                ┆1   ╎    the lazy dog╎     ┊
+                ├┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┤
+                ┆    ╎    god yzal eht╎     ┊
+                ┆Line╎  revo spmuj xof╎     ┊
+                ┆   2╎ nworb kciuq ehT╎     ┊
+                ├┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┤
+                ┆Line╎The qui…lazy dog╎extra┊
+                ┆3   ╎                ╎     ┊
+                └┉┉┉┉┴┉┉┉┉┉┉┉┉┉┉┉┉┉┉┉┉┴┉┉┉┉┉┘
+                
+                """
+        XCTAssertEqual(rendered, expected)
+    }
     func test_README() {
         do {
             let cells:[[Txt]] = [
@@ -4027,7 +4052,7 @@ final class TableTests : XCTestCase {
                 Col("Col 2", width: width, defaultAlignment: .bottomCenter),
                 Col("Col 3", width: width, defaultAlignment: .bottomCenter),
             ]
-            let table = Tbl2("Table title",
+            let table = Tbl("Table title",
                             columns: cols,
                             cells: cells)
             
@@ -4073,11 +4098,11 @@ final class TableTests : XCTestCase {
                            """
             )
         }
-        /*do { // TODO: Implement for Tbl2
+        do {
             let table = Tbl("Summer Olympics") {
 
                 Columns {
-                    Col("Year", width: .auto)
+                    Col("Year", width: 4)
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
@@ -4088,7 +4113,7 @@ final class TableTests : XCTestCase {
                     ["1960", "Rome", "Italy"]
                 }
             }
-            print(table.render())
+            print(table.render(style: .rounded))
             //╭──────────────────────╮
             //│   Summer Olympics    │
             //├────┬─────────┬───────┤
@@ -4116,14 +4141,14 @@ final class TableTests : XCTestCase {
                            
                            """
             )
-        }*/
+        }
     }
     func test_contentHint_unique_bug() {
         do {
             let cells:[[Txt]] = [["Quick brown\nfox", "jumped\nover"], ["the\nlazy", "dog."]]
             let c = [Col(width: 9, defaultWrapping: .char, contentHint: .unique),
                      Col(width: 4, defaultWrapping: .word, contentHint: .unique)]
-            let t = Tbl2("title",columns: c, cells: cells)
+            let t = Tbl("title",columns: c, cells: cells)
             print(t.render(style: .roundedPadded))
             XCTAssertEqual(t.render(style: .roundedPadded),
                            """
@@ -4153,7 +4178,7 @@ final class TableTests : XCTestCase {
                 Col(width: .hidden, defaultWrapping: .char, contentHint: .unique),
                 Col(width: .auto, defaultWrapping: .char, contentHint: .unique)
             ]
-            let t = Tbl2("title",columns: c, cells: cells)
+            let t = Tbl("title",columns: c, cells: cells)
             let rendered = t.render(style: .roundedPadded)
             XCTAssertEqual(rendered,
                            """
@@ -4205,7 +4230,7 @@ final class TableTests : XCTestCase {
             let cells = [
                 [Txt("Auto"), Txt("min"), Txt("maximum"), Txt("tripletto"), Txt("Range"), Txt("12345678")]
             ]
-            let t = Tbl2("Title", columns: cols, cells: cells)
+            let t = Tbl("Title", columns: cols, cells: cells)
             XCTAssertEqual(t.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┐
@@ -4236,7 +4261,7 @@ final class TableTests : XCTestCase {
             let cells = [
                 [Txt("Auto"), Txt("12345678"), Txt("m"), Txt("tripletto"), Txt("R"), Txt("1")]
             ]
-            let t = Tbl2("Title", columns: cols, cells: cells)
+            let t = Tbl("Title", columns: cols, cells: cells)
             XCTAssertEqual(t.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┐
@@ -4265,7 +4290,7 @@ final class TableTests : XCTestCase {
                 Col("Rnge", width: .range(2..<5), defaultAlignment: .middleCenter),
                 Col(Txt("In", alignment: .bottomRight), width: .in(3...6)),
             ]
-            let t = Tbl2("Title", columns: cols, cells: [])
+            let t = Tbl("Title", columns: cols, cells: [])
             print(t.render(style: .debug))
             XCTAssertEqual(t.render(style: .debug),
                            """
@@ -4280,6 +4305,59 @@ final class TableTests : XCTestCase {
                            
                            """
             )
+        }
+    }
+    func test_renx_hex() {
+        let hexGen:(Int) -> Txt = { n in
+            let addr = n * 16
+            let str = String(format: "0x%06x", addr)
+            return Txt(str)
+        }
+        let cells:[[Txt]] =
+        (0..<16).map({ l in
+            let ra = (0..<16).map({ m in (16 * l) + m })
+            //                print(ra)
+            return [
+                Txt(ra.map({ String(format: "%02x", $0) }).joined(separator: ":")),
+                Txt(ra.map({
+                    let c = Character(UnicodeScalar($0)!)
+                    return (c.isLetter || c.isNumber || c.isPunctuation) ? Character(UnicodeScalar($0)!).description : "." }).joined())
+            ]
+        })
+        
+        let expected:String = [
+            "                                 Hexdump                                 ",
+            "0x000000 00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f ................",
+            "0x000010 10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f ................",
+            "0x000020 20:21:22:23:24:25:26:27:28:29:2a:2b:2c:2d:2e:2f .!\"#.%&'()*.,-./",
+            "0x000030 30:31:32:33:34:35:36:37:38:39:3a:3b:3c:3d:3e:3f 0123456789:;...?",
+            "0x000040 40:41:42:43:44:45:46:47:48:49:4a:4b:4c:4d:4e:4f @ABCDEFGHIJKLMNO",
+            "0x000050 50:51:52:53:54:55:56:57:58:59:5a:5b:5c:5d:5e:5f PQRSTUVWXYZ[\\]._",
+            "0x000060 60:61:62:63:64:65:66:67:68:69:6a:6b:6c:6d:6e:6f .abcdefghijklmno",
+            "0x000070 70:71:72:73:74:75:76:77:78:79:7a:7b:7c:7d:7e:7f pqrstuvwxyz{.}..",
+            "0x000080 80:81:82:83:84:85:86:87:88:89:8a:8b:8c:8d:8e:8f ................",
+            "0x000090 90:91:92:93:94:95:96:97:98:99:9a:9b:9c:9d:9e:9f ................",
+            "0x0000a0 a0:a1:a2:a3:a4:a5:a6:a7:a8:a9:aa:ab:ac:ad:ae:af .¡.....§..ª«....",
+            "0x0000b0 b0:b1:b2:b3:b4:b5:b6:b7:b8:b9:ba:bb:bc:bd:be:bf ..²³.µ¶·.¹º»¼½¾¿",
+            "0x0000c0 c0:c1:c2:c3:c4:c5:c6:c7:c8:c9:ca:cb:cc:cd:ce:cf ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ",
+            "0x0000d0 d0:d1:d2:d3:d4:d5:d6:d7:d8:d9:da:db:dc:dd:de:df ÐÑÒÓÔÕÖ.ØÙÚÛÜÝÞß",
+            "0x0000e0 e0:e1:e2:e3:e4:e5:e6:e7:e8:e9:ea:eb:ec:ed:ee:ef àáâãäåæçèéêëìíîï",
+            "0x0000f0 f0:f1:f2:f3:f4:f5:f6:f7:f8:f9:fa:fb:fc:fd:fe:ff ðñòóôõö.øùúûüýþÿ",
+        ].joined(separator: "\n") + "\n"
+        let rendered = cells.renx(
+            title: "Hexdump",
+            style: .singleSpace,
+            options: .insideVerticalFrame,
+            lineNumberGenerator: hexGen
+        )
+        XCTAssertEqual(rendered, expected)
+    }
+
+    func test_wordsx() {
+        do {
+            let txt = Txt("Summer Olympics")
+            let worded = wordsx(txt.string, to: 22)
+            print(worded)
         }
     }
 }
@@ -4400,14 +4478,14 @@ final class DSLTests : XCTestCase {
         
         """
         do {
-            let table = Tbl("Summer Olympics") {
+            let table = Tbl(Txt("Summer Olympics")) {
 
                 Columns {
                     Col("Year", width: .auto)
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
-                
+
                 Rows {
                     ["1952", "Helsinki", "Finland"]
                     ["1956", "Stockholm", "Sweden"]
@@ -4441,7 +4519,7 @@ final class DSLTests : XCTestCase {
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
-                
+
                 Rows {
                     [
                         [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
@@ -4460,7 +4538,7 @@ final class DSLTests : XCTestCase {
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
-                
+
                 Rows {
                     ["1952", "Helsinki", "Finland"]
                     ["1956", "Stockholm", "Sweden"]
@@ -4477,7 +4555,7 @@ final class DSLTests : XCTestCase {
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
-                
+
                 Rows {
                     ["1952", "Helsinki", "Finland"]
                     ["1956", "Stockholm", "Sweden"]
@@ -4494,7 +4572,7 @@ final class DSLTests : XCTestCase {
                     Col("Host", width: .in(5...25), defaultWrapping: .word)
                     Col("Country")
                 }
-                
+
                 Rows {
                     ["1952", "Helsinki", "Finland"]
                     ["1956", "Stockholm", "Sweden"]
@@ -4552,6 +4630,49 @@ final class DSLTests : XCTestCase {
                 }
             }
             XCTAssertEqual(table.render(), expected_default_no_columns)
+        }
+        do {
+            let table = Tbl(nil) {
+                Rows {
+                    [
+                        [Txt("1952"), Txt("Helsinki"), Txt("Finland")],
+                        [Txt("1956"), Txt("Stockholm"), Txt("Sweden")],
+                        [Txt("1960"), Txt("Rome"), Txt("Italy")]
+                    ]
+                }
+            }
+            XCTAssertEqual(table.render(style: .squared),
+                            """
+                            ┌────┬─────────┬───────┐
+                            │1952│Helsinki │Finland│
+                            ├────┼─────────┼───────┤
+                            │1956│Stockholm│Sweden │
+                            ├────┼─────────┼───────┤
+                            │1960│Rome     │Italy  │
+                            └────┴─────────┴───────┘
+
+                            """)
+        }
+        do {
+            let table = Tbl(nil) {
+                
+                Columns {
+                    Col("Year", width: .auto)
+                    Col("Host", width: .in(5...25), defaultWrapping: .word)
+                    Col("Country")
+                }
+                Rows {
+                    Array<[Txt]>()
+                }
+            }
+            XCTAssertEqual(table.render(style: .squared),
+                            """
+                            ┌────┬─────┬───────┐
+                            │Year│Host │Country│
+                            ├────┼─────┼───────┤
+                            └────┴─────┴───────┘
+
+                            """)
         }
     }
 }
@@ -4592,25 +4713,6 @@ final class TablePerformanceTests : XCTestCase {
     // macOS Big Sur 11.5.2
     // Xcode version 12.5.1 (12E507)
     // Apple Swift version 5.4.2 (swiftlang-1205.0.28.2 clang-1205.0.19.57)
-    func test_Tbl_PerformanceCharWrapping() {
-        var data:[[Txt]] = []
-        for _ in 0..<2 {
-            data.append(contentsOf: perfDataSource)
-        }
-
-        let cols = [
-            Col(width: 8, defaultAlignment: .topLeft, defaultWrapping: .char, contentHint: .unique),
-            Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .char, contentHint: .repetitive),
-        ]
-        // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 0,630...0,650 seconds
-
-        measure {
-            // Tbl.init is intentionally included as part of the
-            // work is done there.
-            _ = Tbl("Title", columns: cols, cells: data).render()
-        }
-    }
     func test_Tbl2_PerformanceCharWrapping() {
         var data:[[Txt]] = []
         for _ in 0..<2 {
@@ -4622,25 +4724,6 @@ final class TablePerformanceTests : XCTestCase {
             Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .char, contentHint: .repetitive),
         ]
         
-        measure {
-            // Tbl.init is intentionally included as part of the
-            // work is done there.
-            _ = Tbl2("Title", columns: cols, cells: data).render()
-        }
-    }
-    func test_Tbl_PerformanceCutWrapping() {
-        var data:[[Txt]] = []
-        for _ in 0..<2 {
-            data.append(contentsOf: perfDataSource)
-        }
-
-        let cols = [
-            Col(width: 8, defaultAlignment: .topLeft, defaultWrapping: .cut, contentHint: .unique),
-            Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .cut, contentHint: .repetitive),
-        ]
-        // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 0,350...0,370 seconds
-
         measure {
             // Tbl.init is intentionally included as part of the
             // work is done there.
@@ -4657,25 +4740,6 @@ final class TablePerformanceTests : XCTestCase {
             Col(width: 8, defaultAlignment: .topLeft, defaultWrapping: .cut, contentHint: .unique),
             Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .cut, contentHint: .repetitive),
         ]
-
-        measure {
-            // Tbl.init is intentionally included as part of the
-            // work is done there.
-            _ = Tbl2("Title", columns: cols, cells: data).render()
-        }
-    }
-    func test_Tbl_PerformanceWordWrapping() {
-        var data:[[Txt]] = []
-        for _ in 0..<2 {
-            data.append(contentsOf: perfDataSource)
-        }
-
-        let cols = [
-            Col(width: 8, defaultAlignment: .topLeft, defaultWrapping: .word, contentHint: .unique),
-            Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .word, contentHint: .repetitive),
-        ]
-        // Idicative performance metrics (of release build) with above setup:
-        // average should be within the range of 1,750...1,850 seconds
 
         measure {
             // Tbl.init is intentionally included as part of the
@@ -4697,7 +4761,7 @@ final class TablePerformanceTests : XCTestCase {
         measure {
             // Tbl.init is intentionally included as part of the
             // work is done there.
-            _ = Tbl2("Title", columns: cols, cells: data).render()
+            _ = Tbl("Title", columns: cols, cells: data).render()
         }
     }
     func testPerformance() {
@@ -4724,7 +4788,7 @@ final class TablePerformanceTests : XCTestCase {
                     var cell:[String] = []
                     for _ in 0..<wcount {
                         cell.append(makeGibberishWord())
-                        let re = [/*" ", "  ", "   ",*/ "\n", "\n\n"].randomElement()!
+                        let re = [" ", "  ", "   ", "\n", "\n\n"].randomElement()!
                         cell.append(re)
                     }
                     row.append(Txt(cell.joined(), wrapping: .word))
@@ -4744,7 +4808,7 @@ final class TablePerformanceTests : XCTestCase {
                     Col(width: .fixed($0), defaultWrapping: wrap, contentHint: .unique)
                 })
             let t0 = DispatchTime.now().uptimeNanoseconds
-            let t = Tbl("Wrapping '\(wrap)'", columns: columns, cells: g)
+            let t = Tbl(Txt("Wrapping '\(wrap)'"), columns: columns, cells: g)
             t.cellsMayHaveNewlines = true
             let rendered = t.render(style: .rounded)
             let t1 = DispatchTime.now().uptimeNanoseconds
@@ -4789,69 +4853,159 @@ final class StringExtensionTests : XCTestCase {
         XCTAssertEqual("abcd".halign(.middleCenter, width: 3), "abc")
     }*/
     func test_trim() {
-
-        let h = "  \n\n"
-        let b = "abc  \n\n xyz"
-        let t = "  \n\n"
-        let s = h + b + t
-
-        // Test for correctness
-        for i in 0..<64 {
-            let o = TrimmingOptions(rawValue: i)
-            let eh:String = {
-                switch TrimmingOptions(rawValue: o.rawValue & 3) {
-                case [.leadingWhiteSpaces]: return "\n\n"
-                case [.leadingNewlines]: return "  "
-                case [.leadingWhiteSpaces, .leadingNewlines]: return ""
-                default: return h
-                }
-            }()
-            let eb:String = {
-                switch TrimmingOptions(rawValue: o.rawValue & 12) {
-                case [.inlineConsecutiveWhiteSpaces]: return "abc \n\n xyz"
-                case [.inlineConsecutiveNewlines]: return "abc  \n xyz"
-                case [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines]: return "abc \n xyz"
-                default: return b
-                }
-            }()
-            let et:String = {
-                switch TrimmingOptions(rawValue: o.rawValue & 48) {
-                case [.trailingWhiteSpaces]: return "\n\n"
-                case [.trailingNewlines]: return "  "
-                case [.trailingWhiteSpaces, .trailingNewlines]: return ""
-                default: return t
-                }
-            }()
-            XCTAssertEqual(s.trim(o), eh + eb + et)
-        }
-
-
-        // Get a feel of the performance
-        /*
-        let t0 = DispatchTime.now().uptimeNanoseconds
-        for _ in 0..<10_000 {
+        do {
+            let head = "  \n\n"
+            let body = "abc  \n\n xyz"
+            let tail = "  \n\n"
+            let s = head + body + tail
+            
+            // Test for correctness
             for i in 0..<64 {
-                let p = s.trim(String.TrimmingOptions(rawValue: i))
+                let o = TrimmingOptions(rawValue: i)
+                let expected_head:String = {
+                    switch TrimmingOptions(rawValue: o.rawValue & 3) {
+                    case [.leadingWhiteSpaces]: return "\n\n"
+                    case [.leadingNewlines]: return "  "
+                    case [.leadingWhiteSpaces, .leadingNewlines]: return ""
+                    default: return head
+                    }
+                }()
+                let expected_body:String = {
+                    switch TrimmingOptions(rawValue: o.rawValue & 12) {
+                    case [.inlineConsecutiveWhiteSpaces]: return "abc \n\n xyz"
+                    case [.inlineConsecutiveNewlines]: return "abc  \n xyz"
+                    case [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines]: return "abc \n xyz"
+                    default: return body
+                    }
+                }()
+                let expected_tail:String = {
+                    switch TrimmingOptions(rawValue: o.rawValue & 48) {
+                    case [.trailingWhiteSpaces]: return "\n\n"
+                    case [.trailingNewlines]: return "  "
+                    case [.trailingWhiteSpaces, .trailingNewlines]: return ""
+                    default: return tail
+                    }
+                }()
+                XCTAssertEqual(s.trim(o), expected_head + expected_body + expected_tail)
+            }
+
+            // Get a feel of the performance
+            /*
+             let t0 = DispatchTime.now().uptimeNanoseconds
+             for _ in 0..<10_000 {
+             for i in 0..<64 {
+             let p = s.trim(String.TrimmingOptions(rawValue: i))
+             }
+             }
+             let t1 = DispatchTime.now().uptimeNanoseconds
+             print(t1 - t0)
+             // DEBUG  : 1837715667 ns
+             // RELEASE:  450813791 ns <- ~4x faster than DEBUG (~700 ns / invocation)
+             */
+
+            XCTAssertEqual("".trim([
+                .leadingNewlines, .leadingWhiteSpaces, .inlineConsecutiveNewlines,
+                .inlineConsecutiveWhiteSpaces, .trailingNewlines, .trailingWhiteSpaces]),
+                           "")
+
+            XCTAssertEqual(" ".trim([
+                .leadingNewlines, .inlineConsecutiveNewlines,
+                .inlineConsecutiveWhiteSpaces, .trailingNewlines]),
+                           " ")
+
+            XCTAssertEqual("  \n a  \n\nx  \n ".trim(.all), "a \nx")
+        }
+        do {
+            let s = " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n "
+            let opts = [
+                TrimmingOptions(rawValue: 0),
+                [.leadingWhiteSpaces],
+                [.trailingWhiteSpaces],
+                [.leadingWhiteSpaces, .trailingWhiteSpaces],
+                [.inlineConsecutiveWhiteSpaces],
+                [.inlineConsecutiveNewlines],
+                [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines],
+                [.leadingNewlines],
+                [.trailingNewlines],
+                [.all]
+            ]
+            let expected = [
+                " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n ",
+                "\n\nQuick\nbrown  fox\n\njumped over the lazy dog.  \n ",
+                " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.\n",
+                "\n\nQuick\nbrown  fox\n\njumped over the lazy dog.\n",
+                " \n\n Quick\nbrown fox\n\njumped over the lazy dog.  \n ",
+                " \n\n Quick\nbrown  fox\njumped over the lazy dog.  \n ",
+                " \n\n Quick\nbrown fox\njumped over the lazy dog.  \n ",
+                "  Quick\nbrown  fox\n\njumped over the lazy dog.  \n ",
+                " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.   ",
+                "Quick\nbrown fox\njumped over the lazy dog.",
+            ]
+            for (o,e) in zip(opts,expected) {
+                let t:String = s.trim(o)
+                XCTAssertEqual(t, e)
             }
         }
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        print(t1 - t0)
-         // DEBUG  : 1837715667 ns
-         // RELEASE:  450813791 ns <- ~4x faster than DEBUG (~700 ns / invocation)
-         */
-
-        
-        XCTAssertEqual("".trim([
-            .leadingNewlines, .leadingWhiteSpaces, .inlineConsecutiveNewlines,
-            .inlineConsecutiveWhiteSpaces, .trailingNewlines, .trailingWhiteSpaces]),
-                       "")
-
-        XCTAssertEqual(" ".trim([
-            .leadingNewlines, .inlineConsecutiveNewlines,
-            .inlineConsecutiveWhiteSpaces, .trailingNewlines]),
-                       " ")
-
-        XCTAssertEqual("  \n a  \n\nx  \n ".trim(.all), "a \nx")
+    }
+    func test_String_trim_and_frag() {
+        let s = " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n "
+        let opts = [
+            TrimmingOptions(rawValue: 0),
+            [.leadingWhiteSpaces],
+            [.trailingWhiteSpaces],
+            [.leadingWhiteSpaces, .trailingWhiteSpaces],
+            [.inlineConsecutiveWhiteSpaces],
+            [.inlineConsecutiveNewlines],
+            [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines],
+            [.leadingNewlines],
+            [.trailingNewlines],
+            [.all]
+        ]
+        let expected = [
+            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
+            ["", "", "Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
+            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.", ""],
+            ["", "", "Quick", "brown  fox", "", "jumped over the lazy dog.", ""],
+            [" ", "", " Quick", "brown fox", "", "jumped over the lazy dog.  ", " "],
+            [" ", "", " Quick", "brown  fox", "jumped over the lazy dog.  ", " "],
+            [" ", "", " Quick", "brown fox", "jumped over the lazy dog.  ", " "],
+            ["  Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
+            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.   "],
+            ["Quick", "brown fox", "jumped over the lazy dog."],
+        ]
+        for (o,e) in zip(opts,expected) {
+            let t:[String] = s.trimAndFrag(o)
+            print("\(s, visibleWhitespaces: true, quoted: true),")
+            print("\(t)")
+            XCTAssertEqual(t, e)
+        }
+    }
+    func test_trim_doc() {
+        let data:[(String, TrimmingOptions, String)] = [
+            (" abc\n", .leadingWhiteSpaces, "abc\n"),
+            ("\n \nabc\n", .leadingNewlines, " abc\n"),
+            ("a b  c", .inlineConsecutiveWhiteSpaces, "a b c"),
+            (" a\n\nbc\n", .inlineConsecutiveNewlines, " a\nbc\n"),
+            (" abc  ", .trailingWhiteSpaces, " abc"),
+            (" abc\n ", .trailingNewlines, " abc "),
+            ("  \n\na  b\n\nc\n ", .all, "a b\nc"),
+        ]
+        for (l,o,r) in data {
+            XCTAssertEqual(l.trim(o), r)
+            let ll = l
+                .replacingOccurrences(of: "\n", with: "\\n")
+            let rr = r
+                .replacingOccurrences(of: "[", with: "")
+                .replacingOccurrences(of: "]", with: "")
+                .replacingOccurrences(of: "\n", with: "\\n")
+            let oo = o.description
+                .replacingOccurrences(of: "[", with: "")
+                .replacingOccurrences(of: "]", with: "")
+                .split(separator: "|")
+                .map({ ".\($0)" })
+            //.joined(separator: ",")
+            print("\"\(ll)\".trim(\(oo.count > 1 ? "[\(oo.joined(separator: ", "))]" : oo.first!)) // \"\(rr)\"")
+        }
     }
 }
 final class TxtExtensionTests : XCTestCase {
@@ -5068,106 +5222,14 @@ internal class ArrayExtensionTests : XCTestCase {
     }
 }
 internal class Playground : XCTestCase {
-    func test_String_trim() {
-        let s = " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n "
-        let opts = [
-            TrimmingOptions(rawValue: 0),
-            [.leadingWhiteSpaces],
-            [.trailingWhiteSpaces],
-            [.leadingWhiteSpaces, .trailingWhiteSpaces],
-            [.inlineConsecutiveWhiteSpaces],
-            [.inlineConsecutiveNewlines],
-            [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines],
-            [.leadingNewlines],
-            [.trailingNewlines],
-            [.all]
-        ]
-        let expected = [
-            " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n ",
-            "\n\nQuick\nbrown  fox\n\njumped over the lazy dog.  \n ",
-            " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.\n",
-            "\n\nQuick\nbrown  fox\n\njumped over the lazy dog.\n",
-            " \n\n Quick\nbrown fox\n\njumped over the lazy dog.  \n ",
-            " \n\n Quick\nbrown  fox\njumped over the lazy dog.  \n ",
-            " \n\n Quick\nbrown fox\njumped over the lazy dog.  \n ",
-            "  Quick\nbrown  fox\n\njumped over the lazy dog.  \n ",
-            " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.   ",
-            "Quick\nbrown fox\njumped over the lazy dog.",
-        ]
-        for (o,e) in zip(opts,expected) {
-            let t:String = s.trim(o)
-            XCTAssertEqual(t, e)
-        }
-    }
-    func test_trim_doc() {
-        let data:[(String, TrimmingOptions, String)] = [
-            (" abc\n", .leadingWhiteSpaces, "abc\n"),
-            ("\n \nabc\n", .leadingNewlines, " abc\n"),
-            ("a b  c", .inlineConsecutiveWhiteSpaces, "a b c"),
-            (" a\n\nbc\n", .inlineConsecutiveNewlines, " a\nbc\n"),
-            (" abc  ", .trailingWhiteSpaces, " abc"),
-            (" abc\n ", .trailingNewlines, " abc "),
-            ("  \n\na  b\n\nc\n ", .all, "a b\nc"),
-        ]
-        for (l,o,r) in data {
-            XCTAssertEqual(l.trim(o), r)
-            let ll = l
-                .replacingOccurrences(of: "\n", with: "\\n")
-            let rr = r
-                .replacingOccurrences(of: "[", with: "")
-                .replacingOccurrences(of: "]", with: "")
-                .replacingOccurrences(of: "\n", with: "\\n")
-            let oo = o.description
-                .replacingOccurrences(of: "[", with: "")
-                .replacingOccurrences(of: "]", with: "")
-                .split(separator: "|")
-                .map({ ".\($0)" })
-                //.joined(separator: ",")
-            print("\"\(ll)\".trim(\(oo.count > 1 ? "[\(oo.joined(separator: ", "))]" : oo.first!)) // \"\(rr)\"")
-        }
-    }
-    func test_String_trim_and_frag() {
-        let s = " \n\n Quick\nbrown  fox\n\njumped over the lazy dog.  \n "
-        let opts = [
-            TrimmingOptions(rawValue: 0),
-            [.leadingWhiteSpaces],
-            [.trailingWhiteSpaces],
-            [.leadingWhiteSpaces, .trailingWhiteSpaces],
-            [.inlineConsecutiveWhiteSpaces],
-            [.inlineConsecutiveNewlines],
-            [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines],
-            [.leadingNewlines],
-            [.trailingNewlines],
-            [.all]
-        ]
-        let expected = [
-            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
-            ["", "", "Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
-            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.", ""],
-            ["", "", "Quick", "brown  fox", "", "jumped over the lazy dog.", ""],
-            [" ", "", " Quick", "brown fox", "", "jumped over the lazy dog.  ", " "],
-            [" ", "", " Quick", "brown  fox", "jumped over the lazy dog.  ", " "],
-            [" ", "", " Quick", "brown fox", "jumped over the lazy dog.  ", " "],
-            ["  Quick", "brown  fox", "", "jumped over the lazy dog.  ", " "],
-            [" ", "", " Quick", "brown  fox", "", "jumped over the lazy dog.   "],
-            ["Quick", "brown fox", "jumped over the lazy dog."],
-        ]
-        for (o,e) in zip(opts,expected) {
-            let t:[String] = s.trimAndFrag(o)
-            print("\(s, visibleWhitespaces: true, quoted: true),")
-            print("\(t)")
-            XCTAssertEqual(t, e)
-        }
-    }
     func test_renx() {
         let columns = [
+            Col(Txt("#", alignment: .bottomCenter)),
             Col(Txt("Column 1, trim all"), width: .in(4...6),
                 defaultAlignment: .middleCenter,
                 defaultWrapping: .word,
                 trimming: .all,
                 contentHint: .unique),
-//            Col("Collapsed", width: .collapsed),
-//            Col("Hidden", width: .hidden),
             Col(Txt("Column 2, trim leading & trailing"), width: .in(8...12),
                 defaultAlignment: .bottomRight,
                 defaultWrapping: .word,
@@ -5182,81 +5244,15 @@ internal class Playground : XCTestCase {
              "Quick brown fox jumped over the lazy dog."],
             ["EOF", "End Of File"],
         ]
-        let mask = DebugTopicSet(.all)
-        print(
-            cells.renx(
-                title: "Quick brown title jumped over the lazy columns.",
-                columns: columns,
-                style: .rounded,
-//                rows: [(0..<1), (2..<4)],
-                debugMask: mask
-//                lineNumberGenerator: Table.defaultLnGen
-            )
+        let mask = DebugTopicSet([.all])
+
+        let t = Tbl("Quick brown title jumped over the lazy columns.",
+                    columns: columns,
+                    cells: cells,
+                    lineNumberGenerator: Table.defaultLnGen
         )
-    }
-    func test_renx_hex() {
-        let hexGen:(Int) -> Txt = { n in
-            let addr = n * 16
-            let str = String(format: "0x%06x", addr)
-            return Txt(str)
-        }
-        let cells:[[Txt]] =
-            (0..<16).map({ _ in
-                let ra = (0..<16).map({ _ in (0..<256).randomElement()! })
-                return [
-                    Txt(ra.map({ String(format: "%02x", $0) }).joined(separator: "")),
-                    Txt(ra.map({
-                        let c = Character(UnicodeScalar($0)!)
-                        return (c.isLetter || c.isNumber || c.isPunctuation) ? Character(UnicodeScalar($0)!).description : "." }).joined())
-                ]
-            })
-        
-        print(
-            cells.renx(
-                title: "Hexdump",
-                style: .singleSpace,
-                options: .insideVerticalFrame,
-                lineNumberGenerator: hexGen
-            )
-        )
-    }
-    func test_Tbl2() {
-        let columns = [
-            Col(Txt("#", alignment: .bottomCenter), width: .auto),
-            Col(
-                Txt("This will be interesting", alignment: .bottomRight, wrapping: .word),
-                width: 20,
-                defaultAlignment: .topRight,
-                defaultWrapping: .char,
-                trimming: [],
-                contentHint: .unique),
-            Col(Txt("Col 1", wrapping: .char), width: 1,
-                defaultAlignment: .bottomRight,
-                defaultWrapping: .word,
-                trimming: .all,
-                contentHint: .unique),
-            Col(Txt("Col 3", alignment: .topCenter, wrapping: .word), width: 3,
-                defaultAlignment: .topLeft,
-                defaultWrapping: .char,
-                trimming: [.leadingWhiteSpaces, .trailingWhiteSpaces],
-                contentHint: .unique)
-        ]
-        let cells:[[Txt]] = [
-            ["_<#>_", "Col 1", "Col 3"],
-//            ["Quick brown fox jumped overwhelminglyxxx the lazy dog.", "b\n.\n.\n.\n.\nb"],
-//            ["c", "d"],
-        ]
-        let myLnGen:(Int) -> Txt = { i in
-            return Txt(String(format: "Line\n%d", i + 1), alignment: i % 2 == 0 ? .bottomLeft : .bottomRight)
-        }
-        let tbl = Tbl2(
-            Txt("Well known pangrams from around the world"),
-            columns: columns,
-            cells: cells,
-            lineNumberGenerator: myLnGen
-        )
-        tbl.debugMask = [.all]//[.telemetry, .info, .debug]
-        print(tbl.render(style: .debug))//, rows: [0..<3, 1..<cells.count]))
+        t.debugMask = mask
+        print(t.render(style: .roundedPadded, rows: [(0..<1), (2..<4)]))
     }
     func test_cache() {
         let cells:[[Txt]] = [
@@ -5266,254 +5262,7 @@ internal class Playground : XCTestCase {
         let cols = [
             Col(), Col(defaultAlignment: .bottomLeft)
         ]
-        let tbl = Tbl2(#function, columns: cols, cells: cells, lineNumberGenerator: defaultLnGen)
+        let tbl = Tbl(#function, columns: cols, cells: cells, lineNumberGenerator: defaultLnGen)
         print(tbl.render(style: .roundedPadded))
-    }
-    func test_loop() {
-        var cols = Wrapping.allCases.map({ _ in
-            let r = [Wrapping.char, .cut].randomElement()!
-            return Col(
-                Txt("\(r)", alignment: .bottomLeft, wrapping: .char),
-                width: .auto,
-                defaultAlignment: .topRight,
-                defaultWrapping: r,
-                contentHint: .unique
-            )
-        })
-        cols.insert(Col("hidden", width: .collapsed), at: 1)
-        cols.append(
-            Col(
-                "Column\nheader with\nnewlines",
-                width: .in(6...8),
-                defaultAlignment: .middleCenter,
-                defaultWrapping: .char,
-                contentHint: .unique
-            )
-        )
-        let cells:[[Txt]] = [
-            ["Quick brown fox jumped over the lazy dog.", "hidden", "Shorty"],
-            ["Shorty", "hidden",
-             Txt("Quick brown fox jum\nped over the lazy dog.", alignment: .bottomRight, wrapping: .char)],
-            ["T\nr\ni\nc\nk\ny\n \nc\no\nl\nu\nm\nn\n \nt\ne\nx\nt"],
-            [Txt("Winnipeg Jets"),
-             Txt("Florida Panthers will not be visible"),
-             Txt("Boston Bruins", alignment: .middleCenter),
-             Txt("New York Rangers", alignment: .topLeft, wrapping: .word),
-             "Minnesota Wild",
-             Txt(" \n\n Mon    \n\n\n   treal \n Canad  iens \n ", wrapping: .char)]
-        ]
-        let t = Tbl2("title", columns: cols, cells: cells, lineNumberGenerator: defaultLnGen)
-        print(t.render())
-    }
-    func loop1(_ cols:[Col],
-               _ cells:[[Txt]],
-               _ ranges:[Range<Int>],
-               _ lineNumberGenerator:((Int)->Txt)? = nil,
-               _ cellDataContainsNewlines:Bool = true,
-               trimLeadingWhiteSpaces:Bool = true,
-               trimTrailingWhiteSpaces:Bool = true,
-               trimLeadingNewLines:Bool = true,
-               trimTrailingNewLines:Bool = true) -> ([[[[Txt]]]], [FixedCol]) {
-        
-        print(#function, "Cols")
-        cols.enumerated().forEach({
-            let a = "\($0.element.defaultAlignment, aligned: Alignment.self)"
-            let w = "\($0.element.defaultWrapping, aligned: Wrapping.self)"
-            let l = "\($0.element.dynamicWidth, aligned: Width.self)"
-            print("\($0.offset):", a, w, l, "header = \($0.element.header)")
-        })
-        print(#function, "rows (cell data) \(cells.isEmpty ? "no data" : "\(cells.count) rows")")
-        cells.forEach({ print("  ", $0.map({ $0.string })) })
-
-        var prefmttedRange:[[[[Txt]]]] = []
-        var rowElementCountHistogram:[Int:Int] = [:]
-        var dict:[Int:Col] = Dictionary<Int,Col>(uniqueKeysWithValues: cols.enumerated().map({ $0 }))
-        var columnFixedWidth:[Int:Int] = [:]
-        let defCol = Col(width: .auto, defaultAlignment: .topLeft, defaultWrapping: .char)
-        var minRowElementCount:Int = Int.max
-        var maxRowElementCount:Int = Int.min
-
-        for range in ranges {
-            var prefmtted:[[[Txt]]] = []
-            for (ri, row) in cells[range].enumerated() {
-                print("ROW \(ri):", row)
-                minRowElementCount = Swift.min(minRowElementCount, row.count)
-                maxRowElementCount = Swift.max(maxRowElementCount, row.count)
-                rowElementCountHistogram[row.count, default: 0] += 1
-                if dict.count < maxRowElementCount {
-                    // We have more data cells on the row than
-                    // what we have defined Cols.
-                    // => Add missing Cols with default settings
-                    (dict.count..<maxRowElementCount).forEach { dict[$0] = defCol }
-                }
-                var fmrow:[[Txt]] = []
-                for (ci,unformattedcell) in row.enumerated() {
-                    //print("  COL \(ci) \(dict[ci]!.dynamicWidth):")
-                    guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
-                        columnFixedWidth[ci] = 0
-                        fmrow.append([])
-                        print("  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
-                        continue
-                    }
-                    var lo:Int = {
-                        switch dict[ci]!.dynamicWidth {
-                        case .min(let v): return v
-                        case .range(let r): return r.lowerBound
-                        case .in(let r): return r.lowerBound
-                        default: return 0
-                        }
-                    }()
-                    var hi = 0
-                    // Are we expecting cell data to contain newlines
-                    if cellDataContainsNewlines {
-                        // yes, cell data may contain newlines
-                        // now, split the cell at newlines
-                        // and find out the lower and upper range
-                        // of these row cell fragments
-
-                        let nlSplitted:[Txt] = (unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
-                            .nlSplitted(
-                                unformattedcell,
-                                compressingMultipleConsecutiveNewlinesIntoOne: false
-                            )
-                        let preformatted:[Txt] = nlSplitted.map({
-                            let (t,l,h) = $0.preFormat(for: $0.wrapping ?? dict[ci]!.defaultWrapping)
-                            lo = Swift.min(lo, l)
-                            hi = Swift.max(hi, h)
-                            print("  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth) FRAG: '\($0.string)' → \(l)..<\(h) \(lo)..<\(hi)")
-                            return t
-                        })
-                        fmrow.append(preformatted)
-                    }
-                    else {
-                        // no, cell data does not contain newlines
-                        // quickly find out the lower and upper range
-                        // for this row cell
-                        let (formatted,l,h) = unformattedcell
-                            .preFormat(for: unformattedcell.wrapping ?? dict[ci]!.defaultWrapping)
-                        lo = Swift.min(lo, l)
-                        hi = Swift.max(hi, h)
-                        fmrow.append([formatted])
-                    }
-                    switch dict[ci]!.dynamicWidth {
-                    case .min(let min):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(min, hi))
-                    case .max(let max):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.min(max, hi))
-                    case .in(let closedRange):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(Swift.min(closedRange.upperBound, hi), closedRange.lowerBound))
-                    case .range( let range):
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(Swift.min(range.upperBound - 1, hi), range.lowerBound))
-                    case .auto:
-                        columnFixedWidth[ci] = Swift
-                            .max(columnFixedWidth[ci, default: 0],
-                                 Swift.max(0, hi))
-                    case .fixed(let v):
-                        columnFixedWidth[ci] = v
-                    case .collapsed:
-                        columnFixedWidth[ci] = 0
-                    case .hidden:
-                        continue
-                    }
-                }
-                columnFixedWidth.sorted(by: { $0.key < $1.key }).enumerated().forEach({
-                    print("    C\($0.offset)\($0.element)")
-                })
-                if let lngen = lineNumberGenerator {
-                    let ln = lngen(ri + range.lowerBound)
-                    let nlSplitted = (ln.wrapping ?? .char).nlSplitted(ln)
-                    fmrow.insert(nlSplitted, at: 0)
-                }
-                prefmtted.append(fmrow)
-            }
-            prefmttedRange.append(prefmtted)
-            if maxRowElementCount <= 0 {
-                // There was no data!
-                // Return FixedCols for all Cols which are not .hidden
-                let cellHeadersAsCellData = cols
-                    .filter({ $0.dynamicWidth != .hidden })
-                    .map({ $0.header ?? Txt("") })
-                print("recursion")
-                let hcols = cols
-                    .filter({ $0.dynamicWidth != .hidden })
-                    .map({
-                        let c = Col(
-                            $0.header,
-                            width: .auto, //$0.dynamicWidth == .hidden ? .hidden : .auto,
-                            defaultAlignment: $0.header?.alignment ?? $0.defaultAlignment,
-                            defaultWrapping: $0.header?.wrapping ?? $0.defaultWrapping,
-                            contentHint: $0.contentHint
-                        )
-                        return c
-                    })
-                return loop1(
-                    hcols,
-                    [cellHeadersAsCellData],
-                    [0..<1],
-                    nil, // No autoln for header cells
-                    true
-                )
-            }
-            print("columnFixedWidth:", columnFixedWidth.sorted(by: { $0.key < $1.key }))
-        }
-
-        var fixedColumns:[FixedCol] = columnFixedWidth
-            .sorted(by: { $0.key < $1.key })
-            .map({
-                FixedCol(
-                    dict[$0.key]!,
-                    width: $0.value,
-                    ref: $0.key,
-                    hidden: dict[$0.key]!.dynamicWidth == .hidden
-                )
-            })
-
-        // Insert additional line number column (at index 0)
-        // if lineNumberGenerator function is defined.
-        //
-        // This implementation is a compromise between 'line
-        // numbers will always fit vertically on a single
-        // line' and 'don't waste time in generating all line
-        // numbers in advance just to know their widths'.
-        //
-        // Required column width is calculated with the
-        // assumption that last line number is the one requiring
-        // the longest column width. This assumption can of course
-        // be wrong in some cases and will result to a column
-        // width which is too narrow. In those cases, line number
-        // doesn't fit on a single line, but will be fragmented
-        // over multiple lines (vertically).
-        if let lnGen = lineNumberGenerator {
-            let lastLineNumber = lnGen(cells.count)
-            let fragments = lastLineNumber
-                .split(separator: "\n",
-                       maxSplits: lastLineNumber.string.count,
-                       omittingEmptySubsequences: false)
-            var requiredWidth:Int = 0
-            fragments.forEach({
-                requiredWidth = Swift.max(requiredWidth, $0.count)
-            })
-
-            let autoLNcolumn = FixedCol(
-                ColumnBase(
-                    defaultAlignment: .bottomRight,
-                    defaultWrapping: .cut,
-                    contentHint: .unique
-                ),
-                width: requiredWidth,
-                ref: -1,
-                hidden: false
-            )
-            fixedColumns.insert(autoLNcolumn, at: 0)
-        }
-        return (prefmttedRange, fixedColumns)
     }
 }

@@ -8,7 +8,6 @@ extension Array where Element == [Txt] {
                                 visibleColumns:[FixedCol]) -> Int? {
         // Do we have any visible columns?
         guard visibleColumns.isEmpty == false else {
-            dbg(.debug, prefix: "titleCellWidth", "no visible columns, return nil")
             return nil
         }
         let ivsLen = style.insideVerticalSeparator(for: options).count
@@ -32,11 +31,12 @@ extension Array where Element == [Txt] {
                      debugMask:DebugTopicSet = [],
                      lineNumberGenerator:((Int)->Txt)? = nil) {
 
-        dbg(.debug, debugMask, "Validating ranges \(rows)")
         if let ranges = rows {
             ranges.forEach {
                 guard $0.lowerBound >= 0, $0.upperBound <= count else {
-                    fatalError("Range \($0) out of bounds")
+                    let msg = "Range \($0) out of bounds"
+                    dbg(.error, debugMask, msg)
+                    fatalError(msg)
                 }
             }
         }
@@ -54,18 +54,19 @@ extension Array where Element == [Txt] {
             lnGen: lineNumberGenerator)
         let t1 = DispatchTime.now().uptimeNanoseconds
         let ms = Double(t1 - t0) / 1_000_000
-        if debugMask.contains(.debug) {
-            fixedColumns.forEach({
-                dbg(.debug, prefix:"FixedColumn", "\($0)")
-            })
+        if debugMask.contains(.columns) {
+            dbg(.columns, "Provided columns:")
+            columns?.forEach({ dbg(.columns, "  \($0)") })
+            dbg(.columns, "Derived columns:")
+            fixedColumns.forEach({ dbg(.columns, "  \($0)") })
         }
-        dbg(.telemetry, debugMask, prefix: "\(type(of: self))", "pre-formatting took \(ms) ms")
+        dbg(.telemetry, debugMask, "Table pre-formatting took \(ms) ms")
 
         let hasTitle = title != nil
         let visibleColumns = fixedColumns.filter({ $0.isVisible })
         let hasVisibleColumns = visibleColumns.isEmpty == false
-        dbg(.info, debugMask, prefix: "visibleColumns", "visible column count \(visibleColumns.count) hasVisibleColumns = \(hasVisibleColumns)")
-        let hasData = isEmpty == false //&& maxRowElementCount > 0
+        dbg(.columns, debugMask, "visible column count \(visibleColumns.count), hasVisibleColumns = \(hasVisibleColumns)")
+        let hasData = isEmpty == false
         let hasSomeColumnHeaders = fixedColumns
             .filter({ $0.isVisible && $0.header != nil })
             .isEmpty == false && fixedColumns.isEmpty == false
@@ -80,7 +81,6 @@ extension Array where Element == [Txt] {
         let r = "\(rightVerticalSeparator)\(rightPad)\n"
         let insideVerticalSeparator = style.insideVerticalSeparator(for: options)
 
-        dbg(.debug, debugMask, "titleWidth = \(titleWidth)")
         // Output
         // MARK: Top frame
         if options.contains(.topFrame) {
@@ -118,7 +118,7 @@ extension Array where Element == [Txt] {
                           defaultWrapping: title.wrapping ?? .word,
                           width: titleWidth)
             }
-            dbg(.info, debugMask, prefix: "title", "w=\(titleWidth) \(splitted.description) -> \(titleFragments)")
+            //dbg(.info, debugMask, prefix: "title", "w=\(titleWidth) \(splitted.description) -> \(titleFragments)")
 
             // output title
             for fragments in titleFragments {
@@ -179,7 +179,6 @@ extension Array where Element == [Txt] {
                     return fragmentedColHeader
                 })
             // Find out max column height
-            dbg(.info, debugMask, prefix: "visibleColumns", "alignedColumnHeaders: \(alignedColumnHeaders)")
             let maxColHeight = alignedColumnHeaders
                 .reduce(0, { Swift.max($0, $1.count) })
             // Align columns vertically
@@ -240,9 +239,9 @@ extension Array where Element == [Txt] {
         let ranges:[Range<Int>] = rnges ?? (hasData ? [0..<count] : [0..<0])
         for (rri, rowRange) in ranges.enumerated() {
             let lastValidIndex = Swift.max(0, rowRange.upperBound - 1)
-            dbg(.debug, debugMask, "Row range (\(rri)): \(rowRange) \(lastValidIndex)")
+            dbg(.info, debugMask, "Row range (\(rri)): \(rowRange)")
             guard hasData else {
-                dbg(.debug, debugMask, "No data, skip rest.")
+                dbg(.info, debugMask, "No data")
                 continue
             }
             for (ri, sourceRow) in zip(rowRange.lowerBound..., preFormattedRowRanges[rri]) {
@@ -257,7 +256,6 @@ extension Array where Element == [Txt] {
                     }
                     else {
                     let txt = Txt(String(repeating: " ", count: fixedColumns[i].width))
-                    dbg(.debug, debugMask, "appending (\(i)) \(txt.string, visibleWhitespaces: true, quoted: true)")
                         if rowRange.isEmpty {
                             row.append([])
                         }
@@ -266,36 +264,34 @@ extension Array where Element == [Txt] {
                         }
                     }
                 }
-                dbg(.debug, debugMask, "row is now \(row)")
 
                 guard row.count == fixedColumns.count else {
-                    fatalError("internal inconsistency error")
+                    let msg = "internal inconsistency error"
+                    dbg(.error, debugMask, msg)
+                    fatalError(msg)
                 }
                 // Process the single row column by column
                 for (ci,col) in row.enumerated() {
                     let fixedColumn = fixedColumns[ci]
                     guard fixedColumn.isVisible else {
                         formattedRow.append((nil, []))
-                        dbg(.debug, debugMask, "skip")
                         continue
                     }
                     
-                    dbg(.cache, debugMask, "column hash (\(fixedColumn.hashValue))")
-                    dbg(.cache, debugMask, "search (\(ri),\(ci)) \(col)")
+                    //dbg(.cache, debugMask, "column hash (\(fixedColumn.hashValue))")
+                    //dbg(.cache, debugMask, "search (\(ri),\(ci)) \(col)")
 
                     var combined:[String] = []
                     if fixedColumn.width == 0 {
                         combined.append("")
                     }
                     else {
-                        for (/*fi*/_,fragment) in col.enumerated() {
+                        for (_, fragment) in col.enumerated() {
                             let haligned = fragment.halign(
                                 defaultAlignment: fixedColumn.defaultAlignment,
                                 defaultWrapping: fixedColumn.defaultWrapping,
                                 width: fixedColumn.width
                             )
-                            dbg(.debug, debugMask,
-                                "halign \(fragment.string, visibleWhitespaces: true, quoted: true)->\(haligned)")
                             combined.append(contentsOf: haligned)
                         }
                     }
@@ -304,7 +300,9 @@ extension Array where Element == [Txt] {
                 }
                 var valigned:[[String]] = []
                 guard row.count == formattedRow.count else {
-                    fatalError("internal inconsistency error")
+                    let msg = "internal inconsistency error"
+                    dbg(.error, debugMask, msg)
+                    fatalError(msg)
                 }
                 
                 // Align vertically
@@ -406,19 +404,6 @@ fileprivate func preFormatx(title:Txt?,
                             debugMask:DebugTopicSet = [],
                             lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
         
-    let pfx = "preFormatx"
-    if debugMask.contains(.debug) {
-        cols.enumerated().forEach({
-            let a = "\($0.element.defaultAlignment, aligned: Alignment.self)"
-            let w = "\($0.element.defaultWrapping, aligned: Wrapping.self)"
-            let l = "\($0.element.dynamicWidth, aligned: Width.self)"
-            dbg(.debug, prefix: pfx, "\($0.offset): \(a), \(w), \(l), header = \($0.element.header)")
-        })
-        dbg(.debug, prefix: pfx, "rows (cell data) \(cells.isEmpty ? "no data" : "\(cells.count) rows")")
-        cells.forEach({ dbg(.debug, prefix: pfx, "  \($0.map({ $0.string }))") })
-    }
-
-
     var prefmttedRange:[[[[Txt]]]] = []
     var rowElementCountHistogram:[Int:Int] = [:]
     var dict:[Int:Col] = Dictionary<Int,Col>(uniqueKeysWithValues: cols.enumerated().map({ $0 }))
@@ -428,9 +413,8 @@ fileprivate func preFormatx(title:Txt?,
     var maxRowElementCount:Int = Int.min
 
     guard cells.isEmpty == false else {
-        dbg(.debug, debugMask, "Table has no data cells \(cols)")
+        dbg(.cells, debugMask, "Table has no data cells")
         guard cols.isEmpty == false else {
-            dbg(.debug, debugMask, "Table has no columns (and no data either). Use title width.")
             let c = Col(
                 title ?? Txt(),
                 width: .fixed(title?.count ?? 0),
@@ -486,7 +470,7 @@ fileprivate func preFormatx(title:Txt?,
         }
 
         for (ri, partialRow) in cells[range].enumerated() {
-            dbg(.debug, debugMask, prefix: pfx, "ROW \(ri): \(partialRow)")
+            //dbg(.debug, debugMask, prefix: pfx, "ROW \(ri): \(partialRow)")
             minRowElementCount = Swift.min(minRowElementCount, partialRow.count)
             maxRowElementCount = Swift.max(maxRowElementCount, partialRow.count)
             rowElementCountHistogram[partialRow.count, default: 0] += 1
@@ -504,14 +488,14 @@ fileprivate func preFormatx(title:Txt?,
                 // => Add missing Cols with default settings
                 (dict.count..<maxRowElementCount)
                     .forEach {
-                        dbg(.debug, debugMask, "Adding missing column")
+                        dbg(.columns, debugMask, "Adding missing column")
                         dict[$0] = defCol
                     }
             }
             if row.count < cols.count {
                 let missing:[Txt] = Array<Txt>(repeating: Txt(), count: Swift.max(0, cols.count - row.count))
                 row.append(contentsOf: missing)
-                dbg(.debug, debugMask, "Adding \(missing.count) cells -> \(row)")
+                dbg(.cells, debugMask, "row(\(ri + range.lowerBound)): adding \(missing.count) cell(s)")
             }
             
             var fmrow:[[Txt]] = []
@@ -523,7 +507,7 @@ fileprivate func preFormatx(title:Txt?,
                 guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
                     columnFixedWidth[ci] = 0
                     fmrow.append([""]) // collapsed or hidden -> we don't need cell data, overwrite with ""
-                    dbg(.debug, debugMask, prefix: pfx, "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
+                    //dbg(.debug, debugMask, prefix: pfx, "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
                     continue
                 }
                 var lo:Int = {
@@ -545,14 +529,6 @@ fileprivate func preFormatx(title:Txt?,
                                    alignment: unformattedcell.alignment,
                                    wrapping: unformattedcell.wrapping)
                     }
-                if debugMask.contains(.debug) {
-                    dbg(.debug, debugMask, prefix: pfx,
-                        "IN  : \(unformattedcell.string, visibleWhitespaces: true, quoted: true)")
-                    dbg(.debug, debugMask, prefix: pfx,
-                        "TRIM: \(dict[ci]!.trimming)")
-                    dbg(.debug, debugMask, prefix: pfx,
-                        "OUT : \(trimmedAndFragmented)")
-                }
                 fmrow.append(trimmedAndFragmented)
 
 
@@ -585,9 +561,6 @@ fileprivate func preFormatx(title:Txt?,
                     continue
                 }
             }
-            columnFixedWidth.sorted(by: { $0.key < $1.key }).enumerated().forEach({
-                dbg(.debug, debugMask, prefix: pfx, "    C\($0.offset)\($0.element)")
-            })
             prefmtted.append(fmrow)
         }
         prefmttedRange.append(prefmtted)
@@ -604,7 +577,5 @@ fileprivate func preFormatx(title:Txt?,
             )
         })
 
-    dbg(.debug, debugMask, "preformatted: \(prefmttedRange)")
-    dbg(.debug, debugMask, "preformatted: \(fixedColumns.map({ $0.dynamicWidth}))")
     return (prefmttedRange, fixedColumns)
 }
