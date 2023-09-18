@@ -21,7 +21,7 @@ let package = Package(
         .target(
             name: "Table",
             dependencies: ["DebugKit"]),
-        .target(name: "Table App",
+        .executableTarget(name: "Table App",
                 dependencies: ["Table"]),
         .testTarget(
             name: "TableTests",
