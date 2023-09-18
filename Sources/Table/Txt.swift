@@ -3,15 +3,24 @@
 /// Associated alignment and wrapping will override the
 /// default alignment and wrapping set on the column level.
 
-public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
+public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable {
+    public static func == (lhs: Txt, rhs: Txt) -> Bool {
+        lhs.string == rhs.string &&
+        lhs.wrapping == rhs.wrapping &&
+        lhs.alignment == rhs.alignment
+    }
+
     public typealias StringLiteralType = String
 
     /// Text to be rendered
-    public let string:String
+    public var string:String
     /// Text alignment (will override column default alignment)
     public let alignment:Alignment?
     /// Text wrapping (will override column default wrapping)
     public let wrapping:Wrapping?
+    public init() {
+        self.init("")
+    }
     public init(_ str:String, alignment: Alignment? = nil, wrapping:Wrapping? = nil) {
         self.string = str
         self.alignment = alignment
@@ -30,7 +39,7 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
         let lines:[String]
         switch wrapping {
         case .word:
-            lines = string.compressedWords(string, width)
+            lines = wordsx(string, to: width)
                 .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
         case .char:
             lines = Substring(string).split(to: width)
@@ -61,9 +70,6 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
                     lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
                 }
             default:
-                guard width > Width.auto.value else {
-                    fatalError("Negative widths are not allowed here.")
-                }
                 if string.count > width {
                     let head = width / 2
                     let tail = width - 1 - head
@@ -74,11 +80,11 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable {
                 }
             }
         }
-        return HorizontallyAligned(lines: lines, alignment: alignment, width: .value(width))
+        return HorizontallyAligned(lines: lines, alignment: alignment, width: width)
     }
-    internal func fragment(for column:Col) -> HorizontallyAligned {
+    internal func fragment(for column:FixedCol) -> HorizontallyAligned {
         return self.fragment(fallback: self.alignment ?? column.defaultAlignment,
-                             width: column.width.value,
+                             width: column.width,
                              wrapping: self.wrapping ?? column.defaultWrapping)
     }
 }
@@ -96,4 +102,40 @@ extension Txt : Collection {
         string.endIndex
     }
     public typealias Index = String.Index
+}
+public func wordsx(_ str:String, to width:Int) -> [Substring] {
+    let splitted = str.split(maxSplits: str.count, omittingEmptySubsequences: false) { c in
+        switch c {
+        case " ": return true
+        default: return false
+        }
+    }
+    //print("splitted: \(splitted)")
+    let cutted = splitted.flatMap { $0.cutTo(width: width) }
+    //print("cutted: \(cutted)")
+    var joined:[Substring] = []
+    var len = 0
+    var s:String = ""
+    for w in cutted {
+        if len == 0 {
+            s = "\(w)"
+            len = s.count
+        }
+        else if 1 + len + w.count <= width {
+            s.append(" \(w)")
+            joined.append(s[...])
+            s = ""
+            len = 0
+        }
+        else {
+            joined.append(s[...])
+            s = "\(w)"
+            len = s.count
+        }
+    }
+    if s.isEmpty == false {
+        joined.append(s[...])
+    }
+    //print("joined: \(joined)")
+    return joined
 }

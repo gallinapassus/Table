@@ -53,7 +53,7 @@ print(table.render(style: .roundedPadded))
 //╰───┴───────┴───────┴───────╯
 ```
 
-Another simple table with DSL (domain specific language).
+Another simple table using DSL.
 
 ```swift
 import Table
@@ -61,7 +61,7 @@ import Table
 let table = Tbl("Summer Olympics") {
     
     Columns {
-        Col("Year", width: .auto)
+        Col("Year", width: 4)
         Col("Host", width: .in(5...25), defaultWrapping: .word)
         Col("Country")
     }
@@ -72,7 +72,7 @@ let table = Tbl("Summer Olympics") {
         ["1960", "Rome", "Italy"]
     }
 }
-print(table.render())
+print(table.render(style: .rounded))
 //╭──────────────────────╮
 //│   Summer Olympics    │
 //├────┬─────────┬───────┤
