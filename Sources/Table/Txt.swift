@@ -34,7 +34,7 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable {
 
     /// Generate horizontally aligned text fragments for specified width, alignment and wrapping
 
-    private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
+    /*private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
         precondition(width >= 0, "Negative widths are not allowed here.")
         let lines:[String]
         switch wrapping {
@@ -81,12 +81,12 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable {
             }
         }
         return HorizontallyAligned(lines: lines, alignment: alignment, width: width)
-    }
-    internal func fragment(for column:FixedCol) -> HorizontallyAligned {
+    }*/
+    /*internal func fragment(for column:FixedCol) -> HorizontallyAligned {
         return self.fragment(fallback: self.alignment ?? column.defaultAlignment,
                              width: column.width,
                              wrapping: self.wrapping ?? column.defaultWrapping)
-    }
+    }*/
 }
 extension Txt : Collection {
     public func index(after i: String.Index) -> String.Index {
@@ -104,6 +104,7 @@ extension Txt : Collection {
     public typealias Index = String.Index
 }
 public func wordsx(_ str:String, to width:Int) -> [Substring] {
+    guard width > 0 else { return [] }
     let splitted = str.split(maxSplits: str.count, omittingEmptySubsequences: false) { c in
         switch c {
         case " ": return true

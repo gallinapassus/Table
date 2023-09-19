@@ -3253,11 +3253,11 @@ final class TableTests : XCTestCase {
                 width: .auto,
                 trimming: [.inlineConsecutiveNewlines, .trailingNewlines]
             )
-            print(col.trimming)
+            //print(col.trimming)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let encoded = try encoder.encode(col)
-            print(String(bytes: encoded, encoding: .utf8)!)
+            //print(String(bytes: encoded, encoding: .utf8)!)
             let decoder = JSONDecoder()
             let decoded = try decoder.decode(Col.self, from: encoded)
             XCTAssertEqual(col, decoded)
@@ -4149,7 +4149,7 @@ final class TableTests : XCTestCase {
             let c = [Col(width: 9, defaultWrapping: .char, contentHint: .unique),
                      Col(width: 4, defaultWrapping: .word, contentHint: .unique)]
             let t = Tbl("title",columns: c, cells: cells)
-            print(t.render(style: .roundedPadded))
+            //print(t.render(style: .roundedPadded))
             XCTAssertEqual(t.render(style: .roundedPadded),
                            """
                            ╭──────────────────╮
@@ -4291,7 +4291,6 @@ final class TableTests : XCTestCase {
                 Col(Txt("In", alignment: .bottomRight), width: .in(3...6)),
             ]
             let t = Tbl("Title", columns: cols, cells: [])
-            print(t.render(style: .debug))
             XCTAssertEqual(t.render(style: .debug),
                            """
                            ┌┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┐
@@ -4355,9 +4354,10 @@ final class TableTests : XCTestCase {
 
     func test_wordsx() {
         do {
-            let txt = Txt("Summer Olympics")
-            let worded = wordsx(txt.string, to: 22)
-            print(worded)
+            XCTAssertEqual(wordsx("Summer Olympics", to: 0), [])
+            XCTAssertEqual(wordsx("Summer Olympics", to: 5), ["Summe", "r", "Olymp", "ics"])
+            XCTAssertEqual(wordsx("Summer Olympics", to: 12), ["Summer","Olympics"])
+            XCTAssertEqual(wordsx("Summer Olympics", to: 40), ["Summer Olympics"])
         }
     }
 }
@@ -4713,7 +4713,7 @@ final class TablePerformanceTests : XCTestCase {
     // macOS Big Sur 11.5.2
     // Xcode version 12.5.1 (12E507)
     // Apple Swift version 5.4.2 (swiftlang-1205.0.28.2 clang-1205.0.19.57)
-    func test_Tbl2_PerformanceCharWrapping() {
+    func test_Tbl_PerformanceCharWrapping() {
         var data:[[Txt]] = []
         for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
@@ -4730,7 +4730,7 @@ final class TablePerformanceTests : XCTestCase {
             _ = Tbl("Title", columns: cols, cells: data).render()
         }
     }
-    func test_Tbl2_PerformanceCutWrapping() {
+    func test_Tbl_PerformanceCutWrapping() {
         var data:[[Txt]] = []
         for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
@@ -4747,7 +4747,7 @@ final class TablePerformanceTests : XCTestCase {
             _ = Tbl("Title", columns: cols, cells: data).render()
         }
     }
-    func test_Tbl2_PerformanceWordWrapping() {
+    func test_Tbl_PerformanceWordWrapping() {
         var data:[[Txt]] = []
         for _ in 0..<2 {
             data.append(contentsOf: perfDataSource)
@@ -4764,7 +4764,12 @@ final class TablePerformanceTests : XCTestCase {
             _ = Tbl("Title", columns: cols, cells: data).render()
         }
     }
-    func testPerformance() {
+    func testPerformance() throws {
+
+        func perfData(rows:Int, columns:Int) -> [[Txt]] {
+            let row = Array(repeating: Txt(pangram), count: columns)
+            return Array(repeating: row, count: rows)
+        }
 
         func makeGibberishWord() -> String {
             let lo = (2..<8).randomElement()!
@@ -4797,51 +4802,78 @@ final class TablePerformanceTests : XCTestCase {
             }
             return res
         }
-        var cells:[[Txt]] = [
+
+        let rc = 100
+        let cc = 10
+        var cells:[[Txt]] = []
+        let data:[[Txt]] = perfData(rows: rc, columns: cc)
+        let trimmingOpts = [
+            TrimmingOptions(rawValue: 0),
+            .all,
+            [.inlineConsecutiveWhiteSpaces, .leadingWhiteSpaces, .trailingWhiteSpaces],
+            [.inlineConsecutiveWhiteSpaces, .inlineConsecutiveNewlines]
         ]
-        let cc = 6
-        let step = 2
-        let g = gibberish(rowCount: 2, columnCount: cc)
-        for wrap in [Wrapping.word] {
-            let columns = stride(from: 12, to: 12 + (step * cc), by: step)
-                .map({
-                    Col(width: .fixed($0), defaultWrapping: wrap, contentHint: .unique)
-                })
-            let t0 = DispatchTime.now().uptimeNanoseconds
-            let t = Tbl(Txt("Wrapping '\(wrap)'"), columns: columns, cells: g)
-            t.cellsMayHaveNewlines = true
-            let rendered = t.render(style: .rounded)
-            let t1 = DispatchTime.now().uptimeNanoseconds
-            print(rendered)
-            let duration = (t1 - t0) / 1_000_000
-            cells.append([Txt("\(wrap)"), Txt(duration.description)])
+        for ct in ColumnContentHint.allCases {
+            for t in trimmingOpts {
+                for a in Alignment.allCases {
+                    for w in [Width.auto, .fixed(12), .in(12...24), .range(12..<25), .min(16), .max(16)] {
+                        for wr in Wrapping.allCases {
+                            let cols = (1...cc).map {
+                                Col(
+                                    "Column \($0)",
+                                    width: w,
+                                    defaultAlignment: a,
+                                    defaultWrapping: wr,
+                                    trimming: t,
+                                    contentHint: ct
+                                )
+                            }
+                            let telem = [
+                                "[\(rc)x\(cc)]",
+                                "\(ct)",
+                                "\(t.rawValue)",
+                                "\(a)",
+                                "\(w)",
+                                "\(wr)",
+                            ]
+                            let t0 = DispatchTime.now().uptimeNanoseconds
+                            let tbl = Tbl(
+                                "\(telem.map({$0}).joined(separator: "\n"))",
+                                columns: cols,
+                                cells: data
+                            )
+                            _ = tbl.render(style: .default)
+                            let t1 = DispatchTime.now().uptimeNanoseconds
+                            //print(r)
+                            let render_ms = Double(t1 - t0) / 1_000_000
+                            
+                            cells.append(
+                                telem.map({ Txt($0) }) +
+                                         [Txt(render_ms.description, alignment: .topRight)]
+                                )
+                        }
+                    }
+                }
+            }
         }
-
-//        let cols = [
-//            Col(width: 8, defaultAlignment: .topLeft, defaultWrapping: .word, contentHint: .unique),
-//            Col(width: 6, defaultAlignment: .topCenter, defaultWrapping: .word, contentHint: .repetitive),
-//        ]
-        let data:[[Txt]] = []
-        /*
-        for _ in 0..<5 {
-            data.append(contentsOf: perfDataSource)
+        let sorted = cells.sorted { l, r in
+            Double(l.last!.string)! < Double(r.last!.string)!
         }
-        let t0 = DispatchTime.now().uptimeNanoseconds
-        let tbl = Tbl("Title", columns: cols, cells: data)
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        _ = tbl.render()
-        let t2 = DispatchTime.now().uptimeNanoseconds
-        let initialize_ms = (t1 - t0) / 1_000_000
-        let render_ms = (t2 - t1) / 1_000_000
-
-        cells.append([Txt("init()"), Txt(initialize_ms.description)])
-        cells.append([Txt("render()"), Txt(render_ms.description)])
-         */
-        let columns = [Col("Method", defaultAlignment: .bottomLeft),
-                       Col("Duration", defaultAlignment: .bottomRight)]
-        let t = Tbl("Performance\n\nTable with \(columns.count) columns and \(data.count) rows",
-                    columns: columns, cells: cells)
-        print(t.render(style: .roundedPadded))
+        let columns = [
+            "#",
+            "Table dimensions [RxC]",
+            "Content Hint",
+            "Trim",
+            "Alignment",
+            "Width",
+            "Wrapping",
+            "Duration (ms)",
+        ].map({ Col(Txt($0, alignment: .bottomLeft)) })
+        let t = Tbl("Performance Summary", columns: columns, cells: sorted, lineNumberGenerator: defaultLnGen)
+        let summary = t.render(style: .roundedPadded)
+        let tgt = "/tmp/summary.txt"
+        try summary.write(toFile: tgt, atomically: true, encoding: .utf8)
+        print("Summary written to \(tgt)")
     }
 }
 final class StringExtensionTests : XCTestCase {
@@ -5072,6 +5104,7 @@ final class TxtExtensionTests : XCTestCase {
             ["abc", "  d"]
         )
     }
+    /*
     func test_align() {
         do {
             // Height override
@@ -5124,7 +5157,7 @@ final class TxtExtensionTests : XCTestCase {
                 []
             )
         }
-    }
+    }*/
 }
 internal class ArrayExtensionTests : XCTestCase {
     func test_valign() {

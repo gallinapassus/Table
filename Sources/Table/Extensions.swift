@@ -102,10 +102,6 @@ extension String {
             tmp.reversed().forEach({strStorage.append($0)})
         }
     }
-    func maxFragmentWidth(separator: Character) -> Int {
-        split(separator: separator, omittingEmptySubsequences: true)
-            .reduce(0, { Swift.max($0, $1.count) })
-    }
     /// Trim string
     ///
     /// Examples:
@@ -274,25 +270,6 @@ extension String {
         return hh!
     }
 }
-extension String {
-
-    internal func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
-        guard self.count < width else {
-            return String(self.prefix(width))
-        }
-
-        let padAmount = width - self.count
-        let pad = String(repeating: with, count: padAmount)
-        switch alignment {
-        case .topLeft, .bottomLeft, .middleLeft: return self + pad
-        case .topRight, .bottomRight, .middleRight: return pad + self
-        case .topCenter, .bottomCenter, .middleCenter:
-            let rangeHead = pad.startIndex..<pad.index(pad.startIndex, offsetBy: padAmount / 2, limitedBy: pad.endIndex)!
-            let rangeTail = rangeHead.upperBound..<pad.endIndex
-            return pad[rangeHead].description + self + pad[rangeTail].description
-        }
-    }
-}
 extension String.StringInterpolation {
     /// Prints `Optional` values by only interpolating it if the value is set. `nil` is used as a fallback value to provide a clear output.
     mutating func appendInterpolation<T: CustomStringConvertible>(_ value: T?) {
@@ -332,13 +309,6 @@ extension String.StringInterpolation {
     }
 }
 extension Substring {
-
-    @inline(__always)
-    internal func render(to width:Int, alignment:Alignment = .topLeft, padding with:Character = " ") -> String {
-        String(self).render(to: width, alignment: alignment, padding: with)
-    }
-}
-extension Substring {
     @inline(__always)
     public func cutTo(width:Int) -> [Substring] {
         guard count > width else { return [self] }
@@ -350,39 +320,7 @@ extension Substring {
             }
     }
 }
-import DebugKit
 extension Array where Element == Substring {
-    // Reverse-greedy
-    internal func compress(to width:Int, binding with:Character = " ") -> [Substring] {
-        guard isEmpty == false else {
-            return []
-        }
-        var ridx = index(before: endIndex)
-        var lidx = index(before: ridx)
-        while ridx != startIndex {
-            if self[lidx].count + self[ridx].count + 1 <= width {
-                return (self[..<lidx] +
-                            [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
-                            self[index(after: ridx)...]).compress(to: width)
-            }
-            else {
-                lidx = self.index(before: lidx)
-                ridx = self.index(before: ridx)
-                if lidx == startIndex {
-                    if self[lidx].count + self[ridx].count + 1 <= width {
-                        return (self[..<lidx] +
-                                    [Substring([self[lidx], self[ridx]].joined(separator: "\(with)"))] +
-                                    self[index(after: ridx)...])
-                    }
-                    else {
-                        return self
-                    }
-                }
-            }
-        }
-        return self
-    }
-    // Forward-greedy <tbi>
     @inline(__always)
     public func packWordsTo(width:Int, alignment:Alignment, combining with:String = " ") -> [String] {
         // ["Quick", "brown", "fox", "jumped", "over", "the", "lazy", "dog."]
@@ -425,68 +363,6 @@ extension Array where Element: RangeReplaceableCollection, Element.Element:Colle
             self.map { $0[index] }
         }
     }
-}
-extension ArraySlice where Element == HorizontallyAligned {
-    /// Align cell data vertically
-    @inline(__always)
-    internal func alignVertically(height:Int) -> [[String]] {
-        // Find out number of lines needed to represent
-        // all cells on this row
-        let h:Int
-        if height > 0 {
-            // Use the given height
-            h = height
-        }
-        else {
-            // 0 == no height info => calculate it
-            h = reduce(0, { Swift.max($0, $1.lines.count) })
-        }
-        // Create the cell fragments
-        let fragments:[ArraySlice<String>] = map {
-            guard $0.lines.count != h else {
-                // No need to "vertically pad" if line count
-                // already matches the required height
-                return ArraySlice<String>($0.lines)
-            }
-            // Current line count != required height => pad vertically
-            return padVertically($0, forHeight: h)
-        }
-        // Last step, transpose the cell fragments
-        return fragments.transposed()
-    }
-}
-/// Pad cell data  vertically
-@inline(__always)
-internal func padVertically(_ horizontallyAligned:HorizontallyAligned, forHeight:Int) -> ArraySlice<String> {
-    // Calculate how many row fragments we need to add for this cell
-    let padAmount = Swift.max(0, forHeight - horizontallyAligned.lines.count)
-    guard padAmount > 0 else {
-        // There was no need for padding
-        print("OUT:", horizontallyAligned.lines[...])
-        return horizontallyAligned.lines[...]
-    }
-    // Generate the horizontal cell fragment to be
-    // used in padding
-    let hpad = String(repeating: " ", count: horizontallyAligned.width)
-    // Pad vertically (=add empty cell fragments)
-    // based on the alignment setting
-    let ret:[String]
-    switch horizontallyAligned.alignment {
-    case .topLeft, .topRight, .topCenter:
-        // Add pad framents to the end of the array
-        ret = horizontallyAligned.lines + ArraySlice(repeating: hpad, count: padAmount)
-    case .bottomLeft, .bottomRight, .bottomCenter:
-        // Add pad framents to the beginning of the array
-        ret = ArraySlice(repeating: hpad, count: padAmount) + horizontallyAligned.lines
-    case .middleLeft, .middleRight, .middleCenter:
-        // Add pad framents to the beginning and end of the array
-        let topCount = padAmount / 2
-        let bottomCount = forHeight - horizontallyAligned.lines.count - topCount
-        let topArray = ArraySlice(repeating: hpad, count: topCount)
-        let bottomArray = ArraySlice(repeating: hpad, count: bottomCount)
-        ret = topArray + horizontallyAligned.lines + bottomArray
-    }
-    return ret[...]
 }
 extension String {
     /// Cut and align `String` to specific width and alignment.
@@ -566,19 +442,18 @@ internal func halignOrCut<S:StringProtocol>(_ str:S, _ alignment:Alignment = .to
 }
 
 extension Txt {
+    /* Not used at the moment
     /// Trim.
     internal func trim(_ options:TrimmingOptions) -> Txt {
         Txt(string.trim(options), alignment: alignment, wrapping: wrapping)
     }
-    /* Not available
-    /// Trim in-place.
-    internal func trim(_ options:TrimmingOptions) {
-        string = string.trim(options)
-    }*/
+     */
+    /* Not used at the moment
     internal func trimAndFragment(_ options:TrimmingOptions) -> [Txt] {
         let trimmed:[String] = string.trimAndFrag(options)
         return trimmed.map { Txt($0, alignment: alignment, wrapping: wrapping) }
     }
+     */
     internal func halign(defaultAlignment:Alignment,
                        defaultWrapping:Wrapping,
                        width:Int) -> [String] {
@@ -650,19 +525,19 @@ extension Txt {
             width: column.width
         )
     }
-    public func align(defaultAlignment:Alignment, defaultWrapping:Wrapping, width:Int, height:Int = 0) -> [String] {
+    /* Used only in tests
+     public func align(defaultAlignment:Alignment, defaultWrapping:Wrapping, width:Int, height:Int = 0) -> [String] {
         self.halign(
             defaultAlignment: defaultAlignment,
             defaultWrapping: defaultWrapping,
             width: width
         ).valign(alignment ?? defaultAlignment, height: height)
-    }
+    }*/
 }
 // MARK: Keep
 extension Array where Element == String {
     public func valign(_ horizontallyAligned:Alignment, height:Int = 0) -> [String] {
 
-        //print("\(type(of: self)).valign(\(horizontallyAligned), height: \(height))")
         // Calculate (if it was not previously known)
         let forHeight:Int = height == 0 ? count : Swift.max(0, height)
 
@@ -718,21 +593,5 @@ extension Array where Element == Txt {
             i += 1
         }
         return alignedRow
-    }
-}
-//import Foundation
-extension Wrapping {
-    public func nlSplitted(_ cell:Txt, compressingMultipleConsecutiveNewlinesIntoOne c:Bool = false) -> [Txt] {
-        switch self {
-        case .word:
-            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
-                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
-        case .char:
-            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
-                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
-        case .cut:
-            return cell.string.split(separator: "\n", omittingEmptySubsequences: c)
-                .map({ Txt($0.description, alignment: cell.alignment, wrapping: cell.wrapping) })
-        }
     }
 }
