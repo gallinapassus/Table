@@ -1,3 +1,7 @@
+/// Text trimming options
+///
+/// Defines generic trimming options.
+
 public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible, Hashable, Comparable, Codable {
     enum Opts : Int, CaseIterable {
         case leadingWhiteSpaces

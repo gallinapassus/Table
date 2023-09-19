@@ -31,62 +31,6 @@ public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable {
         self.alignment = nil
         self.wrapping = nil
     }
-
-    /// Generate horizontally aligned text fragments for specified width, alignment and wrapping
-
-    /*private func fragment(fallback alignment:Alignment, width:Int, wrapping:Wrapping) -> HorizontallyAligned {
-        precondition(width >= 0, "Negative widths are not allowed here.")
-        let lines:[String]
-        switch wrapping {
-        case .word:
-            lines = wordsx(string, to: width)
-                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
-        case .char:
-            lines = Substring(string).split(to: width)
-                .map { $0.render(to: width, alignment: self.alignment ?? alignment) }
-        case .cut:
-            switch width {
-            case 0:
-                lines = [""]
-            case 1:
-                if string.count > width {
-                    lines = ["…"]
-                }
-                else {
-                    lines = [string]
-                }
-            case 2:
-                if string.count > width {
-                    lines = ["\(string.prefix(1))…"]
-                }
-                else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
-                }
-            case 3:
-                if string.count > width {
-                    lines = ["\(string.prefix(1))…\(string.suffix(1))"]
-                }
-                else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
-                }
-            default:
-                if string.count > width {
-                    let head = width / 2
-                    let tail = width - 1 - head
-                    lines = [(string.prefix(head) + "…" + string.suffix(tail)).split(to: width).first?.render(to: width, alignment: self.alignment ?? alignment) ?? ""]
-                }
-                else {
-                    lines = [string.render(to: width, alignment: self.alignment ?? alignment)]
-                }
-            }
-        }
-        return HorizontallyAligned(lines: lines, alignment: alignment, width: width)
-    }*/
-    /*internal func fragment(for column:FixedCol) -> HorizontallyAligned {
-        return self.fragment(fallback: self.alignment ?? column.defaultAlignment,
-                             width: column.width,
-                             wrapping: self.wrapping ?? column.defaultWrapping)
-    }*/
 }
 extension Txt : Collection {
     public func index(after i: String.Index) -> String.Index {

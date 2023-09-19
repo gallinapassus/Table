@@ -34,6 +34,43 @@ extension DebugTopic {
     ]
 }
 // MARK: -
+
+/// Table class
+///
+/// `Tbl` class encapsulates required data to represent trivial tables.
+///
+/// Example (using DSL)
+///
+///```swift
+///import Table
+///
+///let table = Tbl("Summer Olympics") {
+///
+///    Columns {
+///        Col("Year", width: 4)
+///        Col("Host", width: .in(5...25), defaultWrapping: .word)
+///        Col("Country")
+///    }
+///
+///    Rows {
+///        ["1952", "Helsinki", "Finland"]
+///        ["1956", "Stockholm", "Sweden"]
+///        ["1960", "Rome", "Italy"]
+///    }
+///}
+///print(table.render(style: .rounded))
+/////╭──────────────────────╮
+/////│   Summer Olympics    │
+/////├────┬─────────┬───────┤
+/////│Year│Host     │Country│
+/////├────┼─────────┼───────┤
+/////│1952│Helsinki │Finland│
+/////├────┼─────────┼───────┤
+/////│1956│Stockholm│Sweden │
+/////├────┼─────────┼───────┤
+/////│1960│Rome     │Italy  │
+/////╰────┴─────────┴───────╯
+///```
 public final class Tbl {
     /// Table cell data
     public let cells:[[Txt]]
@@ -61,6 +98,7 @@ public final class Tbl {
     ///     - title: Table title
     ///     - columns: Table column definitions
     ///     - cells: Table cell data
+    ///     - lineNumberGenerator: Customisable line number generator
 
     public init(_ title:Txt? = nil,
                 columns: [Col] = [],
@@ -96,7 +134,7 @@ public final class Tbl {
             lineNumberGenerator: lineNumberGenerator
         )
     }
-    /// Initializes table
+    /// TnlBuilder initializer
     ///
     /// - Parameters:
     ///     - title: Table title
@@ -143,7 +181,7 @@ public final class Tbl {
                       to out: inout String) {
 
         let t0 = DispatchTime.now().uptimeNanoseconds // NOTE: Drags in Foundation!!!
-        cells.renx(
+        cells.render(
             title: title,
             columns: columns,
             style: style,

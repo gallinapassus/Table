@@ -185,6 +185,11 @@ extension String {
 
         return h
     }
+    
+    /// Trim and fragment string
+    ///
+    /// - Returns: A new Array<String> with original string splitted
+    /// at newlines and trimmed according to trimming options.
     @inline(__always)
     public func trimAndFrag(_ options:TrimmingOptions) -> [String] {
 
@@ -442,18 +447,26 @@ internal func halignOrCut<S:StringProtocol>(_ str:S, _ alignment:Alignment = .to
 }
 
 extension Txt {
-    /* Not used at the moment
-    /// Trim.
-    internal func trim(_ options:TrimmingOptions) -> Txt {
+    public init(_ sub:Substring, alignment:Alignment? = nil, wrapping:Wrapping? = nil) {
+        self.string = String(sub)
+        self.alignment = alignment
+        self.wrapping = wrapping
+    }
+    /// Trim in-place
+    public mutating func trim(_ options:TrimmingOptions) {
+        self.string = string.trim(options)
+    }
+    /// Trim
+    public func trimmed(_ options:TrimmingOptions) -> Txt {
         Txt(string.trim(options), alignment: alignment, wrapping: wrapping)
     }
-     */
-    /* Not used at the moment
-    internal func trimAndFragment(_ options:TrimmingOptions) -> [Txt] {
-        let trimmed:[String] = string.trimAndFrag(options)
-        return trimmed.map { Txt($0, alignment: alignment, wrapping: wrapping) }
+    /// Trim and fragment
+    public func trimAndFragment(_ options:TrimmingOptions) -> [Txt] {
+        return string
+            .trimAndFrag(options)
+            .map { Txt($0, alignment: alignment, wrapping: wrapping) }
     }
-     */
+
     internal func halign(defaultAlignment:Alignment,
                        defaultWrapping:Wrapping,
                        width:Int) -> [String] {

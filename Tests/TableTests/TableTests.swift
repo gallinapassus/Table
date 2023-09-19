@@ -56,6 +56,41 @@ final class TxtTests: XCTestCase {
             }
         }
     }
+    func test_trim() {
+        var t = Txt(" \n\n  " + pangram + " \n\n  ")
+        t.trim([.leadingWhiteSpaces])
+        XCTAssertEqual(t.string, "\n\n" + pangram + " \n\n  ")
+        t.trim([.leadingNewlines])
+        XCTAssertEqual(t.string, pangram + " \n\n  ")
+        t.trim([.trailingNewlines, .trailingWhiteSpaces])
+        XCTAssertEqual(t.string, pangram)
+        t.trim([.all])
+        XCTAssertEqual(t.string, pangram)
+    }
+    func test_trimmed() {
+        let t = Txt(" \n\n  " + pangram + " \n\n  ")
+        XCTAssertEqual(t.trimmed([.leadingWhiteSpaces]).string,
+                       "\n\n" + pangram + " \n\n  ")
+        XCTAssertEqual(t.trimmed([.leadingNewlines]).string,
+                       "   " + pangram + " \n\n  ")
+        XCTAssertEqual(t.trimmed([.trailingNewlines, .trailingWhiteSpaces]).string,
+                       " \n\n  " + pangram)
+        XCTAssertEqual(t.trimmed([.all]).string, pangram)
+    }
+    func test_trimAndFrag() {
+        let t = Txt(" \n\n  " + pangram + " \n\n  ")
+        XCTAssertEqual(t.trimAndFragment([.leadingWhiteSpaces, .trailingWhiteSpaces]),
+                       [
+                        Txt("", alignment: nil, wrapping: nil),
+                        Txt("", alignment: nil, wrapping: nil),
+                        Txt("The quick brown fox jumps over the lazy dog", alignment: nil, wrapping: nil),
+                        Txt("", alignment: nil, wrapping: nil),
+                        Txt("", alignment: nil, wrapping: nil)])
+        XCTAssertEqual(t.trimAndFragment([.all]),
+                       [
+                        Txt("The quick brown fox jumps over the lazy dog", alignment: nil, wrapping: nil)
+                       ])
+    }
 }
 final class ColTests: XCTestCase {
     func test_init() {
@@ -107,7 +142,6 @@ extension TextOutputStream {
     var string:String { self as! String }
 }
 final class TableTests : XCTestCase {
-    let pangram = "The quick brown fox jumps over the lazy dog"
     func test_noData() {
         let columns = [
             Col("Col 1", width: 1, defaultAlignment: .topLeft),
@@ -3553,86 +3587,6 @@ final class TableTests : XCTestCase {
                            
                            """)
         }
-        /*
-        do {
-            func gendata(_ cc:Int, _ rc:Int, _ seed:String) -> [[Txt]] {
-                var data:[[Txt]] = []
-                for _ in 0..<rc {
-                    var row:[Txt] = []
-                    for _ in 0..<cc {
-                        let s = (0...(6...20).randomElement()!)
-                            .map({ _ in seed.randomElement()! })
-                            .map({ String($0) })
-                            .joined()
-                        row.append(Txt(s))
-                    }
-                    data.append(row)
-                }
-                return data
-            }
-            let cc = (2...6).randomElement()!
-            let rc = 5_000
-            // Cell data with newlines
-            let withNewLines = gendata(cc, rc, "abcdefg\n")
-            let noNewLines = withNewLines
-                .map({
-                    $0.map({
-                        Txt($0.string.replacingOccurrences(of: "\n", with: ""))
-                    })
-                })
-
-            // Define all auto column widths
-            let autocol = Array(repeating: Col("Column", width: .auto),
-                                count: cc)
-
-            // cellsMayHaveNewlines optimization promise is:
-            // for data without newlines & with one or more
-            // autocolumns setting cellsMayHaveNewlines to
-            // false IS faster than leaving it to true
-            //let r = 0..<3
-            let o1:UInt64
-            let o2:UInt64
-            let o3:UInt64
-            let o4:UInt64
-            do {
-                let t0 = DispatchTime.now().uptimeNanoseconds
-                let tbl = Tbl2("noNewLines / false", columns: autocol, cells: noNewLines)
-                tbl.cellsMayHaveNewlines = false
-                let _ = tbl.render()
-                let t1 = DispatchTime.now().uptimeNanoseconds
-                //print(tbl.render(rows: r))
-                o1 = (t1 - t0) / 1_000_000
-            }
-            do {
-                let t0 = DispatchTime.now().uptimeNanoseconds
-                let tbl = Tbl2("noNewLines / true", columns: autocol, cells: noNewLines)
-                tbl.cellsMayHaveNewlines = true
-                let _ = tbl.render()
-                let t1 = DispatchTime.now().uptimeNanoseconds
-                //print(tbl.render(rows: r))
-                o2 = (t1 - t0) / 1_000_000
-            }
-            do {
-                let t0 = DispatchTime.now().uptimeNanoseconds
-                let tbl = Tbl2("withNewLines / false", columns: autocol, cells: withNewLines)
-                tbl.cellsMayHaveNewlines = false
-                let _ = tbl.render()
-                let t1 = DispatchTime.now().uptimeNanoseconds
-                //print(tbl.render(rows: r))
-                o3 = (t1 - t0) / 1_000_000
-            }
-            do {
-                let t0 = DispatchTime.now().uptimeNanoseconds
-                let tbl = Tbl2("withNewLines / true", columns: autocol, cells: withNewLines)
-                tbl.cellsMayHaveNewlines = true
-                let _ = tbl.render()
-                let t1 = DispatchTime.now().uptimeNanoseconds
-                //print(tbl.render(rows: r))
-                o4 = (t1 - t0) / 1_000_000
-            }
-
-            XCTAssertEqual([o1, o2, o3, o4], [o1, o2, o3, o4].sorted())
-        }*/
     }
     func test_renderRange() {
         var src:[[Txt]] = []
@@ -4343,7 +4297,7 @@ final class TableTests : XCTestCase {
             "0x0000e0 e0:e1:e2:e3:e4:e5:e6:e7:e8:e9:ea:eb:ec:ed:ee:ef àáâãäåæçèéêëìíîï",
             "0x0000f0 f0:f1:f2:f3:f4:f5:f6:f7:f8:f9:fa:fb:fc:fd:fe:ff ðñòóôõö.øùúûüýþÿ",
         ].joined(separator: "\n") + "\n"
-        let rendered = cells.renx(
+        let rendered = cells.render(
             title: "Hexdump",
             style: .singleSpace,
             options: .insideVerticalFrame,
@@ -5104,60 +5058,6 @@ final class TxtExtensionTests : XCTestCase {
             ["abc", "  d"]
         )
     }
-    /*
-    func test_align() {
-        do {
-            // Height override
-            let a:Alignment = .topLeft
-            XCTAssertEqual(
-                Txt(pangram, alignment: .middleCenter, wrapping: .char)
-                    .align(defaultAlignment: a, defaultWrapping: .char, width: 15, height: 5),
-                ["               ",
-                 "The quick brown",
-                 " fox jumps over",
-                 "  the lazy dog ",
-                 "               "]
-            )
-        }
-        do {
-            // Height limited
-            let a:Alignment = .topLeft
-            XCTAssertEqual(
-                Txt(pangram, alignment: .middleCenter, wrapping: .char)
-                    .align(defaultAlignment: a, defaultWrapping: .char, width: 12, height: 3),
-                ["The quick br",
-                 "own fox jump",
-                 "s over the l"]
-            )
-        }
-        do {
-            // Corner cases, negative height = -1
-            let a:Alignment = .topLeft
-            XCTAssertEqual(
-                Txt(pangram, alignment: .middleCenter, wrapping: .char)
-                    .align(defaultAlignment: a, defaultWrapping: .char, width: 15, height: -1),
-                []
-            )
-        }
-        do {
-            // Corner cases, width = 0
-            let a:Alignment = .topLeft
-            XCTAssertEqual(
-                Txt(pangram, alignment: .middleCenter, wrapping: .char)
-                    .align(defaultAlignment: a, defaultWrapping: .char, width: 0),
-                []
-            )
-        }
-        do {
-            // Corner cases, negative width = -1
-            let a:Alignment = .topLeft
-            XCTAssertEqual(
-                Txt(pangram, alignment: .middleCenter, wrapping: .char)
-                    .align(defaultAlignment: a, defaultWrapping: .char, width: -1),
-                []
-            )
-        }
-    }*/
 }
 internal class ArrayExtensionTests : XCTestCase {
     func test_valign() {
@@ -5202,68 +5102,17 @@ internal class ArrayExtensionTests : XCTestCase {
             )
         }
     }
-    func test_align() {
-        let row = [Txt("Row0Column0"), Txt("R0C1"), Txt("Quick brown fox...")]
-        let columns = [
-            FixedCol(
-                ColumnBase(
-                    Txt("#"),
-                    defaultAlignment: .topLeft,
-                    defaultWrapping: .char,
-                    contentHint: .unique
-                ),
-                width: 4,
-                ref: 0,
-                hidden: false),
-            FixedCol(
-                ColumnBase(
-                    Txt("#"),
-                    defaultAlignment: .topLeft,
-                    defaultWrapping: .char,
-                    contentHint: .unique
-                ),
-                width: 2,
-                ref: 1,
-                hidden: false),
-            FixedCol(
-                ColumnBase(
-                    Txt("#"),
-                    defaultAlignment: .topLeft,
-                    defaultWrapping: .char,
-                    contentHint: .unique
-                ),
-                width: 3,
-                ref: 2,
-                hidden: false),
-            FixedCol(
-                ColumnBase(
-                    Txt("#"),
-                    defaultAlignment: .topLeft,
-                    defaultWrapping: .char,
-                    contentHint: .unique
-                ),
-                width: 3,
-                ref: 3,
-                hidden: false),
-        ]
-        
-        let a = row.align(for: columns)
-        let b = a.transposed()
-        print(a)
-        print(b)
-        b.forEach({ print($0.joined(separator: " | ")) })
-    }
 }
 internal class Playground : XCTestCase {
     func test_renx() {
         let columns = [
             Col(Txt("#", alignment: .bottomCenter)),
-            Col(Txt("Column 1, trim all"), width: .in(4...6),
+            Col(Txt("Tight"), width: .in(4...6),
                 defaultAlignment: .middleCenter,
                 defaultWrapping: .word,
                 trimming: .all,
                 contentHint: .unique),
-            Col(Txt("Column 2, trim leading & trailing"), width: .in(8...12),
+            Col(Txt("Wide"), width: .in(8...12),
                 defaultAlignment: .bottomRight,
                 defaultWrapping: .word,
                 trimming: [.leadingWhiteSpaces, .trailingWhiteSpaces],
