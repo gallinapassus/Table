@@ -72,7 +72,7 @@ internal struct ColumnBase : Equatable, Codable {
         self.dynamicWidth = dynamicWidth
     }
 }
-public struct Col : Equatable/*, Codable*/ {
+public struct Col : Equatable {
     private let _base:ColumnBase
     public var dynamicWidth:Width { _base.dynamicWidth }
     public var header:Txt? { _base.header }

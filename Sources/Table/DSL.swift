@@ -1,17 +1,25 @@
 import Foundation
 
+/// Column builder class initializes table columns
+
 public final class Columns {
     fileprivate var data:[Col]
     public init(@ColumnBuilder _ builder: () -> [Col]) {
         self.data = builder()
     }
 }
+
+/// Rows builder class initializes table cells
+
 public final class Rows {
     fileprivate var rows:[[Txt]]
     public init(@RowsBuilder _ builder: () -> [[Txt]]) {
         self.rows = builder()
     }
 }
+
+/// Row builder class initializes individual table rows
+
 public final class Row {
     fileprivate var rowCells:[Txt]
     public init(_ cells: Txt...) {
@@ -73,15 +81,5 @@ public enum TblBuilder {
     }
     public static func buildBlock(_ data: Rows) -> ([Col], [[Txt]]) {
         ([], data.rows)
-    }
-}
-@resultBuilder
-public enum Tbl2Builder {
-    public static func buildBlock(_ columnDefinitions: Columns,
-                                  _ cells: Rows) -> ([Col], [[Txt]]) {
-        (columnDefinitions.data, cells.rows)
-    }
-    public static func buildBlock(_ cells: Rows) -> ([Col], [[Txt]]) {
-        ([], cells.rows)
     }
 }

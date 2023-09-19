@@ -20,16 +20,31 @@ extension Array where Element == [Txt] {
         let ret:Int? = w < 1 ? nil : w
         return ret
     }
-    public func renx(title:Txt? = nil,
-                     columns:[Col]? = nil,
-                     style:FrameStyle = .default,
-                     options:FramingOptions = .all,
-                     rows:[Range<Int>]? = nil,
-                     leftPad:String = "",
-                     rightPad:String = "",
-                     to out: inout String,
-                     debugMask:DebugTopicSet = [],
-                     lineNumberGenerator:((Int)->Txt)? = nil) {
+    /// Render Array elements as table
+    /// - Parameters:
+    ///   - title:Optional table title
+    ///   - columns:Optional table table columns
+    ///   - style: Frame style
+    ///   - options: Framing options
+    ///   - rows: Optional collection of row ranges to render,
+    ///   default value of `nil` means, render all rows
+    ///   - leftPad: Pad left side of the table with `String`
+    ///   - rightPad: Pad right side of the table with `String`
+    ///   - to: Receiver for the rendering result
+    ///   - debugMask: Debug mask value, default (no debugging)
+    ///   - lineNumberGenerator: Optional customizable line
+    ///   number generator
+
+    public func render(title:Txt? = nil,
+                       columns:[Col]? = nil,
+                       style:FrameStyle = .default,
+                       options:FramingOptions = .all,
+                       rows:[Range<Int>]? = nil,
+                       leftPad:String = "",
+                       rightPad:String = "",
+                       to out: inout String,
+                       debugMask:DebugTopicSet = [],
+                       lineNumberGenerator:((Int)->Txt)? = nil) {
 
         if let ranges = rows {
             ranges.forEach {
@@ -45,7 +60,7 @@ extension Array where Element == [Txt] {
         
         // Pre-format cells and get fixed width columns
         let t0 = DispatchTime.now().uptimeNanoseconds
-        let (preFormattedRowRanges, fixedColumns) = preFormatx(
+        let (preFormattedRowRanges, fixedColumns) = preFormat(
             title: title,
             columns: columns ?? [],
             cells: self,
@@ -379,38 +394,40 @@ extension Array where Element == [Txt] {
             out.write("\(rightPad)\n")
         }
     }
-    public func renx(title:Txt? = nil,
-                     columns:[Col]? = nil,
-                     style:FrameStyle = .default,
-                     options:FramingOptions = .all,
-                     rows rnges:[Range<Int>]? = nil,
-                     leftPad:String = "",
-                     rightPad:String = "",
-                     debugMask:DebugTopicSet = [],
-                     lineNumberGenerator:((Int)->Txt)? = nil,
-                     lineNumberColumn:Col? = nil) -> String {
+    /// Render Array elements as table
+    /// - Returns: A new String containing the rendered table.
+    public func render(title:Txt? = nil,
+                       columns:[Col]? = nil,
+                       style:FrameStyle = .default,
+                       options:FramingOptions = .all,
+                       rows rnges:[Range<Int>]? = nil,
+                       leftPad:String = "",
+                       rightPad:String = "",
+                       debugMask:DebugTopicSet = [],
+                       lineNumberGenerator:((Int)->Txt)? = nil,
+                       lineNumberColumn:Col? = nil) -> String {
         var str = ""
-        renx(title: title, columns: columns, style: style,
+        render(title: title, columns: columns, style: style,
              options: options, rows: rnges, leftPad: leftPad,
              rightPad: rightPad, to: &str, debugMask: debugMask,
              lineNumberGenerator: lineNumberGenerator)
         return str
     }    
 }
-fileprivate func preFormatx(title:Txt?,
-                            columns cols:[Col],
-                            cells:[[Txt]],
-                            ranges:[Range<Int>]?,
-                            debugMask:DebugTopicSet = [],
-                            lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
+fileprivate func preFormat(title:Txt?,
+                           columns cols:[Col],
+                           cells:[[Txt]],
+                           ranges:[Range<Int>]?,
+                           debugMask:DebugTopicSet = [],
+                           lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
         
     var prefmttedRange:[[[[Txt]]]] = []
     var rowElementCountHistogram:[Int:Int] = [:]
     var dict:[Int:Col] = Dictionary<Int,Col>(uniqueKeysWithValues: cols.enumerated().map({ $0 }))
     var columnFixedWidth:[Int:Int] = [:]
     let defCol = Col(width: .auto, defaultAlignment: .topLeft, defaultWrapping: .char, trimming: [])
-    var minRowElementCount:Int = Int.max
-    var maxRowElementCount:Int = Int.min
+    var minRowElementCount:Int = Int.max - 1
+    var maxRowElementCount:Int = Int.min + 1
 
     guard cells.isEmpty == false else {
         dbg(.cells, debugMask, "Table has no data cells")
@@ -471,8 +488,8 @@ fileprivate func preFormatx(title:Txt?,
 
         for (ri, partialRow) in cells[range].enumerated() {
             //dbg(.debug, debugMask, prefix: pfx, "ROW \(ri): \(partialRow)")
-            minRowElementCount = Swift.min(minRowElementCount, partialRow.count)
-            maxRowElementCount = Swift.max(maxRowElementCount, partialRow.count)
+            minRowElementCount = Swift.min(minRowElementCount, partialRow.count) + (lnGen == nil ? 0 : 1)
+            maxRowElementCount = Swift.max(maxRowElementCount, partialRow.count) + (lnGen == nil ? 0 : 1)
             rowElementCountHistogram[partialRow.count, default: 0] += 1
             
             var row:[Txt]
@@ -493,6 +510,8 @@ fileprivate func preFormatx(title:Txt?,
                     }
             }
             if row.count < cols.count {
+                // This row doesn't have enough cells
+                // Let's add required amount of empty cells
                 let missing:[Txt] = Array<Txt>(repeating: Txt(), count: Swift.max(0, cols.count - row.count))
                 row.append(contentsOf: missing)
                 dbg(.cells, debugMask, "row(\(ri + range.lowerBound)): adding \(missing.count) cell(s)")
@@ -500,9 +519,6 @@ fileprivate func preFormatx(title:Txt?,
             
             var fmrow:[[Txt]] = []
             for (ci,unformattedcell) in zip(0..., row) {
-                if dict[ci] == nil {
-                    dict[ci] = defCol
-                }
                 
                 guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
                     columnFixedWidth[ci] = 0
@@ -520,9 +536,14 @@ fileprivate func preFormatx(title:Txt?,
                 }()
                 var hi = 0
 
+                // Here we pre-format the row
+                // In practice, pre-formatting means just trimming
+                // and fragmenting (at newlines)
                 let trimmedAndFragmented:[Txt] = unformattedcell.string
                     .trimAndFrag(dict[ci]!.trimming)
                     .map { str in
+                        // Update lo & hi values on the same loop as we
+                        // map Strings back to Txt
                         lo = Swift.min(lo, str.count)
                         hi = Swift.max(hi, str.count)
                         return Txt(str,
@@ -531,7 +552,7 @@ fileprivate func preFormatx(title:Txt?,
                     }
                 fmrow.append(trimmedAndFragmented)
 
-
+                // Update the fixed width value for the column
                 switch dict[ci]!.dynamicWidth {
                 case .min(let min):
                     columnFixedWidth[ci] = Swift
@@ -561,11 +582,12 @@ fileprivate func preFormatx(title:Txt?,
                     continue
                 }
             }
-            prefmtted.append(fmrow)
+            prefmtted.append(fmrow) // ← Add preformatted row
         }
         prefmttedRange.append(prefmtted)
     }
 
+    // Generate FixedCol's from calculated column widths
     let fixedColumns:[FixedCol] = columnFixedWidth
         .sorted(by: { $0.key < $1.key })
         .map({
