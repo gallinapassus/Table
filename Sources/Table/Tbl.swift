@@ -53,31 +53,6 @@ public final class Tbl {
 
     private let lineNumberGenerator:((Int)->Txt)?
 
-    /// Variable `cellsMayHaveNewlines` affects table rendering speed and
-    /// correctness.
-    ///
-    /// Default value is `true`
-    ///
-    /// **Rendering speed & correctness**
-    ///
-    /// Setting `cellsMayHaveNewlines` to `false` for cell data which doesn't contain
-    /// newlines will result to fastest rendering speed and table columns will render with
-    /// correct widths.
-    ///
-    /// Setting `cellsMayHaveNewlines` to `true` for cell data which doesn't contain
-    /// newlines will result to slightly slower rendering speed. Table columns will render with
-    /// correct widths.
-    ///
-    /// Setting `cellsMayHaveNewlines` to `false` for cell data which does contain
-    /// newlines will result to fast rendering speed but table columns may render with
-    /// incorrect widths.
-    ///
-    /// Setting `cellsMayHaveNewlines` to `true` for cell data which does contain
-    /// newlines will result to slowest overall rendering speed. Table columns will render with
-    /// correct widths.
-    ///
-    public var cellsMayHaveNewlines:Bool = true
-    
     public var debugMask:DebugTopicSet = []
     
     /// Initializes table
@@ -275,7 +250,6 @@ extension Tbl : Codable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(cellsMayHaveNewlines, forKey: .cellsMayHaveNewlines)
         try container.encode(cells, forKey: .cells)
         try container.encode(columns, forKey: .columns)
         try container.encode(title, forKey: .title)
@@ -284,12 +258,10 @@ extension Tbl : Codable {
     }
     public convenience init(from decoder:Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let cellsMayHaveNewlines = try container.decode(Bool.self, forKey: .cellsMayHaveNewlines)
         let cells = try container.decode([[Txt]].self, forKey: .cells)
         let columns = try container.decode([Col].self, forKey: .columns)
         let title = try container.decode(Txt.self, forKey: .title)
         self.init(title, columns: columns, cells: cells, lineNumberGenerator: nil)
-        self.cellsMayHaveNewlines = cellsMayHaveNewlines
     }
 }
 
@@ -298,7 +270,6 @@ extension Tbl : Equatable {
     public static func == (lhs: Tbl, rhs: Tbl) -> Bool {
         lhs.cells == rhs.cells &&
         lhs.columns == rhs.columns &&
-        lhs.title == rhs.title &&
-        lhs.cellsMayHaveNewlines == rhs.cellsMayHaveNewlines
+        lhs.title == rhs.title
     }
 }
