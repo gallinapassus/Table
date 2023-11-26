@@ -8,8 +8,6 @@ let package = Package(
         .library(
             name: "Table",
             targets: ["Table"]),
-        .executable(name: "tableapp",
-                    targets: ["Table App"])
     ],
     dependencies: [
         //.package(path: "../Combinations"),
@@ -20,8 +18,6 @@ let package = Package(
         .target(
             name: "Table",
             dependencies: ["DebugKit"]),
-        .executableTarget(name: "Table App",
-                dependencies: ["Table"]),
         .testTarget(
             name: "TableTests",
             dependencies: ["Table"/*, "Combinations"*/]),
