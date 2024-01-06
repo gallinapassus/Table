@@ -21,15 +21,15 @@ public let defaultLnGen:(Int) -> Txt = { n in
 }
 extension DebugTopic {
     // Topics
-    public static let info = DebugTopic(level: 0, "info")
-    public static let warning = DebugTopic(level: 1, "warning")
-    public static let error = DebugTopic(level: 2, "error")
-    public static let telemetry = DebugTopic(level: 3, "telemetry")
-    public static let cache = DebugTopic(level: 4, "cache")
-    public static let columns = DebugTopic(level: 5, "columns")
-    public static let cells = DebugTopic(level: 6, "cells")
+    internal static let info = DebugTopic(level: 0, "info")
+    internal static let warning = DebugTopic(level: 1, "warning")
+    internal static let error = DebugTopic(level: 2, "error")
+    internal static let telemetry = DebugTopic(level: 3, "telemetry")
+    internal static let cache = DebugTopic(level: 4, "cache")
+    internal static let columns = DebugTopic(level: 5, "columns")
+    internal static let cells = DebugTopic(level: 6, "cells")
     // A allTopics "mask" including all topics
-    public static let allTopics:DebugTopicSet = [
+    internal static let allTopics:DebugTopicSet = [
         .info, .warning, .error, .telemetry, .cache, .columns, .cells
     ]
 }
