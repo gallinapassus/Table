@@ -3,7 +3,7 @@
 /// Defines generic trimming options.
 
 public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible, Hashable, Comparable, Codable {
-    enum Opts : Int, CaseIterable {
+    enum Opts : Int8, CaseIterable {
         case leadingWhiteSpaces
         case leadingNewlines
         case inlineConsecutiveWhiteSpaces
@@ -12,7 +12,7 @@ public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible
         case trailingNewlines
     }
     public static var allCases: [TrimmingOptions] = Opts.allCases
-        .filter({ $0.rawValue < (MemoryLayout<Int>.size * 8)})
+        .filter({ $0.rawValue < (MemoryLayout<Int8>.size * 8)})
         .map { TrimmingOptions(rawValue: 1 << $0.rawValue) }
     public static func < (lhs: TrimmingOptions, rhs: TrimmingOptions) -> Bool {
         lhs.rawValue < rhs.rawValue
@@ -20,6 +20,8 @@ public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible
     
     public let rawValue: Int
     public init(rawValue:Int) {
+        let r = (0..<Int(Opts.RawValue.max))
+        precondition(r.contains(rawValue), "invalid value \(rawValue), must be in range \(r)")
         self.rawValue = rawValue
     }
     public static let leadingWhiteSpaces = TrimmingOptions(rawValue: 1 << Opts.leadingWhiteSpaces.rawValue)

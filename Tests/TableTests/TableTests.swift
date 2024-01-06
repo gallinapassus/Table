@@ -5139,12 +5139,17 @@ internal class Playground : XCTestCase {
     func test_cache() {
         let cells:[[Txt]] = [
             [Txt(pangram), Txt(pangram)],
-            [Txt(pangram)],
+            [Txt(pangram), Txt([pangram, pangram].joined(separator: "\n"))],
+            [Txt(pangram), Txt(pangram)],
+            [Txt(pangram), Txt(pangram)],
         ]
         let cols = [
-            Col(), Col(defaultAlignment: .bottomLeft)
+            Col(),
+            Col(width: .min(10), defaultAlignment: .bottomLeft, defaultWrapping: .word),
+            Col(width: .max(10), defaultAlignment: .bottomLeft, defaultWrapping: .word),
         ]
         let tbl = Tbl(#function, columns: cols, cells: cells, lineNumberGenerator: defaultLnGen)
+        tbl.debugMask = [.cache]
         print(tbl.render(style: .roundedPadded))
     }
 }

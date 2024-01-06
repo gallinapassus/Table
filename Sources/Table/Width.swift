@@ -7,7 +7,7 @@ public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable, C
     
     // NOTE: This is propably the weirdest
     // implementation possible -> should be re-worked
-    private static let allowedRange:ClosedRange<Int> = 0...1024
+    internal static let allowedRange:ClosedRange<Int> = 0...1024
 
     public typealias IntegerLiteralType = Int
     /// Indicates that column width should be calculated dynamically
