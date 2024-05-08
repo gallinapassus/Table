@@ -95,7 +95,11 @@ extension Array where Element == [Txt] {
         let l = "\(leftPad)\(leftVerticalSeparator)"
         let r = "\(rightVerticalSeparator)\(rightPad)\n"
         let insideVerticalSeparator = style.insideVerticalSeparator(for: options)
-
+        // Cache
+        var cache:[String:[CellHash:[String]]] = [:]
+        var cacheHit:Int = 0
+        var cacheMiss:Int = 0
+        var cacheWrite:Int = 0
         // Output
         // MARK: Top frame
         if options.contains(.topFrame) {
@@ -286,15 +290,33 @@ extension Array where Element == [Txt] {
                     fatalError(msg)
                 }
                 // Process the single row column by column
+                var _key:String? = nil
+                var _hash:CellHash? = nil
                 for (ci,col) in row.enumerated() {
                     let fixedColumn = fixedColumns[ci]
                     guard fixedColumn.isVisible else {
                         formattedRow.append((nil, []))
                         continue
                     }
-                    
-                    //dbg(.cache, debugMask, "column hash (\(fixedColumn.hashValue))")
-                    //dbg(.cache, debugMask, "search (\(ri),\(ci)) \(col)")
+
+                    if fixedColumn.contentHint == .repetitive,
+                       ci < sourceRow.count,
+                       let txt = sourceRow[ci].first {
+                        _key = txt.string
+                        _hash = CellHash(
+                            width: fixedColumn.width,
+                            alignment: txt.alignment ?? fixedColumn.defaultAlignment,
+                            wrapping: txt.wrapping ?? fixedColumn.defaultWrapping,
+                            trimming: fixedColumn.trimming
+                        )
+                        if let _ = cache[_key!]?[_hash!] {
+                            cacheHit += 1
+                        }
+                        else {
+                            cacheMiss += 1
+                        }
+                        dbg(.cache, debugMask, "(\(ri),\(ci)) \(cacheHit) \(cacheMiss) \(cacheWrite) \(cache.count)")
+                    }
 
                     var combined:[String] = []
                     if fixedColumn.width == 0 {
@@ -326,7 +348,15 @@ extension Array where Element == [Txt] {
                     guard fc.isVisible else {
                         continue
                     }
-                    valigned.append(fr.1.valign(fr.0 ?? fc.defaultAlignment, height: rowHeight))
+                    //dbg(.cache, debugMask, "column(\(i)), contentHint = \(fc.contentHint)")
+                    //dbg(.cache, debugMask, "\(fr.1)")
+                    //dbg(.cache, debugMask, "\(sourceRow)")
+                    let verticallyAligned = fr.1.valign(fr.0 ?? fc.defaultAlignment, height: rowHeight)
+                    valigned.append(verticallyAligned)
+                    if let key = _key, let hash = _hash {
+                        cache[key, default: [:]][hash] = verticallyAligned
+                        cacheWrite += 1
+                    }
                 }
                 // MARK: Individual row
                 for fragment in valigned.transposed() {
@@ -393,6 +423,12 @@ extension Array where Element == [Txt] {
             out.write(style.bottomRightCorner(for: options))
             out.write("\(rightPad)\n")
         }
+        for (str,v) in cache {
+            dbg(.cache, debugMask, "\(str)")
+            for (hash,cell) in v {
+                dbg(.cache, debugMask, "    \(hash) | \(cell)")
+            }
+        }
     }
     /// Render Array elements as table
     /// - Returns: A new String containing the rendered table.
@@ -412,7 +448,7 @@ extension Array where Element == [Txt] {
              rightPad: rightPad, to: &str, debugMask: debugMask,
              lineNumberGenerator: lineNumberGenerator)
         return str
-    }    
+    }
 }
 fileprivate func preFormat(title:Txt?,
                            columns cols:[Col],

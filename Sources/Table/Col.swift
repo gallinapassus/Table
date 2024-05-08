@@ -86,6 +86,7 @@ public struct Col : Equatable {
                 defaultWrapping:Wrapping = .char,
                 trimming:TrimmingOptions = [],
                 contentHint:ColumnContentHint = .repetitive) {
+        precondition(width.isValidColWidth, "invalid column width, must be in range \(Width.allowedRange)")
         self._base = ColumnBase(header,
                                 dynamicWidth: width,
                                 defaultAlignment: defaultAlignment,
@@ -181,6 +182,35 @@ extension Col {
         self.init(Txt(string), width: width, defaultAlignment: defaultAlignment, defaultWrapping: defaultWrapping, trimming: trimming, contentHint: contentHint)
     }
 }
+fileprivate extension Width {
+    var isValidColWidth:Bool {
+        let w:Int = {
+            switch self {
+            case .auto:
+                return Width.allowedRange.lowerBound
+            case .hidden:
+                return Width.allowedRange.lowerBound
+            case .collapsed:
+                return Width.allowedRange.lowerBound
+            case .fixed(let int):
+                return int
+            case .min(let int):
+                return int
+            case .max(let int):
+                return int
+            case .range(let range):
+                if Width.allowedRange.contains(range.lowerBound) == false { return range.lowerBound }
+                else if Width.allowedRange.contains(range.upperBound) == false { return range.upperBound }
+                else { return Width.allowedRange.lowerBound }
+            case .in(let closedRange):
+                if Width.allowedRange.contains(closedRange.lowerBound) == false { return closedRange.lowerBound }
+                else if Width.allowedRange.contains(closedRange.upperBound) == false { return closedRange.upperBound }
+                else { return Width.allowedRange.lowerBound }
+            }
+        }()
+        return Width.allowedRange.contains(w)
+    }
+}
 internal struct FixedCol {
     private let _base:ColumnBase
     public var header:Txt? { _base.header }
@@ -217,5 +247,37 @@ extension FixedCol : Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(_base.trimming)
         hasher.combine(width)
+    }
+}
+internal struct CellHash : Hashable, CustomStringConvertible {
+    static let maskUnused:UInt64    = 0xfffffffff0000000
+    static let maskAlignment:UInt64 = 0x000000000f000000
+    static let maskWrapping:UInt64  = 0x0000000000f00000
+    static let maskTrimming:UInt64  = 0x00000000000f0000
+    static let maskWidth:UInt64     = 0x000000000000ffff
+    private let hash:UInt64
+    public var width:Int { Int(hash & Self.maskWidth) }
+    public var trimming:TrimmingOptions { 
+        TrimmingOptions(rawValue: Int(hash & Self.maskTrimming) >> Self.maskTrimming.trailingZeroBitCount)
+    }
+    public var wrapping:Wrapping {
+        Wrapping(rawValue: UInt8(Int(hash & Self.maskWrapping) >> Self.maskWrapping.trailingZeroBitCount))!
+    }
+    public var alignment:Alignment {
+        Alignment(rawValue: UInt8(Int(hash & Self.maskAlignment) >> Self.maskAlignment.trailingZeroBitCount))!
+    }
+    public init(width: Int, alignment:Alignment, wrapping:Wrapping, trimming:TrimmingOptions) {
+        precondition(
+            Width.allowedRange.contains(width),
+            "invalid width \(width), must be in range \(Width.allowedRange)"
+        )
+        var h:UInt64 = UInt64(width) & Self.maskWidth
+        h |= UInt64(trimming.rawValue) << Self.maskTrimming.trailingZeroBitCount
+        h |= UInt64(wrapping.rawValue) << Self.maskWrapping.trailingZeroBitCount
+        h |= UInt64(alignment.rawValue) << Self.maskAlignment.trailingZeroBitCount
+        self.hash = h
+    }
+    public var description:String {
+        return "\(type(of: self)): width(\(width)), \(trimming), \(wrapping), \(alignment)"
     }
 }
