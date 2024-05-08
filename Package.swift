@@ -10,7 +10,8 @@ let package = Package(
             targets: ["Table"]),
     ],
     dependencies: [
-        //.package(path: "../Combinations"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git",
+                 branch: "main"),
         .package(url: "https://github.com/gallinapassus/DebugKit.git",
                  branch: "main"),
     ],
@@ -20,6 +21,15 @@ let package = Package(
             dependencies: ["DebugKit"]),
         .testTarget(
             name: "TableTests",
-            dependencies: ["Table"/*, "Combinations"*/]),
+            dependencies: [
+                "Table",
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ]),
+        .testTarget(
+            name: "PerfTests",
+            dependencies: [
+                "Table",
+                //.product(name: "ArgumentParser", package: "swift-argument-parser")
+            ]),
     ]
 )

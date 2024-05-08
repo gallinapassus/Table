@@ -300,6 +300,7 @@ extension Array where Element == [Txt] {
                     }
 
                     if fixedColumn.contentHint == .repetitive,
+                       ci < sourceRow.count,
                        let txt = sourceRow[ci].first {
                         _key = txt.string
                         _hash = CellHash(

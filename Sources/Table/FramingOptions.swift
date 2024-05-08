@@ -5,40 +5,56 @@
 ///
 /// By default, all frame elements are included.
 
-public struct FramingOptions : OptionSet, Hashable, Codable {
+public struct FramingOptions : OptionSet, Hashable, Codable, CaseIterable {
+
+    public enum FrameElement : String, Codable, CaseIterable {
+        case topFrame
+        case bottomFrame
+        case leftFrame
+        case rightFrame
+        case insideHorizontalFrame
+        case insideVerticalFrame
+        
+        public var index:Int {
+            Self.allCases.firstIndex(where: { $0.rawValue == rawValue })!
+        }
+    }
+
     public typealias RawValue = Int
     public var rawValue:RawValue
     public init(rawValue: RawValue) {
         self.rawValue = rawValue
     }
-    public static let topFrame              = FramingOptions(rawValue: 1 << 0)
-    public static let bottomFrame           = FramingOptions(rawValue: 1 << 1)
-    public static let leftFrame             = FramingOptions(rawValue: 1 << 2)
-    public static let rightFrame            = FramingOptions(rawValue: 1 << 3)
-    public static let insideHorizontalFrame = FramingOptions(rawValue: 1 << 4)
-    public static let insideVerticalFrame   = FramingOptions(rawValue: 1 << 5)
+    public init(_ elements:[FrameElement]) {
+        self.rawValue = elements.reduce(0, { $0 | (1 << $1.index) })
+    }
+    public static let topFrame              = FramingOptions(rawValue: 1 << FrameElement.topFrame.index)
+    public static let bottomFrame           = FramingOptions(rawValue: 1 << FrameElement.bottomFrame.index)
+    public static let leftFrame             = FramingOptions(rawValue: 1 << FrameElement.leftFrame.index)
+    public static let rightFrame            = FramingOptions(rawValue: 1 << FrameElement.rightFrame.index)
+    public static let insideHorizontalFrame = FramingOptions(rawValue: 1 << FrameElement.insideHorizontalFrame.index)
+    public static let insideVerticalFrame   = FramingOptions(rawValue: 1 << FrameElement.insideVerticalFrame.index)
 
     public static let none = FramingOptions([])
     public static let all = FramingOptions([.topFrame, .bottomFrame,
+                                            .insideHorizontalFrame, .insideVerticalFrame,
+                                            .leftFrame, .rightFrame])
+    public static var allCases:[FramingOptions] = [.topFrame, .bottomFrame,
                                                    .insideHorizontalFrame, .insideVerticalFrame,
-                                                   .leftFrame, .rightFrame])
+                                                   .leftFrame, .rightFrame]
     public static let inside = FramingOptions([.insideHorizontalFrame, .insideVerticalFrame])
     public static let outside = FramingOptions([.topFrame, .bottomFrame, .leftFrame, .rightFrame])
 
     public var optionsInEffect:String {
         var str:[String] = []
-        for i in 0...5 {
-            switch rawValue & (1 << i) {
-            case FramingOptions.topFrame.rawValue: str.append("topFrame")
-            case FramingOptions.bottomFrame.rawValue: str.append("bottomFrame")
-            case FramingOptions.leftFrame.rawValue: str.append("leftFrame")
-            case FramingOptions.rightFrame.rawValue: str.append("rightFrame")
-            case FramingOptions.insideHorizontalFrame.rawValue: str.append("insideHorizontalFrame")
-            case FramingOptions.insideVerticalFrame.rawValue: str.append("insideVerticalFrame")
-            default: break
-            }
+        for i in FrameElement.allCases {
+            guard ((1 << i.index) & rawValue) > 0 else { continue }
+            str.append(i.rawValue)
         }
         return str.joined(separator: ", ")
+    }
+    public static var availableOptions:[String] {
+        FrameElement.allCases.map({ $0.rawValue })
     }
 }
 
