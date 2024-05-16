@@ -142,6 +142,102 @@ extension TextOutputStream {
     var string:String { self as! String }
 }
 final class TableTests : XCTestCase {
+    func test_init_subsctring() {
+        do {
+            let s = "abcd"
+            let src:[[any StringProtocol]] = [
+                [
+                    // Substring
+                    s[s.startIndex..<s.index(s.startIndex, offsetBy: 1)],
+                    // Substring
+                    Substring(stringLiteral: "replaced")
+                ],
+                [
+                    // Substring
+                    s[s.firstIndex(of: "c")!..<s.firstIndex(of: "d")!],
+                    // String
+                    "d"
+                ]
+            ]
+            let table = Tbl(
+                title: s[...s.firstIndex(of: "d")!],
+                columns: ["C1", "C2"],
+                cells: src,
+                lineNumberGenerator: nil
+            )
+            XCTAssertEqual(table.render(style: .debug),
+                           """
+                           ┌┅┅┅┅┅┅┅┅┅┅┐
+                           ┆   abcd   ┊
+                           ├┄┬┄┄┄┄┄┄┄┄┤
+                           ┆C╎C2      ┊
+                           ┆1╎        ┊
+                           ├┄┼┄┄┄┄┄┄┄┄┤
+                           ┆a╎replaced┊
+                           ├┄┼┄┄┄┄┄┄┄┄┤
+                           ┆c╎d       ┊
+                           └┉┴┉┉┉┉┉┉┉┉┘
+                           
+                           """)
+        }
+    }
+    func test_init_string() {
+        do {
+            let src = [["a", "b"],["c", "d"]]
+            let table = Tbl(
+                title: "title",
+                columns: ["C1", "C2"],
+                cells: src,
+                lineNumberGenerator: nil
+            )
+            XCTAssertEqual(table.render(style: .debug),
+                           """
+                           ┌┅┅┅┐
+                           ┆tit┊
+                           ┆le ┊
+                           ├┄┬┄┤
+                           ┆C╎C┊
+                           ┆1╎2┊
+                           ├┄┼┄┤
+                           ┆a╎b┊
+                           ├┄┼┄┤
+                           ┆c╎d┊
+                           └┉┴┉┘
+                           
+                           """)
+        }
+    }
+    func test_init_txt() {
+        do {
+            let src:[[Txt]] = [
+                [Txt("a", alignment: .topCenter), "b"],
+                ["c", "d"]
+            ]
+            let table = Tbl(
+                Txt("title", alignment: .topRight),
+                columns: [
+                    Col(Txt("C1", alignment: .topCenter), width: 5),
+                    "C2"
+                ],
+                cells: src,
+                lineNumberGenerator: nil
+            )
+            XCTAssertEqual(table.render(style: .debug),
+                           """
+                           ┌┅┅┅┅┅┅┅┐
+                           ┆  title┊
+                           ├┄┄┄┄┄┬┄┤
+                           ┆ C1  ╎C┊
+                           ┆     ╎2┊
+                           ├┄┄┄┄┄┼┄┤
+                           ┆  a  ╎b┊
+                           ├┄┄┄┄┄┼┄┤
+                           ┆c    ╎d┊
+                           └┉┉┉┉┉┴┉┘
+                           
+                           """)
+        }
+    }
     func test_noData() {
         let columns = [
             Col("Col 1", width: 1, defaultAlignment: .topLeft),

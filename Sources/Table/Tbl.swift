@@ -100,12 +100,16 @@ public final class Tbl {
     ///     - cells: Table cell data
     ///     - lineNumberGenerator: Customisable line number generator
 
-    public init(_ title:Txt? = nil,
-                columns: [Col] = [],
-                cells:[[Txt]],
-                lineNumberGenerator:((Int)->Txt)? = nil) {
-        
-        precondition(columns.count <= maxColumnCount, "Maximum column count is limited to \(maxColumnCount).")
+    public init(
+        _ title:Txt? = nil,
+        columns: [Col] = [],
+        cells:[[Txt]],
+        lineNumberGenerator:((Int)->Txt)? = nil
+    ) {
+        precondition(
+            columns.count <= maxColumnCount,
+            "Maximum column count is limited to \(maxColumnCount)."
+        )
 
         self.cells = cells
         self.title = title
@@ -122,15 +126,40 @@ public final class Tbl {
     ///     - title: Table title
     ///     - columns: Table column definitions
     ///     - cells: Table cell data
+    ///     - lineNumberGenerator: Customisable line number generator
 
-    public convenience init(_ title:String,
-                            columns: [Col] = [],
-                            cells:[[Txt]],
-                            lineNumberGenerator:((Int)->Txt)? = nil) {
+    public convenience init(
+        _ title:String,
+        columns: [Col] = [],
+        cells:[[Txt]],
+        lineNumberGenerator:((Int)->Txt)? = nil
+    ) {
         self.init(
             Txt(title, alignment: .bottomCenter, wrapping: .word),
             columns: columns,
             cells: cells,
+            lineNumberGenerator: lineNumberGenerator
+        )
+    }
+
+    /// Initializes table
+    ///
+    /// - Parameters:
+    ///     - title: Table title
+    ///     - columns: Table column definitions
+    ///     - cells: Table cell data
+    ///     - lineNumberGenerator: Customisable line number generator
+
+    public convenience init(
+        title:any StringProtocol,
+        columns: [Col] = [],
+        cells:[[any StringProtocol]],
+        lineNumberGenerator:((Int)->Txt)? = nil
+    ) {
+        self.init(
+            Txt(title.description, alignment: .bottomCenter, wrapping: .word),
+            columns: columns,
+            cells: cells.map({ $0.map({ Txt($0.description) }) }),
             lineNumberGenerator: lineNumberGenerator
         )
     }
@@ -141,9 +170,10 @@ public final class Tbl {
 
     public convenience init(
         _ title:Txt?,
-        @TblBuilder _ makeTable: () -> ([Col], [[Txt]])) {
-            let (columns, cells) = makeTable()
-            self.init(title, columns: columns, cells: cells)
+        @TblBuilder _ makeTable: () -> ([Col], [[Txt]])
+    ) {
+        let (columns, cells) = makeTable()
+        self.init(title, columns: columns, cells: cells)
     }
 
     /// Calculates table title width
