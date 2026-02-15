@@ -7,29 +7,24 @@ let package = Package(
     products: [
         .library(
             name: "Table",
-            targets: ["Table"]),
+            targets: ["Table"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser.git",
-                 branch: "main"),
-        .package(url: "https://github.com/gallinapassus/DebugKit.git",
-                 branch: "main"),
+        .package(
+            url: "https://github.com/apple/swift-argument-parser.git",
+            branch: "main")
     ],
     targets: [
-        .target(
-            name: "Table",
-            dependencies: ["DebugKit"]),
+        .target(name: "Table"),
         .testTarget(
             name: "TableTests",
             dependencies: [
                 "Table",
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
+                .product(
+                    name: "ArgumentParser", package: "swift-argument-parser"),
             ]),
         .testTarget(
             name: "PerfTests",
-            dependencies: [
-                "Table",
-                //.product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]),
+            dependencies: ["Table"]),
     ]
 )

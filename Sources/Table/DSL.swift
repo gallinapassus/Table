@@ -2,8 +2,8 @@ import Foundation
 
 /// Column builder class initializes table columns
 
-public final class Columns {
-    fileprivate var data:[Col]
+public final class Columns : Sendable {
+    fileprivate let data:[Col]
     public init(@ColumnBuilder _ builder: () -> [Col]) {
         self.data = builder()
     }
@@ -11,8 +11,8 @@ public final class Columns {
 
 /// Rows builder class initializes table cells
 
-public final class Rows {
-    fileprivate var rows:[[Txt]]
+public final class Rows : Sendable {
+    fileprivate let rows:[[Txt]]
     public init(@RowsBuilder _ builder: () -> [[Txt]]) {
         self.rows = builder()
     }
@@ -20,14 +20,14 @@ public final class Rows {
 
 /// Row builder class initializes individual table rows
 
-public final class Row {
-    fileprivate var rowCells:[Txt]
+public final class Row : Sendable {
+    fileprivate let rowCells:[Txt]
     public init(_ cells: Txt...) {
         self.rowCells = cells
     }
 }
 @resultBuilder
-public enum ColumnBuilder {
+public enum ColumnBuilder : Sendable {
     public static func buildBlock(_ components: Col...) -> [Col] {
         components
     }
@@ -36,7 +36,7 @@ public enum ColumnBuilder {
     }
 }
 @resultBuilder
-public enum RowsBuilder {
+public enum RowsBuilder : Sendable {
 
     // Rows {
     //     [
@@ -68,13 +68,13 @@ public enum RowsBuilder {
     }
 }
 @resultBuilder
-public enum RowCellBuilder {
+public enum RowCellBuilder : Sendable {
     public static func buildBlock(_ components: Txt...) -> [Txt] {
         components
     }
 }
 @resultBuilder
-public enum TblBuilder {
+public enum TblBuilder : Sendable {
     public static func buildBlock(_ columnDefinitions: Columns,
                                   _ data: Rows) -> ([Col], [[Txt]]) {
         (columnDefinitions.data, data.rows)

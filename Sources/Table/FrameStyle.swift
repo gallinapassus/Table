@@ -6,7 +6,7 @@
 ///
 /// Custom styles can be created as extensions.
 
-public struct FrameStyle : Equatable, Codable {
+public struct FrameStyle : Equatable, Codable, Sendable {
     public let topLeftCorner:                     String
     public let topHorizontalSeparator:            String
     public let topHorizontalVerticalSeparator:    String

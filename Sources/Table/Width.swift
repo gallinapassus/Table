@@ -1,6 +1,6 @@
 /// Concrete type for expressing static and dynamic widths for table columns
 
-public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable, CaseIterable {
+public enum Width : Equatable, Hashable, ExpressibleByIntegerLiteral, Codable, CaseIterable, Sendable {
     public static var allCases: [Width] {
         return [.auto, .hidden, .collapsed, .fixed(0), .min(0), .max(0), .in(0...0), .range(0..<0)]
     }

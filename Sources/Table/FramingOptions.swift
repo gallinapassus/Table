@@ -5,7 +5,7 @@
 ///
 /// By default, all frame elements are included.
 
-public struct FramingOptions : OptionSet, Hashable, Codable, CaseIterable {
+public struct FramingOptions : OptionSet, Hashable, Codable, CaseIterable, Sendable {
 
     public enum FrameElement : String, Codable, CaseIterable {
         case topFrame
@@ -39,7 +39,7 @@ public struct FramingOptions : OptionSet, Hashable, Codable, CaseIterable {
     public static let all = FramingOptions([.topFrame, .bottomFrame,
                                             .insideHorizontalFrame, .insideVerticalFrame,
                                             .leftFrame, .rightFrame])
-    public static var allCases:[FramingOptions] = [.topFrame, .bottomFrame,
+    public static let allCases:[FramingOptions] = [.topFrame, .bottomFrame,
                                                    .insideHorizontalFrame, .insideVerticalFrame,
                                                    .leftFrame, .rightFrame]
     public static let inside = FramingOptions([.insideHorizontalFrame, .insideVerticalFrame])
