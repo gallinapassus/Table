@@ -1,5 +1,5 @@
 
-public enum Alignment : UInt8, RawRepresentable, CaseIterable, Codable, Hashable {
+public enum Alignment : UInt8, RawRepresentable, CaseIterable, Codable, Hashable, Sendable {
     case topLeft, topRight, topCenter
     case bottomLeft, bottomRight, bottomCenter
     case middleLeft, middleRight, middleCenter

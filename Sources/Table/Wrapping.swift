@@ -1,5 +1,5 @@
 
-public enum Wrapping : UInt8, RawRepresentable, Codable, CaseIterable, Hashable {
+public enum Wrapping : UInt8, RawRepresentable, Codable, CaseIterable, Hashable, Sendable {
 
     /// Wrap at word boundaries
     case word // Prefer wrapping at word boundary (whenever possible)

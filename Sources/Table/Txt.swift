@@ -3,7 +3,7 @@
 /// Associated alignment and wrapping will override the
 /// default alignment and wrapping set on the column level.
 
-public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable {
+public struct Txt : ExpressibleByStringLiteral, Equatable, Codable, Hashable, Sendable {
     public static func == (lhs: Txt, rhs: Txt) -> Bool {
         lhs.string == rhs.string &&
         lhs.wrapping == rhs.wrapping &&
@@ -55,9 +55,7 @@ public func wordsx(_ str:String, to width:Int) -> [Substring] {
         default: return false
         }
     }
-    //print("splitted: \(splitted)")
     let cutted = splitted.flatMap { $0.cutTo(width: width) }
-    //print("cutted: \(cutted)")
     var joined:[Substring] = []
     var len = 0
     var s:String = ""
@@ -81,6 +79,5 @@ public func wordsx(_ str:String, to width:Int) -> [Substring] {
     if s.isEmpty == false {
         joined.append(s[...])
     }
-    //print("joined: \(joined)")
     return joined
 }

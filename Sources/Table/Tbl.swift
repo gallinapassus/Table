@@ -1,5 +1,4 @@
 import Foundation
-import DebugKit
 
 /// Maximum number of table columns.
 ///
@@ -16,22 +15,8 @@ internal let maxColumnCount:Int = Int(UInt16.max)
 /// - Note: `lineNumberGenerator` function is called for
 /// each line (on given row ranges) with line number as argument.
 
-public let defaultLnGen:(Int) -> Txt = { n in
+public let defaultLnGen: @Sendable (Int) -> Txt = { n in
     return Txt((1 + n).description)
-}
-extension DebugTopic {
-    // Topics
-    internal static let info = DebugTopic(level: 0, "info")
-    internal static let warning = DebugTopic(level: 1, "warning")
-    internal static let error = DebugTopic(level: 2, "error")
-    internal static let telemetry = DebugTopic(level: 3, "telemetry")
-    internal static let cache = DebugTopic(level: 4, "cache")
-    internal static let columns = DebugTopic(level: 5, "columns")
-    internal static let cells = DebugTopic(level: 6, "cells")
-    // A allTopics "mask" including all topics
-    internal static let allTopics:DebugTopicSet = [
-        .info, .warning, .error, .telemetry, .cache, .columns, .cells
-    ]
 }
 // MARK: -
 
@@ -90,8 +75,6 @@ public final class Tbl {
 
     private let lineNumberGenerator:((Int)->Txt)?
 
-    public var debugMask:DebugTopicSet = []
-    
     /// Initializes table
     ///
     /// - Parameters:
@@ -99,7 +82,6 @@ public final class Tbl {
     ///     - columns: Table column definitions
     ///     - cells: Table cell data
     ///     - lineNumberGenerator: Customisable line number generator
-
     public init(
         _ title:Txt? = nil,
         columns: [Col] = [],
@@ -115,9 +97,6 @@ public final class Tbl {
         self.title = title
         self.columns = columns
         self.lineNumberGenerator = lineNumberGenerator
-
-        dbg(.info, debugMask, prefix: "\(type(of: self))", "\(columns.count) columns")
-        dbg(.info, debugMask, prefix: "\(type(of: self))", "\(cells.reduce(0, { $0 + $1.count })) cells")
     }
 
     /// Initializes table
@@ -210,7 +189,6 @@ public final class Tbl {
                       rightPad:String = "",
                       to out: inout String) {
 
-        let t0 = DispatchTime.now().uptimeNanoseconds // NOTE: Drags in Foundation!!!
         cells.render(
             title: title,
             columns: columns,
@@ -220,27 +198,7 @@ public final class Tbl {
             leftPad: leftPad,
             rightPad: rightPad,
             to: &out,
-            debugMask: debugMask,
             lineNumberGenerator: lineNumberGenerator)
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        let ms = Double(t1-t0) / 1_000_000
-        let range_count = ranges?.reduce(0, { $0 + $1.count }) ?? cells.count
-        let cell_count = (ranges ?? [(0..<cells.count)])
-            .reduce(0, {
-                $0 + $1.reduce(0, {
-                    $0 + cells[$1].count
-                }
-                )
-            }
-            )
-        let ms_per_row = ms / Double(range_count)
-        let ms_per_cell = ms / Double(cell_count)
-        dbg(.telemetry, debugMask,
-            "Total table rendering time (includes pre-formatting): \(ms) ms")
-        dbg(.telemetry, debugMask,
-            "Avg rendering time (\(range_count) rows): \(ms_per_row) ms/row")
-        dbg(.telemetry, debugMask,
-            "Avg rendering time (\(cell_count) cells): \(ms_per_cell) ms/cell")
     }
 
     /// Render table

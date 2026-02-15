@@ -1,6 +1,5 @@
 
 import Foundation
-import DebugKit
 
 extension Array where Element == [Txt] {
     private func titleCellWidth(style:FrameStyle,
@@ -34,7 +33,6 @@ extension Array where Element == [Txt] {
     ///   - debugMask: Debug mask value, default (no debugging)
     ///   - lineNumberGenerator: Optional customizable line
     ///   number generator
-
     public func render(title:Txt? = nil,
                        columns:[Col]? = nil,
                        style:FrameStyle = .default,
@@ -43,14 +41,12 @@ extension Array where Element == [Txt] {
                        leftPad:String = "",
                        rightPad:String = "",
                        to out: inout String,
-                       debugMask:DebugTopicSet = [],
                        lineNumberGenerator:((Int)->Txt)? = nil) {
 
         if let ranges = rows {
             ranges.forEach {
                 guard $0.lowerBound >= 0, $0.upperBound <= count else {
                     let msg = "Range \($0) out of bounds"
-                    dbg(.error, debugMask, msg)
                     fatalError(msg)
                 }
             }
@@ -59,28 +55,16 @@ extension Array where Element == [Txt] {
         let rnges = rows
         
         // Pre-format cells and get fixed width columns
-        let t0 = DispatchTime.now().uptimeNanoseconds
+        //let t0 = DispatchTime.now().uptimeNanoseconds
         let (preFormattedRowRanges, fixedColumns) = preFormat(
             title: title,
             columns: columns ?? [],
             cells: self,
             ranges: rnges,
-            debugMask: debugMask,
             lnGen: lineNumberGenerator)
-        let t1 = DispatchTime.now().uptimeNanoseconds
-        let ms = Double(t1 - t0) / 1_000_000
-        if debugMask.contains(.columns) {
-            dbg(.columns, "Provided columns:")
-            columns?.forEach({ dbg(.columns, "  \($0)") })
-            dbg(.columns, "Derived columns:")
-            fixedColumns.forEach({ dbg(.columns, "  \($0)") })
-        }
-        dbg(.telemetry, debugMask, "Table pre-formatting took \(ms) ms")
-
         let hasTitle = title != nil
         let visibleColumns = fixedColumns.filter({ $0.isVisible })
         let hasVisibleColumns = visibleColumns.isEmpty == false
-        dbg(.columns, debugMask, "visible column count \(visibleColumns.count), hasVisibleColumns = \(hasVisibleColumns)")
         let hasData = isEmpty == false
         let hasSomeColumnHeaders = fixedColumns
             .filter({ $0.isVisible && $0.header != nil })
@@ -137,7 +121,6 @@ extension Array where Element == [Txt] {
                           defaultWrapping: title.wrapping ?? .word,
                           width: titleWidth)
             }
-            //dbg(.info, debugMask, prefix: "title", "w=\(titleWidth) \(splitted.description) -> \(titleFragments)")
 
             // output title
             for fragments in titleFragments {
@@ -258,9 +241,7 @@ extension Array where Element == [Txt] {
         let ranges:[Range<Int>] = rnges ?? (hasData ? [0..<count] : [0..<0])
         for (rri, rowRange) in ranges.enumerated() {
             let lastValidIndex = Swift.max(0, rowRange.upperBound - 1)
-            dbg(.info, debugMask, "Row range (\(rri)): \(rowRange)")
             guard hasData else {
-                dbg(.info, debugMask, "No data")
                 continue
             }
             for (ri, sourceRow) in zip(rowRange.lowerBound..., preFormattedRowRanges[rri]) {
@@ -286,7 +267,6 @@ extension Array where Element == [Txt] {
 
                 guard row.count == fixedColumns.count else {
                     let msg = "internal inconsistency error"
-                    dbg(.error, debugMask, msg)
                     fatalError(msg)
                 }
                 // Process the single row column by column
@@ -315,7 +295,6 @@ extension Array where Element == [Txt] {
                         else {
                             cacheMiss += 1
                         }
-                        dbg(.cache, debugMask, "(\(ri),\(ci)) \(cacheHit) \(cacheMiss) \(cacheWrite) \(cache.count)")
                     }
 
                     var combined:[String] = []
@@ -338,7 +317,6 @@ extension Array where Element == [Txt] {
                 var valigned:[[String]] = []
                 guard row.count == formattedRow.count else {
                     let msg = "internal inconsistency error"
-                    dbg(.error, debugMask, msg)
                     fatalError(msg)
                 }
                 
@@ -348,9 +326,6 @@ extension Array where Element == [Txt] {
                     guard fc.isVisible else {
                         continue
                     }
-                    //dbg(.cache, debugMask, "column(\(i)), contentHint = \(fc.contentHint)")
-                    //dbg(.cache, debugMask, "\(fr.1)")
-                    //dbg(.cache, debugMask, "\(sourceRow)")
                     let verticallyAligned = fr.1.valign(fr.0 ?? fc.defaultAlignment, height: rowHeight)
                     valigned.append(verticallyAligned)
                     if let key = _key, let hash = _hash {
@@ -423,12 +398,6 @@ extension Array where Element == [Txt] {
             out.write(style.bottomRightCorner(for: options))
             out.write("\(rightPad)\n")
         }
-        for (str,v) in cache {
-            dbg(.cache, debugMask, "\(str)")
-            for (hash,cell) in v {
-                dbg(.cache, debugMask, "    \(hash) | \(cell)")
-            }
-        }
     }
     /// Render Array elements as table
     /// - Returns: A new String containing the rendered table.
@@ -439,13 +408,12 @@ extension Array where Element == [Txt] {
                        rows rnges:[Range<Int>]? = nil,
                        leftPad:String = "",
                        rightPad:String = "",
-                       debugMask:DebugTopicSet = [],
                        lineNumberGenerator:((Int)->Txt)? = nil,
                        lineNumberColumn:Col? = nil) -> String {
         var str = ""
         render(title: title, columns: columns, style: style,
              options: options, rows: rnges, leftPad: leftPad,
-             rightPad: rightPad, to: &str, debugMask: debugMask,
+             rightPad: rightPad, to: &str,
              lineNumberGenerator: lineNumberGenerator)
         return str
     }
@@ -454,7 +422,6 @@ fileprivate func preFormat(title:Txt?,
                            columns cols:[Col],
                            cells:[[Txt]],
                            ranges:[Range<Int>]?,
-                           debugMask:DebugTopicSet = [],
                            lnGen:((Int)->Txt)? = nil) -> ([[[[Txt]]]], [FixedCol]) {
         
     var prefmttedRange:[[[[Txt]]]] = []
@@ -466,7 +433,6 @@ fileprivate func preFormat(title:Txt?,
     var maxRowElementCount:Int = Int.min + 1
 
     guard cells.isEmpty == false else {
-        dbg(.cells, debugMask, "Table has no data cells")
         guard cols.isEmpty == false else {
             let c = Col(
                 title ?? Txt(),
@@ -509,12 +475,11 @@ fileprivate func preFormat(title:Txt?,
         return ([], hcols)
     }
 
-    for (rri,range) in zip(0..., ranges ?? [0..<cells.count]) {
+    for range in ranges ?? [0..<cells.count] {
 
         var prefmtted:[[[Txt]]] = []
 
         guard range.isEmpty == false else {
-            dbg(.info, debugMask, "EMPTY RANGE \(range) at range index \(rri)")
             prefmttedRange.append([[[]]])
             for (ci,ccc) in cols.enumerated() {
                 columnFixedWidth[ci] = ccc.header?.count ?? 0
@@ -523,7 +488,6 @@ fileprivate func preFormat(title:Txt?,
         }
 
         for (ri, partialRow) in cells[range].enumerated() {
-            //dbg(.debug, debugMask, prefix: pfx, "ROW \(ri): \(partialRow)")
             minRowElementCount = Swift.min(minRowElementCount, partialRow.count) + (lnGen == nil ? 0 : 1)
             maxRowElementCount = Swift.max(maxRowElementCount, partialRow.count) + (lnGen == nil ? 0 : 1)
             rowElementCountHistogram[partialRow.count, default: 0] += 1
@@ -541,7 +505,6 @@ fileprivate func preFormat(title:Txt?,
                 // => Add missing Cols with default settings
                 (dict.count..<maxRowElementCount)
                     .forEach {
-                        dbg(.columns, debugMask, "Adding missing column")
                         dict[$0] = defCol
                     }
             }
@@ -550,7 +513,6 @@ fileprivate func preFormat(title:Txt?,
                 // Let's add required amount of empty cells
                 let missing:[Txt] = Array<Txt>(repeating: Txt(), count: Swift.max(0, cols.count - row.count))
                 row.append(contentsOf: missing)
-                dbg(.cells, debugMask, "row(\(ri + range.lowerBound)): adding \(missing.count) cell(s)")
             }
             
             var fmrow:[[Txt]] = []
@@ -559,7 +521,6 @@ fileprivate func preFormat(title:Txt?,
                 guard [Width.hidden, .collapsed].contains(dict[ci]!.dynamicWidth) == false else {
                     columnFixedWidth[ci] = 0
                     fmrow.append([""]) // collapsed or hidden -> we don't need cell data, overwrite with ""
-                    //dbg(.debug, debugMask, prefix: pfx, "  R\(ri)C\(ci) \(dict[ci]!.dynamicWidth): → skip")
                     continue
                 }
                 var lo:Int = {

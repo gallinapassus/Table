@@ -1,8 +1,6 @@
 import XCTest
 @testable
 import Table
-//import Combinations
-import DebugKit
 
 extension FrameStyle {
     public static var debug: Self {
@@ -4053,7 +4051,7 @@ final class TableTests : XCTestCase {
             cells: cells,
             lineNumberGenerator: myLnGen
         )
-        tbl.debugMask = []//[.telemetry, .info, .debug]
+        //tbl.debugMask = []//[.telemetry, .info, .debug]
         let rendered = tbl.render(style: .debug)//, rows: [0..<3, 1..<cells.count]))
         let expected =
                 """
@@ -5022,14 +5020,14 @@ internal class Playground : XCTestCase {
              "Quick brown fox jumped over the lazy dog."],
             ["EOF", "End Of File"],
         ]
-        let mask = DebugTopicSet([.all])
+        //let mask = DebugTopicSet([.all])
 
         let t = Tbl("Quick brown title jumped over the lazy columns.",
                     columns: columns,
                     cells: cells,
                     lineNumberGenerator: Table.defaultLnGen
         )
-        t.debugMask = mask
+        //t.debugMask = mask
         print(t.render(style: .roundedPadded, rows: [(0..<1), (2..<4)]))
     }
     func test_cache() {
@@ -5045,7 +5043,7 @@ internal class Playground : XCTestCase {
             Col(width: .max(10), defaultAlignment: .bottomLeft, defaultWrapping: .word),
         ]
         let tbl = Tbl(#function, columns: cols, cells: cells, lineNumberGenerator: defaultLnGen)
-        tbl.debugMask = [.cache]
+        //tbl.debugMask = [.cache]
         print(tbl.render(style: .roundedPadded))
     }
 }

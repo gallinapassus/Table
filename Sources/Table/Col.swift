@@ -1,4 +1,4 @@
-public enum ColumnContentHint : String, Equatable, Codable, CaseIterable {
+public enum ColumnContentHint : String, Equatable, Codable, CaseIterable, Sendable {
     /// Content cells are known to be unique
     case unique
     /// Content cells are known to be repetitive (not completely unique)
@@ -7,9 +7,9 @@ public enum ColumnContentHint : String, Equatable, Codable, CaseIterable {
 
 /// Internal table column type which has column width calculated
 /// based on table cell data.
-internal struct ColumnBase : Equatable, Codable {
+internal struct ColumnBase : Equatable, Codable, Sendable {
 
-    internal (set) public var dynamicWidth:Width
+    internal(set) public var dynamicWidth:Width
 
     /// Column header text
     ///
@@ -72,7 +72,7 @@ internal struct ColumnBase : Equatable, Codable {
         self.dynamicWidth = dynamicWidth
     }
 }
-public struct Col : Equatable {
+public struct Col : Equatable, Sendable {
     private let _base:ColumnBase
     public var dynamicWidth:Width { _base.dynamicWidth }
     public var header:Txt? { _base.header }
@@ -211,7 +211,7 @@ fileprivate extension Width {
         return Width.allowedRange.contains(w)
     }
 }
-internal struct FixedCol {
+internal struct FixedCol : Sendable {
     private let _base:ColumnBase
     public var header:Txt? { _base.header }
     public var defaultAlignment:Alignment { _base.defaultAlignment }

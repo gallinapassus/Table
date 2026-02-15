@@ -2,7 +2,7 @@
 ///
 /// Defines generic trimming options.
 
-public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible, Hashable, Comparable, Codable {
+public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible, Hashable, Comparable, Codable, Sendable {
     enum Opts : Int8, CaseIterable {
         case leadingWhiteSpaces
         case leadingNewlines
@@ -11,7 +11,7 @@ public struct TrimmingOptions : OptionSet, CaseIterable, CustomStringConvertible
         case trailingWhiteSpaces
         case trailingNewlines
     }
-    public static var allCases: [TrimmingOptions] = Opts.allCases
+    public static let allCases: [TrimmingOptions] = Opts.allCases
         .filter({ $0.rawValue < (MemoryLayout<Int8>.size * 8)})
         .map { TrimmingOptions(rawValue: 1 << $0.rawValue) }
     public static func < (lhs: TrimmingOptions, rhs: TrimmingOptions) -> Bool {
